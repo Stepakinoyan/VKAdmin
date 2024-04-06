@@ -1,0 +1,23 @@
+[tool.poetry]
+name = "vkadmin"
+version = "0.1.0"
+description = ""
+authors = ["ScrollDude <stepakinoyan@gmail.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.11"
+fastapi = {extras = ["all"], version = "^0.110.1"}
+sqlalchemy = "^2.0.29"
+alembic = "^1.13.1"
+pytest = "^8.1.1"
+pytest-asyncio = "^0.23.6"
+black = "^24.3.0"
+asyncpg = "^0.29.0"
+python-jose = {extras = ["cryptography"], version = "^3.3.0"}
+passlib = {extras = ["bcrypt"], version = "^1.7.4"}
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
