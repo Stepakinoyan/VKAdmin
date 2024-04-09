@@ -1,7 +1,8 @@
-<template>
+<!-- <template>
     <div>
         <DataTable  tableStyle="min-width: 50rem">
-
+            
+            <Column field="organization" header="уровень"></Column>
             <Column field="organization" header="Организация"></Column>
             <Column field="founder" header="Учредитель"></Column>
             <Column field="sphere" header="Сфера"></Column>
@@ -13,7 +14,31 @@
             <Column field="activity" header="Кол. постов"></Column>
             <Column field="followers" header="Кол. Подписчиков"></Column>
             <Column field="weekly_audience" header="Охват аудитории за неделю "></Column>
-            <!-- <Column field="average_publication_coverage" header="average_publication_coverage"></Column> -->
         </DataTable>
     </div>
 </template>
+
+
+<script>
+import axios from "axios"
+import Filter from '../components/Filter.vue'
+
+export default {
+    data(){
+        return {
+            stats: []
+        }
+
+    },
+    methods:{
+        
+        getFStats(level, founder, sphere, sphere){
+                axios.get("/filter/get_stats")
+                .then((stats) => {
+                    this.stats = stats.data
+                })
+        }
+    }
+}
+
+</script> -->

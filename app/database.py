@@ -4,14 +4,15 @@ from sqlalchemy.orm import DeclarativeBase
 from app.config import settings
 
 if settings.MODE == "TEST":
-    database_url = settings.get_test_database_url
-    database_params = {"poolclass": NullPool}
+    DATABASE_URL = settings.get_test_database_url
+    DATABASE_PARAMS = {"poolclass": NullPool}
 else:
     DATABASE_URL = settings.get_database_url
     DATABASE_PARAMS = {}
 
-engine = create_async_engine(settings.get_database_url, **database_params)
+engine = create_async_engine(DATABASE_URL, **DATABASE_PARAMS)
 async_session_maker = async_sessionmaker(engine, expire_on_commit=False)
+
 
 class Base(DeclarativeBase):
     pass

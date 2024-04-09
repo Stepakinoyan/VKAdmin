@@ -3,5 +3,5 @@ import Form from '../components/Form.vue'
 </script>
 
 <template>
-    <Form />
+    <Form class="bg-slate-300"/>
 </template>
