@@ -88,6 +88,7 @@ export default {
                     this.stats = stats.data[0]["items"]
                 })
         
+        }
     }
 }
 

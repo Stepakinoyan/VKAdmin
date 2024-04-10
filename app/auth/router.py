@@ -1,9 +1,13 @@
 from fastapi import APIRouter
 from app.auth.schema import UserAuth
 from app.auth.users import authenticate_user, create_access_token
+from app.dao.dao import BaseDAO
 
 router = APIRouter(prefix="/auth", tags=["Авторизация"])
 
+@router.post("/prepare")
+async def prepare_db():
+    return await BaseDAO.prepare_database()
 
 @router.post("/login")
 async def login_user(user_data: UserAuth):
