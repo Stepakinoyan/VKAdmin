@@ -24,7 +24,7 @@ class BaseDAO:
             await conn.run_sync(Base.metadata.create_all)
 
         def open_json(model: str):
-            with open(f"app/{model}.json", encoding="utf-8") as file:
+            with open(f"app/tests/{model}.json", encoding="utf-8") as file:
                 return json.load(file)
 
         users = open_json("users")
