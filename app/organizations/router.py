@@ -5,6 +5,9 @@ from app.organizations.params import FilterChannelsParams, FilterFounderParams
 
 router = APIRouter(prefix="/filter", tags=["Фильтрация данных"])
 
+@router.get("/get_all_stats")
+async def get_all_stats():
+    return await OrganizationsDAO.get_all_stats()
 
 @router.get("/get_founders")
 async def filter_channels(filterfounderparams: FilterFounderParams = Depends()):

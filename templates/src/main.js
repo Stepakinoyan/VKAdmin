@@ -21,7 +21,7 @@ import axios from 'axios';
 
 const app = createApp(App)
 axios.defaults.withCredentials = true;
-axios.defaults.baseURL = 'http://78.24.216.129:7777/';
+axios.defaults.baseURL = 'http://127.0.0.1:8000/';
 app.component("InputText", InputText);
 app.component("Button", Button);
 app.component("InputGroup", InputGroup);

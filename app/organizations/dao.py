@@ -9,6 +9,15 @@ class OrganizationsDAO(BaseDAO):
     model = Organizations
 
     @classmethod
+    async def get_all_stats(self):
+        async with async_session_maker() as session:
+            get_stats = select(self.model.__table__.columns)
+
+            results = await session.execute(get_stats)
+
+            return results.mappings().all()
+
+    @classmethod
     async def get_founders_by_level(self, level: str) -> list:
         async with async_session_maker() as session:
             get_founders = (

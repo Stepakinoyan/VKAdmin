@@ -37,6 +37,9 @@
                         <div>
                             <Button label="Применить" @click="getStats(selectedlevel, selectedfounder, selectedsphere, checked)"/>
                         </div>
+                        <div>
+                            <h4 class="text-red-600">{{ error }}</h4>
+                        </div>
                 </div>
         </div>
         </main>
@@ -49,9 +52,9 @@ import axios from "axios"
 export default {
     data(){
         return {
-            selectedlevel: null,
-            selectedfounder: null,
-            selectedsphere: null,
+            selectedlevel: "",
+            selectedfounder: "",
+            selectedsphere: "",
             founders: [],
             spheres: [],
             levels: [
@@ -71,11 +74,18 @@ export default {
                 { sphere: 'Социальная защита' }
             ],
             checked: false,
-            stats: []
+            stats: this.getAllStats(),
+            error: ""
         }
 
     },
     methods:{
+        getAllStats(){
+                axios.get(`/filter/get_all_stats`)
+                .then((stats) => {
+                    this.stats = stats.data
+                })
+        },
         getFoundersByLevel(level){
                 axios.get(`/filter/get_founders?level=${level["level"]}`)
                 .then((founders) => {
@@ -92,7 +102,11 @@ export default {
                 axios.get(`/filter/get_stats?level=${level["level"]}&founder=${founder["founder"]}&sphere=${sphere["sphere"]}&sort=${sort}`)
                 .then((stats) => {
                     this.stats = stats.data[0]["items"]
+                    this.error = ""
                 })
+                .catch((error) => {
+                          this.error = "Все поля не заполнены"
+                  });
         }
     }
 }
