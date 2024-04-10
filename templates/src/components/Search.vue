@@ -1,8 +1,8 @@
 <template>
         <main class="flex flex-col-reverse mt-5">
             <div>
-                <DataTable :value="stats" tableStyle="min-width: 50rem">           
-                        <Column field="organization" header="Организация"></Column>
+                <DataTable :value="stats" tableStyle="min-width: 50rem">   
+                        <Column field="organization" header="Организация"></Column> 
                         <Column field="founder" header="Учредитель"></Column>
                         <Column field="sphere" header="Сфера"></Column>
                         <Column field="address" header="Адрес"></Column>
@@ -28,7 +28,7 @@
                             <Dropdown v-model="selectedfounder" :options="founders" optionLabel="founder" placeholder="Учредитель" class="w-full md:w-14rem" @click="getFoundersByLevel(selectedlevel)"/>
                         </div>
                         <div>
-                            <Dropdown v-model="selectedsphere" :options="spheres" optionLabel="sphere" placeholder="Сфера" class="w-full md:w-14rem" @click="getSphereByFounder(selectedfounder)"/>
+                            <Dropdown v-model="selectedsphere" :options="spheres" optionLabel="sphere" placeholder="Сфера" class="w-full md:w-14rem" @click="getSpheresByFounder(selectedfounder)"/>
                         </div>
                         <div>
                             <Checkbox v-model="checked" :binary="true"/>
@@ -82,12 +82,17 @@ export default {
                     this.founders = founders.data
                 })
         },
+        getSpheresByFounder(founder){
+                axios.get(`/filter/get_spheres?founder=${founder["founder"]}`)
+                .then((spheres) => {
+                    this.spheres = spheres.data
+                })
+        },
         getStats(level, founder, sphere, sort){
                 axios.get(`/filter/get_stats?level=${level["level"]}&founder=${founder["founder"]}&sphere=${sphere["sphere"]}&sort=${sort}`)
                 .then((stats) => {
                     this.stats = stats.data[0]["items"]
                 })
-        
         }
     }
 }

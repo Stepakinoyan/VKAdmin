@@ -6,7 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 app = FastAPI()
 
 origins = [
-    "http://localhost:5468",
+    "http://78.24.216.129:5468",
 ]
 
 app.add_middleware(
@@ -19,14 +19,3 @@ app.add_middleware(
 
 app.include_router(router_auth)
 app.include_router(router_filter)
-
-
-            # location / {
-            #     proxy_set_header Host $http_host;
-            #     proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-            #     proxy_set_header X-Forwarded-Proto $scheme;
-            #     proxy_set_header Upgrade $http_upgrade;
-            #     proxy_redirect off;
-            #     proxy_buffering off;
-            #     proxy_pass http://api:4444/;
-            # },

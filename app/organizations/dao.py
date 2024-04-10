@@ -11,7 +11,11 @@ class OrganizationsDAO(BaseDAO):
     @classmethod
     async def get_founders_by_level(self, level: str) -> list:
         async with async_session_maker() as session:
-            get_founders = select(self.model.founder).filter_by(level=level)
+            get_founders = (
+                select(self.model.founder)
+                .filter_by(level=level)
+                .distinct(self.model.founder)
+            )
 
             results = await session.execute(get_founders)
 
@@ -20,7 +24,11 @@ class OrganizationsDAO(BaseDAO):
     @classmethod
     async def get_sphere_by_founder(self, founder: str) -> list:
         async with async_session_maker() as session:
-            get_founders = select(self.model.sphere).filter_by(founder=founder)
+            get_founders = (
+                select(self.model.sphere)
+                .filter_by(founder=founder)
+                .distinct(self.model.sphere)
+            )
 
             results = await session.execute(get_founders)
 

@@ -11,6 +11,11 @@ async def filter_channels(filterfounderparams: FilterFounderParams = Depends()):
     return await OrganizationsDAO.get_founders_by_level(filterfounderparams.level)
 
 
+@router.get("/get_spheres")
+async def get_stats(founder: str):
+    return await OrganizationsDAO.get_sphere_by_founder(founder=founder)
+
+
 @router.get("/get_stats")
 async def get_stats(filterchannelsparams: FilterChannelsParams = Depends()):
     return await OrganizationsDAO.filter_channels(
