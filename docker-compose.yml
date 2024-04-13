@@ -9,9 +9,9 @@ services:
       - 5432:5432 
 
     environment:
-      POSTGRES_DB: vkadmin
-      POSTGRES_USER: scroll
-      POSTGRES_PASSWORD: scroll1234
+      POSTGRES_DB: postgres
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
 
   api:
     build:
