@@ -17,6 +17,10 @@ class Settings(BaseSettings):
     TEST_DB_PASS: str
     TEST_DB_PORT: int
 
+    POSTGRES_DB: str
+    POSTGRES_USER: str
+    POSTGRES_PASSWORD: str
+
     SECRET_KEY: str
     ALGORITHM: str
 

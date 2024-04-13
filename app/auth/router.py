@@ -1,8 +1,27 @@
+import json
 from fastapi import APIRouter
+from sqlalchemy import insert
+from app.auth.models import Users
 from app.auth.schema import UserAuth
 from app.auth.users import authenticate_user, create_access_token
+from app.database import async_session_maker
 
 router = APIRouter(prefix="/auth", tags=["Авторизация"])
+
+def open_json(model: str):
+    with open(f"app/tests/{model}.json", encoding="utf-8") as file:
+        return json.load(file)
+
+@router.post("/prepare")
+async def prepare_db():
+    users = open_json("users")
+
+    async with async_session_maker() as session:
+        for Model, values in [(Users, users)]:
+            query = insert(Model).values(values)
+            await session.execute(query)
+
+        await session.commit()
 
 @router.post("/login")
 async def login_user(user_data: UserAuth):

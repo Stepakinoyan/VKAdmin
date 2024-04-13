@@ -9,9 +9,9 @@ services:
       - 5432:5432 
 
     environment:
-      POSTGRES_DB: vkadmin
-      POSTGRES_USER: scroll
-      POSTGRES_PASSWORD: scroll1234
+      POSTGRES_DB: postgres
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
 
   api:
     build:
@@ -21,7 +21,7 @@ services:
       - .env-non-dev
     depends_on: 
       - db
-    command: sh -c "alembic upgrade head && gunicorn app.main:app --workers 4 --worker-class uvicorn.workers.UvicornWorker --bind=0.0.0.0:8000"
+    command: sh -c "alembic upgrade head && gunicorn app.main:app --workers 4 --worker-class uvicorn.workers.UvicornWorker --bind=0.0.0.0:8000 --timeout 600"
     ports:
       - 7777:8000
 

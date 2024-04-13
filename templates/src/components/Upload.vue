@@ -1,7 +1,7 @@
 <template>
     <div class="flex justify-center items-center">
         <Toast class="text-bla"/>
-        <FileUpload mode="basic" name="file" url="http://127.0.0.1:8000/excel/upload" @upload="onUpload" :auto="true" chooseLabel="Загрузить"/>
+        <FileUpload mode="basic" name="file" url="http://localhost:7777/excel/upload" @upload="onUpload" :auto="true" chooseLabel="Загрузить"/>
     </div>
 </template>
 
