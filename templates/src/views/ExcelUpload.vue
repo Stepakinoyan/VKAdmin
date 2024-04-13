@@ -1,16 +1,17 @@
 <script setup>
 import MenuBar from "../components/MenuBar.vue"
-import Search from "../components/Search.vue"
+import Upload from "../components/Upload.vue"
 </script>
 
-<template>
+<template >
   <div class="bg-slate-300" style="height: 100vh;">
     <header>
       <MenuBar/>
     </header>
-    <div>
-      <Search/>
+    <div class="mt-2">
+      <Upload/>
     </div>
+      
   </div>
 
 </template> 

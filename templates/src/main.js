@@ -17,11 +17,15 @@ import Password from 'primevue/password';
 import Checkbox from 'primevue/checkbox';
 import Column from 'primevue/column';
 import 'primeicons/primeicons.css';
+import FileUpload from 'primevue/fileupload';
+import Toast from 'primevue/toast';
+import ToastService from 'primevue/toastservice';
+
 import axios from 'axios';
 
-const app = createApp(App)
+export const app = createApp(App)
 axios.defaults.withCredentials = true;
-axios.defaults.baseURL = 'http://78.24.216.129:7777/';
+axios.defaults.baseURL = 'http://127.0.0.1:8000/';
 app.component("InputText", InputText);
 app.component("Button", Button);
 app.component("InputGroup", InputGroup);
@@ -33,12 +37,16 @@ app.component("Column", Column)
 app.component("Dropdown", Dropdown)
 app.component("Password", Password)
 app.component("Checkbox", Checkbox)
+app.component("FileUpload", FileUpload)
+app.component("Toast", Toast)
+
 app.use(VueCookies)
 
 app.use(PrimeVue, {
     unstyled: true,
     pt: Lara
 });
+app.use(ToastService);
 app.use(router)
 
 app.mount('#app')

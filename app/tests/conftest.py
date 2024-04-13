@@ -8,7 +8,6 @@ from app.config import settings
 from app.database import Base, async_session_maker, engine
 from app.main import app as fastapi_app
 from app.auth.models import Users
-from app.organizations.models import Organizations
 
 
 @pytest.fixture(scope="session", autouse=True)
@@ -24,10 +23,9 @@ async def prepare_database():
             return json.load(file)
 
     users = open_json("users")
-    organizations = open_json("stats")
 
     async with async_session_maker() as session:
-        for Model, values in [(Users, users), (Organizations, organizations)]:
+        for Model, values in [(Users, users)]:
             query = insert(Model).values(values)
             await session.execute(query)
 
@@ -51,3 +49,15 @@ async def authenticated_ac():
             },
         )
         assert ac.cookies["access_token"]
+
+
+from httpx import AsyncClient
+
+files = {"file": ("dashboard.xlsx", open("dashboard.xlsx", "rb"), "text/plain")}
+
+
+@pytest.fixture(scope="session", autouse=True)
+async def test_excel_to_db(ac: AsyncClient):
+    response = await ac.post("/excel/upload", files=files)
+
+    assert response.status_code == 200

@@ -1,4 +1,4 @@
-from typing import Literal, Union
+from typing import Optional, Literal
 
 
 class FilterFounderParams:
@@ -14,15 +14,7 @@ class FilterChannelsParams:
         self,
         level: Literal["Министерство", "МО", "Ведомство", "Узкоспециальные", "Регион"],
         founder: str,
-        sphere: Literal[
-            "Спорт",
-            "Культура",
-            "Образование",
-            "Здравоохранение",
-            "Администрации",
-            "ЖКХ",
-            "Социальная защита",
-        ],
+        sphere: Optional[str] = "",
         sort: bool = False,
     ):
         self.level = level
