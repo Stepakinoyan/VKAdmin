@@ -5,13 +5,12 @@ from app.excel_to_db.router import router as router_excel
 from fastapi.middleware.cors import CORSMiddleware
 
 
+
 app = FastAPI()
 
-<<<<<<< HEAD
+
 origins = ["http://localhost:5468"]
-=======
-origins = ["http://localhost:5173"]
->>>>>>> 2f21a14af65e5a7730bdb4566ffe116e3753c460
+
 
 app.add_middleware(
     CORSMiddleware,
