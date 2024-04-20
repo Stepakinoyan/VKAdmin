@@ -2,7 +2,7 @@
 name = "vkadmin"
 version = "0.1.0"
 description = ""
-authors = ["ScrollDude <stepakinoyan@gmail.com>"]
+authors = ["ScrollDude"]
 readme = "README.md"
 
 [tool.poetry.dependencies]
