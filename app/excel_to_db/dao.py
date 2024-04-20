@@ -92,20 +92,11 @@ class ExcelToDBDAO(BaseDAO):
 
         async with async_session_maker() as session:
 
-            excel_data_df = pandas.read_excel(file).rename(columns=db_columns)
+            excel_data_df = pandas.read_csv(file).rename(columns=db_columns)
 
             thisisjson = excel_data_df.to_json(orient="records")
 
             thisisjson_dict = json.loads(thisisjson)
-
-            data = openpyxl.open(file)
-            sheet = data.active
-
-            thisisjson_dict[1]["level"] = "Регион"
-            thisisjson_dict[1]["founder"] = sheet["C5"].value
-
-            thisisjson_dict[2]["level"] = "Регион"
-            thisisjson_dict[2]["founder"] = sheet["C6"].value
 
             for column in thisisjson_dict:
                 item = Item(**column)

@@ -25,7 +25,7 @@ import axios from 'axios';
 
 export const app = createApp(App)
 axios.defaults.withCredentials = true;
-axios.defaults.baseURL = 'http://127.0.0.1:7777/';
+axios.defaults.baseURL = 'http://localhost:8000/';
 app.component("InputText", InputText);
 app.component("Button", Button);
 app.component("InputGroup", InputGroup);
@@ -43,7 +43,7 @@ app.component("Toast", Toast)
 app.use(VueCookies)
 
 app.use(PrimeVue, {
-    unstyled: true,
+    unstyled: false,
     pt: Lara
 });
 app.use(ToastService);

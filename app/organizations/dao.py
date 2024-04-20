@@ -1,4 +1,4 @@
-from sqlalchemy import or_, select
+from sqlalchemy import and_, or_, select
 from app.dao.dao import BaseDAO
 from app.organizations.models import Organizations
 from app.database import async_session_maker
@@ -31,6 +31,26 @@ class OrganizationsDAO(BaseDAO):
             return results.mappings().all()
 
     @classmethod
+    async def get_sphere_by_level(self, level: str) -> list:
+        spheres = []
+        async with async_session_maker() as session:
+            get_founders = (
+                select(self.model.sphere_1, self.model.sphere_2, self.model.sphere_3)
+                .filter_by(level=level)
+                .distinct(self.model.sphere_1, self.model.sphere_2, self.model.sphere_3)
+            )
+
+            results = await session.execute(get_founders)
+
+            for item in list(
+                set(filter(lambda item: item is not None, results.scalars().all()))
+            ):
+                sphere = Sphere(sphere=item).model_dump()
+                spheres.append(sphere)
+
+        return spheres
+
+    @classmethod
     async def get_sphere_by_founder(self, founder: str) -> list:
         spheres = []
         async with async_session_maker() as session:
@@ -55,30 +75,59 @@ class OrganizationsDAO(BaseDAO):
         self, level: str, founder: str, sphere: str, sort: bool
     ) -> list:
         async with async_session_maker() as session:
-            if sort and sphere == "":
+            if sort:
                 get_channels = (
-                    select(self.model.__table__.columns)
-                    .filter_by(level=level, founder=founder)
-                    .where(self.model.sphere_1.like(f"%{sphere}%"))
-                    .order_by(self.model.followers.desc())
-                )
-            elif not sort and sphere == "":
-                get_channels = (
-                    select(self.model.__table__.columns)
-                    .filter_by(level=level, founder=founder)
-                    .where(self.model.sphere_1.like(f"%{sphere}%"))
-                    .order_by(self.model.followers.desc())
-                )
-            else:
-                get_channels = (
-                    select(self.model.__table__.columns)
-                    .filter_by(level=level, founder=founder)
-                    .where(
-                        or_(
-                            self.model.sphere_1 == sphere,
-                            self.model.sphere_2 == sphere,
-                            self.model.sphere_3 == sphere,
+                    select(
+                        self.model.name,
+                        self.model.channel_id,
+                        self.model.url,
+                        self.model.address,
+                        self.model.connected,
+                        self.model.state_mark,
+                        self.model.decoration,
+                        self.model.widgets,
+                        self.model.activity,
+                        self.model.followers,
+                        self.model.weekly_audience,
+                        self.model.average_publication_coverage,
+                    )
+                    .filter(
+                        and_(
+                            self.model.level.like(f"%{level}%"),
+                            self.model.founder.like(f"%{founder}%"),
+                            or_(
+                                self.model.sphere_1.like(f"%{sphere}%"),
+                                self.model.sphere_2.like(f"%{sphere}%"),
+                                self.model.sphere_3.like(f"%{sphere}%"),
+                            ),
                         )
+                    )
+                    .order_by(self.model.followers.desc())
+                )
+
+            else:
+                get_channels = select(
+                    self.model.name,
+                    self.model.channel_id,
+                    self.model.url,
+                    self.model.address,
+                    self.model.connected,
+                    self.model.state_mark,
+                    self.model.decoration,
+                    self.model.widgets,
+                    self.model.activity,
+                    self.model.followers,
+                    self.model.weekly_audience,
+                    self.model.average_publication_coverage,
+                ).filter(
+                    and_(
+                        self.model.level.like(f"%{level}%"),
+                        self.model.founder.like(f"%{founder}%"),
+                        or_(
+                            self.model.sphere_1.like(f"%{sphere}%"),
+                            self.model.sphere_2.like(f"%{sphere}%"),
+                            self.model.sphere_3.like(f"%{sphere}%"),
+                        ),
                     )
                 )
 
