@@ -1,16 +1,15 @@
 from sqlalchemy import and_, or_, select
 from app.dao.dao import BaseDAO
 from app.organizations.models import Organizations
-from app.database import async_session_maker
+from app.database import get_session
 from app.organizations.schema import Sphere, Stats
-
+from sqlalchemy.ext.asyncio import AsyncSession
 
 class OrganizationsDAO(BaseDAO):
     model = Organizations
 
     @classmethod
-    async def get_all_stats(self):
-        async with async_session_maker() as session:
+    async def get_all_stats(self, session: AsyncSession = get_session()):
             get_stats = select(self.model.__table__.columns)
 
             results = await session.execute(get_stats)
@@ -18,8 +17,7 @@ class OrganizationsDAO(BaseDAO):
             return results.mappings().all()
 
     @classmethod
-    async def get_founders_by_level(self, level: str) -> list:
-        async with async_session_maker() as session:
+    async def get_founders_by_level(self, level: str, session = get_session()) -> list:
             get_founders = (
                 select(self.model.founder)
                 .filter_by(level=level)
@@ -31,50 +29,47 @@ class OrganizationsDAO(BaseDAO):
             return results.mappings().all()
 
     @classmethod
-    async def get_sphere_by_level(self, level: str) -> list:
+    async def get_sphere_by_level(self, level: str, session = get_session()) -> list:
         spheres = []
-        async with async_session_maker() as session:
-            get_founders = (
-                select(self.model.sphere_1, self.model.sphere_2, self.model.sphere_3)
-                .filter_by(level=level)
-                .distinct(self.model.sphere_1, self.model.sphere_2, self.model.sphere_3)
-            )
+        get_founders = (
+            select(self.model.sphere_1, self.model.sphere_2, self.model.sphere_3)
+            .filter_by(level=level)
+            .distinct(self.model.sphere_1, self.model.sphere_2, self.model.sphere_3)
+        )
 
-            results = await session.execute(get_founders)
+        results = await session.execute(get_founders)
 
-            for item in list(
-                set(filter(lambda item: item is not None, results.scalars().all()))
-            ):
-                sphere = Sphere(sphere=item).model_dump()
-                spheres.append(sphere)
+        for item in list(
+            set(filter(lambda item: item is not None, results.scalars().all()))
+        ):
+            sphere = Sphere(sphere=item).model_dump()
+            spheres.append(sphere)
 
         return spheres
 
     @classmethod
-    async def get_sphere_by_founder(self, founder: str) -> list:
+    async def get_sphere_by_founder(self, founder: str, session = get_session()) -> list:
         spheres = []
-        async with async_session_maker() as session:
-            get_founders = (
-                select(self.model.sphere_1, self.model.sphere_2, self.model.sphere_3)
-                .filter_by(founder=founder)
-                .distinct(self.model.sphere_1, self.model.sphere_2, self.model.sphere_3)
-            )
+        get_founders = (
+            select(self.model.sphere_1, self.model.sphere_2, self.model.sphere_3)
+            .filter_by(founder=founder)
+            .distinct(self.model.sphere_1, self.model.sphere_2, self.model.sphere_3)
+        )
 
-            results = await session.execute(get_founders)
+        results = await session.execute(get_founders)
 
-            for item in list(
-                set(filter(lambda item: item is not None, results.scalars().all()))
-            ):
-                sphere = Sphere(sphere=item).model_dump()
-                spheres.append(sphere)
+        for item in list(
+            set(filter(lambda item: item is not None, results.scalars().all()))
+        ):
+            sphere = Sphere(sphere=item).model_dump()
+            spheres.append(sphere)
 
         return spheres
 
     @classmethod
     async def filter_channels(
-        self, level: str, founder: str, sphere: str, sort: bool
+        self, level: str, founder: str, sphere: str, sort: bool, session = get_session()
     ) -> list:
-        async with async_session_maker() as session:
             if sort:
                 get_channels = (
                     select(

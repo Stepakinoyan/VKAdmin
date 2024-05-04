@@ -1,5 +1,4 @@
 from typing import Optional
-from numpy import int32
 from sqlalchemy.orm import Mapped, mapped_column
 from sqlalchemy import BigInteger
 from app.database import Base

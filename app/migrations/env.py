@@ -14,6 +14,7 @@ from app.config import settings
 
 from app.auth.models import Users
 from app.organizations.models import Organizations
+from app.vk.models import Account, Statistic
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
 config = context.config

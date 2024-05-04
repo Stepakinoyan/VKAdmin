@@ -1,13 +1,12 @@
-import openpyxl
 import pandas
 import json
 from sqlalchemy import delete, insert
 from app.organizations.models import Organizations
 from app.dao.dao import BaseDAO
-from app.database import async_session_maker
+from app.database import get_session
 from typing import Optional, Union
 from pydantic import BaseModel, validator
-
+from sqlalchemy.ext.asyncio import AsyncSession
 
 class Item(BaseModel):
     level: Optional[str]
@@ -83,14 +82,12 @@ class ExcelToDBDAO(BaseDAO):
     model = Organizations
 
     @classmethod
-    async def excel_to_db(self, file: str):
-        async with async_session_maker() as session:
+    async def excel_to_db(self, file: str, session: AsyncSession = get_session()):
 
             delete_data = delete(self.model)
             await session.execute(delete_data)
             await session.commit()
 
-        async with async_session_maker() as session:
 
             excel_data_df = pandas.read_csv(file).rename(columns=db_columns)
 
