@@ -1,21 +1,29 @@
+import redis.asyncio as redis
 from fastapi import FastAPI
-from app.auth.router import router as router_auth
-from app.organizations.router import router as router_filter
-from app.excel_to_db.router import router as router_excel
 from fastapi.middleware.cors import CORSMiddleware
 from rich.console import Console
-import redis.asyncio as redis
-from app.config import settings
-from app.vk.router import router as vk_router 
 
+from app.auth.router import router as router_auth
+from app.config import settings
+from app.excel_to_db.router import router as router_excel
+from app.organizations.router import router as router_filter
+from app.vk.router import router as vk_router
 
 app = FastAPI()
 console = Console(color_system="truecolor", width=140)
-redis_ = redis.from_url(f"redis://{settings.REDIS_HOST}:{settings.REDIS_PORT}", encoding="utf-8", decode_responses=True, socket_timeout=5, socket_keepalive=True)
+redis_ = redis.from_url(
+    f"redis://{settings.REDIS_HOST}:{settings.REDIS_PORT}",
+    encoding="utf-8",
+    decode_responses=True,
+    socket_timeout=5,
+    socket_keepalive=True,
+)
+
+
 async def startup(_: FastAPI = app) -> None:
     console.rule("[bold white on blue] STARTUP ")
     pattern = f"*"
-    cursor = '0'
+    cursor = "0"
     records = []
     while cursor != 0:
         cursor, keys = await redis_.scan(cursor, match=pattern)

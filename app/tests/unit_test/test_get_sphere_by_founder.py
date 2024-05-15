@@ -1,5 +1,5 @@
-from httpx import AsyncClient
 import pytest
+from httpx import AsyncClient
 
 
 @pytest.mark.parametrize(
@@ -11,7 +11,7 @@ import pytest
     ],
 )
 async def test_get_sphere_by_founder(founder: str, ac: AsyncClient):
-    response = await ac.get("/filter/get_spheres", params={"founder": founder})
+    response = await ac.get("/filter/get_spheres_by_founder", params={"founder": founder})
 
     print(response.json())
     assert type(response.json()) == list

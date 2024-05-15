@@ -1,13 +1,18 @@
-from sqlalchemy import select
-import httpx
-from openpyxl import Workbook
-import redis.asyncio as redis
 import asyncio
+from datetime import datetime
+import time
+
+import httpx
+import redis.asyncio as redis
+from openpyxl import Workbook
 from rich.console import Console
-from app.config import settings
-from app.database import get_session
-from app.vk.models import Account
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.config import settings
+from app.vk.models import Account
+from sqlalchemy.ext.asyncio import async_sessionmaker
+from app.database import engine
 
 redis_ = redis.from_url(
     f"redis://{settings.REDIS_HOST}:{settings.REDIS_PORT}",
@@ -59,14 +64,14 @@ async def call(method: str, params: dict, access_token: str, retries: int = 3):
 
 
 def load_vk_links(file_path: str) -> list:
-    with open(file_path, 'r') as f:
+    with open(file_path, "r") as f:
         lines = f.readlines()
 
     # Remove any trailing or leading whitespace from each line
     lines = [line.strip() for line in lines]
 
     # Split the list into chunks of 500 items each
-    chunks = [lines[i:i + 500] for i in range(0, len(lines), 500)]
+    chunks = [lines[i : i + 500] for i in range(0, len(lines), 500)]
 
     return chunks
 
@@ -74,21 +79,22 @@ def load_vk_links(file_path: str) -> list:
 async def fetch_gos_page(url, account_id):
     headers = {
         "Accept-Language": "ru-RU,ru;q=0.9",
-        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/115.0.0.0 Safari/537.36"
+        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/115.0.0.0 Safari/537.36",
     }
     async with httpx.AsyncClient(follow_redirects=True, timeout=30.0) as client:
         response = await client.get(url, headers=headers)
-        if response.status_code == 200 and 'GovernmentCommunityBadge' in response.text:
+        if response.status_code == 200 and "GovernmentCommunityBadge" in response.text:
             print(f"{account_id}: {url}")
             return account_id
         elif response.status_code in [400, 401, 403, 500]:
             print(f"[{response.status_code}] {account_id}: {url}")
     return None
 
+
 async def save_accounts_to_xlsx(file_path: str, session: AsyncSession):
     # 1. Fetch all data from the accounts table
     result = await session.execute(select(Account))
-    accounts = result.scalars().all() 
+    accounts = result.scalars().all()
 
     # 2. Create a new XLSX workbook and sheet
     wb = Workbook()
@@ -97,23 +103,143 @@ async def save_accounts_to_xlsx(file_path: str, session: AsyncSession):
 
     # Set headers for the sheet
     headers = [
-        "id", "screen_name", "type", "name", "city", "activity", "verified",
-        "has_avatar", "has_cover", "has_description", "has_gos_badge",
-        "has_widget", "widget_count", "members_count", "site", "date_added",
-        "posts", "posts_1d", "posts_7d", "posts_30d", "post_date"
+        "id",
+        "screen_name",
+        "type",
+        "name",
+        "city",
+        "activity",
+        "verified",
+        "has_avatar",
+        "has_cover",
+        "has_description",
+        "has_gos_badge",
+        "has_widget",
+        "widget_count",
+        "members_count",
+        "site",
+        "date_added",
+        "posts",
+        "posts_1d",
+        "posts_7d",
+        "posts_30d",
+        "post_date",
     ]
     ws.append(headers)
 
     # Append account data to the sheet
     for account in accounts:
-        ws.append([
-            account.id, account.screen_name, account.type, account.name,
-            account.city, account.activity, account.verified, account.has_avatar,
-            account.has_cover, account.has_description, account.has_gos_badge,
-            account.has_widget, account.widget_count, account.members_count,
-            account.site, account.date_added, account.posts, account.posts_1d,
-            account.posts_7d, account.posts_30d, account.post_date
-        ])
+        ws.append(
+            [
+                account.id,
+                account.screen_name,
+                account.type,
+                account.name,
+                account.city,
+                account.activity,
+                account.verified,
+                account.has_avatar,
+                account.has_cover,
+                account.has_description,
+                account.has_gos_badge,
+                account.has_widget,
+                account.widget_count,
+                account.members_count,
+                account.site,
+                account.date_added,
+                account.posts,
+                account.posts_1d,
+                account.posts_7d,
+                account.posts_30d,
+                account.post_date,
+            ]
+        )
 
     # Save the workbook to the specified file path
     wb.save(file_path)
+
+
+semaphore = asyncio.Semaphore(3)
+
+
+async def wall_get_data(group_id: int):
+
+    async with semaphore:
+
+        data = await call('wall.get', {
+            # "domain": domain,
+            "owner_id": -group_id,
+            "count": 100,
+            "extended": 1,
+            "filter": "owner",
+            "fields" : "counters,wall"
+            # "fields" : "counters,members_count,main_section,activity,ban_info,city,contacts,cover,description,fixed_post,links,place,site,verified,wiki_page,wall"
+        }, settings.VK_SERVICE_TOKEN)
+
+        # print(data)
+
+        if 'response' in data and data.get('response', {}).get('count') > 0:
+
+            print(f">> {data['response']['count']}")
+
+            # Получаем текущую дату в unix timestamp
+            current_time = int(time.time())
+
+            # Определяем интервалы в секундах
+            one_day = 86400  # 24 * 60 * 60
+            seven_days = 7 * one_day
+            thirty_days = 30 * one_day
+
+            # Инициализируем счетчики
+            count_1_day = 0
+            count_7_days = 0
+            count_30_days = 0
+
+            # Извлекаем даты всех элементов
+            dates = [item['date'] for item in data['response']['items']]
+
+            # Для каждой даты увеличиваем соответствующий счетчик
+            for date in dates:
+                if current_time - date < one_day:
+                    count_1_day += 1
+                if current_time - date < seven_days:
+                    count_7_days += 1
+                if current_time - date < thirty_days:
+                    count_30_days += 1
+
+            data['group_id'] = data['response']['groups'][0]['id']
+            data['posts'] = data['response']['count']
+            data['posts_1d'] = count_1_day
+            data['posts_7d'] = count_7_days
+            data['posts_30d'] = count_30_days
+            data['first_item_date'] = dates[0]
+            data['last_item_date'] = dates[-1]
+
+
+            async_session = async_sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
+            async with async_session() as session:
+                async with session.begin():
+                    db_item = await session.get(Account, group_id)
+                    # print(db_item)
+                    if db_item:
+                        db_item.posts = data['posts']
+                        db_item.posts_1d = data['posts_1d']
+                        db_item.posts_7d = data['posts_7d']
+                        db_item.posts_30d = data['posts_30d']
+                        db_item.post_date = datetime.utcfromtimestamp(data['first_item_date'])
+
+                        print(f">>{data['group_id']}: {data['posts']}")
+
+                        await session.commit()
+
+                        return {data['group_id'] : "DB"}
+                    else:
+                        print(data)
+                        return {data['group_id'] : data}
+
+        else:
+            print(f"{group_id}: NO DATA", data)
+
+            return {group_id : "NO DATA"}
+
+        return group_id

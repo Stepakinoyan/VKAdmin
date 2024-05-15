@@ -1,7 +1,9 @@
 from datetime import datetime
-from app.database import Base
-from sqlalchemy.orm import Mapped, mapped_column
+
 from sqlalchemy import ForeignKey
+from sqlalchemy.orm import Mapped, mapped_column, relationship
+
+from app.database import Base
 
 
 class Account(Base):
@@ -22,7 +24,7 @@ class Account(Base):
     widget_count: Mapped[int] = mapped_column()
     members_count: Mapped[int] = mapped_column()
     site: Mapped[str] = mapped_column()
-    date_added: Mapped[datetime] = mapped_column()  # default=datetime.utcnow
+    date_added: Mapped[datetime] = mapped_column(default=datetime.utcnow())  # default=datetime.utcnow
     posts: Mapped[int] = mapped_column()
     posts_1d: Mapped[int] = mapped_column()
     posts_7d: Mapped[int] = mapped_column()
@@ -30,10 +32,12 @@ class Account(Base):
     post_date: Mapped[datetime] = mapped_column()
 
 
+
+
 class Statistic(Base):
     __tablename__ = "statistic"
 
     date_id: Mapped[str] = mapped_column(primary_key=True)
-    account_id: Mapped[int] = mapped_column(ForeignKey("organizations.id"))
-    date_added: Mapped[datetime] = mapped_column()  # default=datetime.utcnow
+    account_id: Mapped[int] = mapped_column(ForeignKey("account.id"))
+    date_added: Mapped[datetime] = mapped_column(default=datetime.utcnow())  # default=datetime.utcnow
     members_count: Mapped[int] = mapped_column()

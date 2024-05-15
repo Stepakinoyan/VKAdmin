@@ -4,10 +4,11 @@ import pytest
 from httpx import AsyncClient
 from sqlalchemy import insert
 
-from app.config import settings
-from app.database import Base, async_session_maker, engine
-from app.main import app as fastapi_app
 from app.auth.models import Users
+from app.config import settings
+from app.database import Base, engine, async_session_maker
+from app.main import app as fastapi_app
+from app.organizations.models import Organizations
 
 
 @pytest.fixture(scope="session", autouse=True)
@@ -22,14 +23,15 @@ async def prepare_database():
         with open(f"app/tests/{model}.json", encoding="utf-8") as file:
             return json.load(file)
 
+    organizations = open_json("organizations")
     users = open_json("users")
 
     async with async_session_maker() as session:
-        for Model, values in [(Users, users)]:
-            query = insert(Model).values(values)
-            await session.execute(query)
+        for Model, values in [(Users, users), (Organizations, organizations)]:
+                query = insert(Model).values(values)
+                await session.execute(query)
 
-        await session.commit()
+                await session.commit()
 
 
 @pytest.fixture(scope="session")
@@ -49,15 +51,3 @@ async def authenticated_ac():
             },
         )
         assert ac.cookies["access_token"]
-
-
-from httpx import AsyncClient
-
-files = {"file": ("dashboard.xlsx", open("dashboard.xlsx", "rb"), "text/plain")}
-
-
-@pytest.fixture(scope="session", autouse=True)
-async def test_excel_to_db(ac: AsyncClient):
-    response = await ac.post("/excel/upload", files=files)
-
-    assert response.status_code == 200

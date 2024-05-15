@@ -1,14 +1,14 @@
 import asyncio
-from datetime import datetime
 import time
-from app.dao.dao import BaseDAO
-from app.database import get_session
-from sqlalchemy.ext.asyncio import AsyncSession
+from datetime import datetime
+
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
+
 from app.config import settings
+from app.dao.dao import BaseDAO
+from app.database import engine, get_session
 from app.vk.funcs import call
 from app.vk.models import Account
-from sqlalchemy.ext.asyncio import async_sessionmaker
-from app.database import engine
 
 
 class VkDAO(BaseDAO):
@@ -142,5 +142,3 @@ class VkDAO(BaseDAO):
                 print(f"{group_id}: NO DATA", data)
 
                 return {group_id: "NO DATA"}
-
-            return group_id
