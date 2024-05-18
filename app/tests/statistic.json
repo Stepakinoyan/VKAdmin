@@ -1,0 +1,21 @@
+[
+    {
+      "date_id": "2024-05-14",
+      "account_id": 1,
+      "date_added": "2024-05-17T00:00:00",
+      "members_count": 1200
+    },
+    {
+      "date_id": "2024-05-17",
+      "account_id": 2,
+      "date_added": "2024-05-17T00:00:00",
+      "members_count": 800
+    },
+    {
+      "date_id": "2024-07-17",
+      "account_id": 3,
+      "date_added": "2024-05-17T00:00:00",
+      "members_count": 1500
+    }
+  ]
+  

@@ -1,5 +1,6 @@
 import asyncio
 from datetime import datetime
+import logging
 
 import httpx
 import redis.asyncio as redis
@@ -89,48 +90,53 @@ async def callback(code: str, state: str = None):
 
 @router.get("/get_stat")
 async def get_stat(session: AsyncSession = Depends(get_session)):
-    # Получаем все ID из таблицы accounts
-    get_result = select(Account.id)
-    result = await session.execute(get_result)
-    account_ids = result.scalars().all()
-    # account_ids = await session.get(Account, data["id"])
+    try:
+        # Получаем все ID из таблицы accounts
+        get_result = select(Account.id)
+        result = await session.execute(get_result)
+        account_ids = result.scalars().all()
 
-    # Разбиваем список по 500 значений
-    chunks = [account_ids[i : i + 500] for i in range(0, len(account_ids), 500)]
+        # Разбиваем список по 500 значений
+        chunks = [account_ids[i : i + 500] for i in range(0, len(account_ids), 500)]
 
-    for chunk in chunks:
-        # Преобразуем chunk к формату, подходящему для запроса
-        group_ids = ",".join(str(item) for item in chunk)
+        for chunk in chunks:
+            # Преобразуем chunk к формату, подходящему для запроса
+            group_ids = ",".join(str(item) for item in chunk)
+            auth = settings.VK_SERVICE_TOKEN
 
-        auth = settings.VK_SERVICE_TOKEN
+            # Выполняем запрос, как в функции fgroup_info
+            data = await call(
+                "groups.getById", {"group_ids": group_ids, "fields": "members_count"}, auth
+            )
 
-        # Выполняем запрос, как в функции fgroup_info
-        data = await call(
-            "groups.getById", {"group_ids": group_ids, "fields": "members_count"}, auth
-        )
+            if "response" in data and "groups" in data["response"]:
+                for group in data["response"]["groups"]:
+                    # Генерируем date_id
+                    date_str = datetime.now().strftime("%Y%m%d")
+                    date_id = f"{date_str}{group['id']}"
 
-        for group in data["response"]["groups"]:
-            # Генерируем date_id
-            date_str = datetime.now().strftime("%Y%m%d")
-            date_id = f"{date_str}{group['id']}"
+                    # Добавляем или обновляем значения в таблице статистики
+                    stat = await session.get(Statistic, date_id)
+                    if stat:
+                        stat.members_count = group.get("members_count", 0)
+                        stat.date_added = datetime.now()
+                    else:
+                        new_stat = Statistic(
+                            date_id=date_id,
+                            account_id=group["id"],
+                            date_added=datetime.now(),
+                            members_count=group.get("members_count", 0),
+                        )
+                        session.add(new_stat)
 
-            # Добавляем или обновляем значения в таблице статистики
-            stat = await session.get(Statistic, date_id)
-            if stat:
-                stat.members_count = group.get("members_count", 0)
-                stat.date_added = datetime.now()
-            else:
-                new_stat = Statistic(
-                    date_id=date_id,
-                    account_id=group["id"],
-                    date_added=datetime.now(),
-                    members_count=group.get("members_count", 0),
-                )
-                session.add(new_stat)
-
-            await session.commit()
-
-    return {"status": "completed"}
+        await session.commit()
+        return {"status": "completed"}
+    except Exception as e:
+        logging.error(f"An error occurred: {e}")
+        await session.rollback()
+        return {"status": "failed", "error": str(e)}
+    finally:
+        await session.close()
 
 
 @router.get("/wall_get_all")
@@ -192,63 +198,6 @@ async def get_gos_bage(session: AsyncSession = Depends(get_session)):
     return {"updated_accounts": len(accounts)}
 
 
-@router.post("/get_stat_from_file")
-async def fgroup_info(
-    file: UploadFile = File(...), session: AsyncSession = Depends(get_session)
-):
-    if file.content_type != "text/plain":
-        raise HTTPException(
-            status_code=400, detail="Invalid file type. Only text/plain is accepted."
-        )
-
-    content = await file.read()
-    lines = content.decode("utf-8").splitlines()
-    screen_names = [
-        line.split("/")[-1] for line in lines if line.startswith("https://vk.com/")
-    ]
-
-    chunks = [screen_names[i : i + 500] for i in range(0, len(screen_names), 500)]
-
-    auth = settings.VK_SERVICE_TOKEN
-
-    bigdata = []
-    missing_screen_names = []
-
-    for chunk in chunks:
-
-        group_ids = ",".join(str(item) for item in chunk)
-
-        data = await call(
-            "groups.getById",
-            {
-                "group_ids": group_ids,
-                "fields": "counters,members_count,activity,verified,cover,description,site,phone,city,place,contacts,addresses,menu",
-            },
-            auth,
-        )
-
-        # print(data)
-
-        received_screen_names = [
-            group["screen_name"] for group in data["response"]["groups"]
-        ]
-
-        # проверка на отсутствующие screen_name
-        for screen_name in chunk:
-            if screen_name not in received_screen_names:
-                missing_screen_names.append(screen_name)
-
-        for group in data["response"]["groups"]:
-            await VkDAO.upsert_account(group, session)
-            bigdata.append(group)
-        await session.commit()
-
-    return {
-        "processed_count": len(bigdata),
-        "missing_screen_names": missing_screen_names,
-    }
-
-
 @router.get("/group_info")
 async def group_info(group_ids: str):
 
@@ -276,20 +225,20 @@ async def group_info(group_ids: str):
 
     return data
 
-@router.get("/wall_get")
-async def wall_get(group_id: int):
+# @router.get("/wall_get")
+# async def wall_get(group_id: int):
 
-    result = await wall_get_data(group_id)
-    print(result)
+#     result = await wall_get_data(group_id)
+#     print(result)
 
-    return result
+#     return result
 
-@router.get("/xlsx", tags=["accounts"])
-async def download_accounts_xlsx(session: AsyncSession = Depends(get_session)):
-    file_path = "accounts_data.xlsx"
-    await save_accounts_to_xlsx(session=session, file_path=file_path)
-    return FileResponse(
-        file_path,
-        media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-        filename="accounts_data.xlsx",
-    )
+# @router.get("/xlsx", tags=["accounts"])
+# async def download_accounts_xlsx(session: AsyncSession = Depends(get_session)):
+#     file_path = "accounts_data.xlsx"
+#     await save_accounts_to_xlsx(session=session, file_path=file_path)
+#     return FileResponse(
+#         file_path,
+#         media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+#         filename="accounts_data.xlsx",
+#     )

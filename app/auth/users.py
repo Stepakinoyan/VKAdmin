@@ -12,6 +12,7 @@ from app.exceptions import (
     TokenExpiredException,
     UserIsNotPresentException,
 )
+from sqlalchemy.ext.asyncio import AsyncSession
 
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
@@ -33,8 +34,8 @@ def create_access_token(data: dict) -> str:
     return encoded_jwt
 
 
-async def authenticate_user(email: EmailStr, password: str):
-    user = await UserDAO.find_user(email=email)
+async def authenticate_user(session: AsyncSession, email: EmailStr, password: str):
+    user = await UserDAO.find_user(session=session, email=email)
     if not (user and verify_password(password, user.password)):
         raise IncorrectEmailOrPasswordException
     return user

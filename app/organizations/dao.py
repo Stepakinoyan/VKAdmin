@@ -1,35 +1,45 @@
+from fastapi.encoders import jsonable_encoder
 from sqlalchemy import and_, or_, select
+from sqlalchemy.orm import joinedload, selectinload
 from app.dao.dao import BaseDAO
 from app.organizations.models import Organizations
 from app.database import get_session
-from app.organizations.schema import Sphere, Stats
+from app.organizations.schemas import OrganizationsBase, Sphere, Stats
 from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.vk.models import Account
+
 
 class OrganizationsDAO(BaseDAO):
     model = Organizations
 
     @classmethod
     async def get_all_stats(self, session: AsyncSession = get_session()):
-            get_stats = select(self.model.__table__.columns)
+        get_stats = select(self.model).options(joinedload(self.model.account))
 
-            results = await session.execute(get_stats)
+        results = await session.execute(get_stats)
 
-            return results.mappings().all()
+        res = results.scalars().all()
+        result = [
+            OrganizationsBase.model_validate(row, from_attributes=True) for row in res
+        ]
 
-    @classmethod
-    async def get_founders_by_level(self, level: str, session = get_session()) -> list:
-            get_founders = (
-                select(self.model.founder)
-                .filter_by(level=level)
-                .distinct(self.model.founder)
-            )
-
-            results = await session.execute(get_founders)
-
-            return results.mappings().all()
+        return result
 
     @classmethod
-    async def get_sphere_by_level(self, level: str, session = get_session()) -> list:
+    async def get_founders_by_level(self, level: str, session=get_session()) -> list:
+        get_founders = (
+            select(self.model.founder)
+            .filter_by(level=level)
+            .distinct(self.model.founder)
+        )
+
+        results = await session.execute(get_founders)
+
+        return results.mappings().all()
+
+    @classmethod
+    async def get_sphere_by_level(self, level: str, session=get_session()) -> list:
         spheres = []
         get_founders = (
             select(self.model.sphere_1, self.model.sphere_2, self.model.sphere_3)
@@ -48,7 +58,7 @@ class OrganizationsDAO(BaseDAO):
         return spheres
 
     @classmethod
-    async def get_sphere_by_founder(self, founder: str, session = get_session()) -> list:
+    async def get_sphere_by_founder(self, founder: str, session=get_session()) -> list:
         spheres = []
         get_founders = (
             select(self.model.sphere_1, self.model.sphere_2, self.model.sphere_3)
@@ -68,69 +78,31 @@ class OrganizationsDAO(BaseDAO):
 
     @classmethod
     async def filter_channels(
-        self, level: str, founder: str, sphere: str, sort: bool, session = get_session()
+        cls, level: str, founder: str, sphere: str, sort: bool, session=get_session()
     ) -> list:
-            if sort:
-                get_channels = (
-                    select(
-                        self.model.name,
-                        self.model.channel_id,
-                        self.model.url,
-                        self.model.address,
-                        self.model.connected,
-                        self.model.state_mark,
-                        self.model.decoration,
-                        self.model.widgets,
-                        self.model.activity,
-                        self.model.followers,
-                        self.model.weekly_audience,
-                        self.model.average_publication_coverage,
-                    )
-                    .filter(
-                        and_(
-                            self.model.level.like(f"%{level}%"),
-                            self.model.founder.like(f"%{founder}%"),
-                            or_(
-                                self.model.sphere_1.like(f"%{sphere}%"),
-                                self.model.sphere_2.like(f"%{sphere}%"),
-                                self.model.sphere_3.like(f"%{sphere}%"),
-                            ),
-                        )
-                    )
-                    .order_by(self.model.followers.desc())
+        query = (
+            select(cls.model)
+            .options(selectinload(cls.model.account).joinedload(Account.statistic))
+            .filter(
+                and_(
+                    cls.model.level.like(f"%{level}%"),
+                    cls.model.founder.like(f"%{founder}%"),
+                    or_(
+                        cls.model.sphere_1.like(f"%{sphere}%"),
+                        cls.model.sphere_2.like(f"%{sphere}%"),
+                        cls.model.sphere_3.like(f"%{sphere}%"),
+                    ),
                 )
+            )
+        )
 
-            else:
-                get_channels = select(
-                    self.model.name,
-                    self.model.channel_id,
-                    self.model.url,
-                    self.model.address,
-                    self.model.connected,
-                    self.model.state_mark,
-                    self.model.decoration,
-                    self.model.widgets,
-                    self.model.activity,
-                    self.model.followers,
-                    self.model.weekly_audience,
-                    self.model.average_publication_coverage,
-                ).filter(
-                    and_(
-                        self.model.level.like(f"%{level}%"),
-                        self.model.founder.like(f"%{founder}%"),
-                        or_(
-                            self.model.sphere_1.like(f"%{sphere}%"),
-                            self.model.sphere_2.like(f"%{sphere}%"),
-                            self.model.sphere_3.like(f"%{sphere}%"),
-                        ),
-                    )
-                )
+        if sort:
+            query = query.order_by(cls.model.followers.desc())
 
-            results = await session.execute(get_channels)
-            mapping_result = results.mappings().all()
+        results = await session.execute(query)
+        res = results.scalars().all()
+        res = jsonable_encoder(res)
 
-            stats = [
-                Stats(count=len(mapping_result), items=mapping_result).model_dump()
-            ]
+        stats = [Stats(count=len(res), items=res).model_dump()]
 
-            return stats
+        return stats

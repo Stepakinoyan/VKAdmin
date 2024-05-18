@@ -1,6 +1,41 @@
 <template>
         <main class="flex flex-col-reverse mt-5">
-                    <DataTable :value="stats" tableStyle="min-width: 50rem;">
+            <DataTable :value="stats" responsiveLayout="scroll" >
+                    <Column field="id" header="ID"></Column>
+                    <Column field="level" header="Уровень"></Column>
+                    <Column field="founder" header="Учредитель"></Column>
+                    <Column field="name" header="Название"></Column>
+                    <Column field="the_main_state_registration_number" header="ОГРН"></Column>
+                    <Column field="sphere_1" header="Сфера 1"></Column>
+                    <Column field="sphere_2" header="Сфера 2"></Column>
+                    <Column field="sphere_3" header="Сфера 3"></Column>
+                    <Column field="status" header="Статус"></Column>
+                    <Column field="channel_id" header="ID канала"></Column>
+                    <Column field="url" header="URL"></Column>
+                    <Column field="address" header="Адрес"></Column>
+                    <Column field="connected" header="Связь"></Column>
+                    <Column field="state_mark" header="Гос. отметка"></Column>
+                    <Column field="account.screen_name" header="Экранное имя аккаунта"></Column>
+                    <Column field="account.name" header="Имя аккаунта"></Column>
+                    <Column field="account.city" header="Город"></Column>
+                    <Column field="account.activity" header="Активность"></Column>
+                    <Column field="account.verified" header="Проверен"></Column>
+                    <Column field="account.has_avatar" header="Аватар"></Column>
+                    <Column field="account.has_cover" header="Обложка"></Column>
+                    <Column field="account.has_description" header="Описание"></Column>
+                    <Column field="account.has_gos_badge" header="Гос. значок"></Column>
+                    <Column field="account.has_widget" header="Виджет"></Column>
+                    <Column field="account.widget_count" header="Кол-во виджетов"></Column>
+                    <Column field="account.members_count" header="Кол-во участников"></Column>
+                    <Column field="account.site" header="Сайт"></Column>
+                    <Column field="account.date_added" header="Дата добавления"></Column>
+                    <Column field="account.posts" header="Посты"></Column>
+                    <Column field="account.posts_1d" header="Посты за 1 день"></Column>
+                    <Column field="account.posts_7d" header="Посты за 7 дней"></Column>
+                    <Column field="account.posts_30d" header="Посты за 30 дней"></Column>
+                    <Column field="account.post_date" header="Дата поста"></Column>
+                </DataTable>
+                    <!-- <DataTable :value="stats" tableStyle="min-width: 50rem;">
                             <Column field="name" header="Название" class="text-sm"></Column>
                             <Column field="channel_id" header="ID канала" class="text-sm"></Column>
                             <Column field="url" header="Ссылка на госпаблик ВК" class="text-sm"></Column>
@@ -13,8 +48,17 @@
                             <Column field="followers" header="Количество подписчиков" class="text-sm"></Column>
                             <Column field="weekly_audience" header="Общий охват аудитории за неделю" class="text-sm"></Column>
                             <Column field="average_publication_coverage" header="Средний охват одной публикации" class="text-sm"></Column>
-
-                    </DataTable>
+                            <Column header="Account">
+                                <template #body="stats">
+                                    <div v-if="stats.data.account">
+                                        {{ stats.data.account.statistic }}
+                                    </div>
+                                    <div v-else>
+                                        No account data
+                                    </div>
+                                </template>
+                            </Column>
+                    </DataTable> -->
 
                 <div class="flex items-center flex-col lg:flex-row mb-1 w-4/5 space-y-1 lg:space-y-0">
                     <InputGroup class="ml-3">

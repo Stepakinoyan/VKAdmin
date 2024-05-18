@@ -56,5 +56,3 @@ export default {
     }
 };
 </script>
-
-<!-- test@test.com -->
