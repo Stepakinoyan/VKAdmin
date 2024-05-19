@@ -5,9 +5,8 @@ from httpx import AsyncClient
 @pytest.mark.parametrize(
     "level,founder,sphere,sort",
     [
-        # ("МО", "Архаринский", None, True),
         ("Регион", "Правительство Амурской области", "Прочее", False),
-        # ("Министерство", "Министерство здравоохранения", "Здравоохранение", False),
+        ("МО", "Архаринский", "Школы", True),
     ],
 )
 async def test_get_founder_by_level(

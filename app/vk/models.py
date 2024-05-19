@@ -33,9 +33,12 @@ class Account(Base):
     posts_30d: Mapped[int] = mapped_column()
     post_date: Mapped[datetime] = mapped_column()
 
-    organizations: Mapped["Organizations"] = relationship("Organizations", back_populates="account")
-    statistic: Mapped[list["Statistic"]] = relationship("Statistic", back_populates="account")
-
+    organizations: Mapped["Organizations"] = relationship(
+        "Organizations", back_populates="account"
+    )
+    statistic: Mapped[list["Statistic"]] = relationship(
+        "Statistic", back_populates="account"
+    )
 
 
 class Statistic(Base):

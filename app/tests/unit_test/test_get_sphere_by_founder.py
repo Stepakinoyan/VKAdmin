@@ -11,7 +11,9 @@ from httpx import AsyncClient
     ],
 )
 async def test_get_sphere_by_founder(founder: str, ac: AsyncClient):
-    response = await ac.get("/filter/get_spheres_by_founder", params={"founder": founder})
+    response = await ac.get(
+        "/filter/get_spheres_by_founder", params={"founder": founder}
+    )
 
     print(response.json())
     assert type(response.json()) == list

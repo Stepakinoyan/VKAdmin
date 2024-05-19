@@ -106,7 +106,9 @@ async def get_stat(session: AsyncSession = Depends(get_session)):
 
             # Выполняем запрос, как в функции fgroup_info
             data = await call(
-                "groups.getById", {"group_ids": group_ids, "fields": "members_count"}, auth
+                "groups.getById",
+                {"group_ids": group_ids, "fields": "members_count"},
+                auth,
             )
 
             if "response" in data and "groups" in data["response"]:
@@ -198,32 +200,32 @@ async def get_gos_bage(session: AsyncSession = Depends(get_session)):
     return {"updated_accounts": len(accounts)}
 
 
-@router.get("/group_info")
-async def group_info(group_ids: str):
+# @router.get("/group_info")
+# async def group_info(group_ids: str):
 
-    auth = await redis_.get(f"access_token")
+#     auth = await redis_.get(f"access_token")
 
-    data = await call(
-        "groups.getById",
-        {
-            "group_ids": group_ids,
-            "fields": "counters,members_count,activity,verified,cover,description,site,phone,city,place,contacts,addresses,menu",
-            # "fields" : "counters,members_count,activity,ban_info,city,contacts,cover,description,fixed_post,links,place,site,verified,wiki_page"
-        },
-        auth,
-    )
+#     data = await call(
+#         "groups.getById",
+#         {
+#             "group_ids": group_ids,
+#             "fields": "counters,members_count,activity,verified,cover,description,site,phone,city,place,contacts,addresses,menu",
+#             # "fields" : "counters,members_count,activity,ban_info,city,contacts,cover,description,fixed_post,links,place,site,verified,wiki_page"
+#         },
+#         auth,
+#     )
 
-    data = data["response"]["groups"][0]
+#     data = data["response"]["groups"][0]
 
-    print(data)
+#     print(data)
 
-    data["has_avatar"] = bool(data.get("photo_50"))
-    data["has_cover"] = bool(data.get("cover", {}).get("enabled", 0))
-    data["has_description"] = bool(data.get("description"))
-    data["has_widget"] = bool(data.get("menu"))
-    data["widget_count"] = len(data.get("menu", {}).get("items", []))
+#     data["has_avatar"] = bool(data.get("photo_50"))
+#     data["has_cover"] = bool(data.get("cover", {}).get("enabled", 0))
+#     data["has_description"] = bool(data.get("description"))
+#     data["has_widget"] = bool(data.get("menu"))
+#     data["widget_count"] = len(data.get("menu", {}).get("items", []))
 
-    return data
+#     return data
 
 # @router.get("/wall_get")
 # async def wall_get(group_id: int):

@@ -12,7 +12,9 @@ class FilterFounderParams:
 class FilterChannelsParams:
     def __init__(
         self,
-        level: Literal["", "Министерство", "МО", "Ведомство", "Узкоспециальные", "Регион"] = "",
+        level: Literal[
+            "", "Министерство", "МО", "Ведомство", "Узкоспециальные", "Регион"
+        ] = "",
         founder: Optional[str] = "",
         sphere: Optional[str] = "",
         sort: bool = False,

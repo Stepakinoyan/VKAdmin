@@ -8,6 +8,7 @@ from app.organizations.schemas import OrganizationsBase, Sphere, Stats
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.vk.models import Account
+import logging
 
 
 class OrganizationsDAO(BaseDAO):
@@ -99,10 +100,13 @@ class OrganizationsDAO(BaseDAO):
         if sort:
             query = query.order_by(cls.model.followers.desc())
 
-        results = await session.execute(query)
-        res = results.scalars().all()
-        res = jsonable_encoder(res)
-
-        stats = [Stats(count=len(res), items=res).model_dump()]
+        try:
+            results = await session.execute(query)
+            res = results.scalars().all()
+            res = jsonable_encoder(res)
+            stats = [Stats(items=res).model_dump()]
+        except Exception as e:
+            logging.error("Error executing filter_channels query", exc_info=True)
+            raise e
 
         return stats

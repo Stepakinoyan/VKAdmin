@@ -3,10 +3,9 @@ from typing import Optional
 from pydantic import BaseModel
 
 
-
-
 class Sphere(BaseModel):
     sphere: str
+
 
 class StatisticBase(BaseModel):
     date_id: str
@@ -38,7 +37,7 @@ class AccountBase(BaseModel):
     posts_7d: int
     posts_30d: int
     post_date: Optional[datetime]
-    statistic: list[StatisticBase] = []
+    statistic: list[StatisticBase]
 
 
 class OrganizationsBase(BaseModel):
@@ -63,18 +62,14 @@ class OrganizationsBase(BaseModel):
     followers: Optional[str]
     weekly_audience: Optional[str]
     average_publication_coverage: Optional[str]
-    account: Optional[AccountBase]
+
 
 class OrganizationResponse(BaseModel):
-    id: int
     level: Optional[str]
     founder: Optional[str]
     name: Optional[str]
     reason: Optional[str]
     the_main_state_registration_number: Optional[int]
-    sphere_1: Optional[str]
-    sphere_2: Optional[str]
-    sphere_3: Optional[str]
     status: Optional[str]
     channel_id: Optional[int]
     url: Optional[str]
@@ -84,6 +79,6 @@ class OrganizationResponse(BaseModel):
 
     account: Optional[AccountBase]
 
+
 class Stats(BaseModel):
-    count: int
     items: list[OrganizationResponse]

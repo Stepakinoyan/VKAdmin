@@ -11,6 +11,7 @@ from app.main import app as fastapi_app
 from app.organizations.models import Organizations
 from app.vk.models import Account, Statistic
 
+
 @pytest.fixture(scope="session", autouse=True)
 async def prepare_database():
     assert settings.MODE == "TEST"
@@ -37,16 +38,23 @@ async def prepare_database():
         stat["date_added"] = datetime.fromisoformat(stat["date_added"])
 
     async with async_session_maker() as session:
-        for Model, values in [(Users, users), (Organizations, organizations), (Account, accounts), (Statistic, statistic)]:
+        for Model, values in [
+            (Users, users),
+            (Organizations, organizations),
+            (Account, accounts),
+            (Statistic, statistic),
+        ]:
             query = insert(Model).values(values)
             await session.execute(query)
 
         await session.commit()
 
+
 @pytest.fixture(scope="session")
 async def ac():
     async with AsyncClient(app=fastapi_app, base_url="http://test") as ac:
         yield ac
+
 
 @pytest.fixture(scope="session")
 async def authenticated_ac():

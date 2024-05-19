@@ -17,28 +17,27 @@ import Password from 'primevue/password';
 import Checkbox from 'primevue/checkbox';
 import Column from 'primevue/column';
 import 'primeicons/primeicons.css';
-import FileUpload from 'primevue/fileupload';
 import Toast from 'primevue/toast';
-import ToastService from 'primevue/toastservice';
+import ToastService from 'primevue/toastservice'; 
 
 import axios from 'axios';
 
 export const app = createApp(App)
 axios.defaults.withCredentials = true;
 axios.defaults.baseURL = 'http://localhost:8000/';
+app.component('DataTable', DataTable);
+app.component('Column', Column);
+app.component('Dropdown', Dropdown);
+app.component('InputGroup', InputGroup);
+app.component('Checkbox', Checkbox);
+app.component('Button', Button);
 app.component("InputText", InputText);
-app.component("Button", Button);
-app.component("InputGroup", InputGroup);
 app.component("InputGroupAddon", InputGroupAddon);
 app.component("InputMask", InputMask)
 app.component("Menubar", Menubar)
-app.component("DataTable", DataTable)
-app.component("Column", Column)
-app.component("Dropdown", Dropdown)
 app.component("Password", Password)
-app.component("Checkbox", Checkbox)
-app.component("FileUpload", FileUpload)
 app.component("Toast", Toast)
+
 
 app.use(VueCookies)
 
