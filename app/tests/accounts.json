@@ -1,7 +1,6 @@
 [
     {
-      "id": 1,
-      "organization_id": 1,
+      "channel_id": 219857107,
       "screen_name": "amurmedia",
       "type": "official",
       "name": "Агентство Амурмедиа",
@@ -24,8 +23,7 @@
       "post_date": "2024-05-17T00:00:00"
     },
     {
-      "id": 2,
-      "organization_id": 2,
+      "channel_id": 219528566,
       "screen_name": "amur_auto",
       "type": "official",
       "name": "Амур-Авто",
@@ -48,8 +46,7 @@
       "post_date": "2024-05-17T00:00:00"
     },
     {
-      "id": 3,
-      "organization_id": 3,
+      "channel_id": 217439520,
       "screen_name": "amur_gov",
       "type": "official",
       "name": "Управление делами Правительства Амурской области",

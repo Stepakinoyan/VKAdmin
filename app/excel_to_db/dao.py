@@ -51,7 +51,10 @@ class ExcelToDBDAO(BaseDAO):
 
         for column in thisisjson_dict:
             item = Item(**column)
-            add_data = insert(self.model).values(item.model_dump())
-
-            await session.execute(add_data)
-            await session.commit()
+            if item.channel_id != 0 and item.channel_id != None:
+                add_data = insert(self.model).values(item.model_dump())
+                await session.execute(add_data)
+                await session.commit()
+            else:
+                pass
+            

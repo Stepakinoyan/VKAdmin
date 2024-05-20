@@ -11,7 +11,7 @@ class Account(Base):
     __tablename__ = "account"
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    organization_id: Mapped[int] = mapped_column(ForeignKey("organizations.id"))
+    channel_id: Mapped[int] = mapped_column(ForeignKey("organizations.channel_id"), unique=True)
     screen_name: Mapped[str] = mapped_column()
     type: Mapped[str] = mapped_column()
     name: Mapped[str] = mapped_column()
@@ -50,3 +50,4 @@ class Statistic(Base):
     members_count: Mapped[int] = mapped_column()
 
     account: Mapped["Account"] = relationship("Account", back_populates="statistic")
+    

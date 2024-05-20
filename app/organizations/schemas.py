@@ -16,7 +16,7 @@ class StatisticBase(BaseModel):
 
 class AccountBase(BaseModel):
     id: int
-    organization_id: int
+    channel_id: int
     screen_name: str
     type: str
     name: str
@@ -41,7 +41,6 @@ class AccountBase(BaseModel):
 
 
 class OrganizationsBase(BaseModel):
-    id: int
     level: Optional[str]
     founder: Optional[str]
     name: Optional[str]

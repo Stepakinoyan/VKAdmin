@@ -22,7 +22,7 @@ class Organizations(Base):
     sphere_2: Mapped[Optional[str]] = mapped_column()
     sphere_3: Mapped[Optional[str]] = mapped_column()
     status: Mapped[Optional[str]] = mapped_column()
-    channel_id: Mapped[Optional[int]] = mapped_column()
+    channel_id: Mapped[Optional[int]] = mapped_column(unique=True)
     url: Mapped[Optional[str]] = mapped_column()
     address: Mapped[Optional[str]] = mapped_column()
     connected: Mapped[Optional[str]] = mapped_column()
