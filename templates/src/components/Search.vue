@@ -11,7 +11,7 @@
             <Column field="address" header="Адрес"></Column>
             <Column field="connected" header="Связь"></Column>
             <Column field="state_mark" header="Гос. отметка"></Column>
-            <Column field="account.screen_name" header="имя в VK"></Column>
+            <Column field="account.screen_name" header="Имя в VK"></Column>
             <Column field="account.name" header="Имя аккаунта"></Column>
             <Column field="account.city" header="Город"></Column>
             <Column field="account.activity" header="Активность"></Column>
@@ -129,18 +129,29 @@ export default {
         },
         transformData(items) {
             return items.map(item => {
-                const newItem = { ...item, ...item.account };
-                item.account.statistic.forEach((stat, index) => {
-                    newItem[`statistic_date_id_${index + 1}`] = stat.date_id;
-                    newItem[`statistic_members_count_${index + 1}`] = stat.members_count;
-                });
-                delete newItem.statistic;
+                const newItem = { ...item };
+                if (item.account) {
+                    Object.assign(newItem, item.account);
+                    item.account.statistic.forEach((stat, index) => {
+                        newItem[`statistic_date_id_${index + 1}`] = stat.date_id;
+                        newItem[`statistic_members_count_${index + 1}`] = stat.members_count;
+                    });
+                } else {
+                    const emptyFields = [
+                        'screen_name', 'name', 'city', 'activity', 'verified', 'has_avatar', 'has_cover',
+                        'has_description', 'has_gos_badge', 'has_widget', 'widget_count', 'members_count',
+                        'site', 'date_added', 'posts', 'posts_1d', 'posts_7d', 'posts_30d', 'post_date'
+                    ];
+                    emptyFields.forEach(field => {
+                        newItem[`account.${field}`] = null;
+                    });
+                }
                 return newItem;
             });
         },
         generateStatisticColumns(items) {
             const statisticColumns = [];
-            if (items.length > 0) {
+            if (items.length > 0 && items[0].account && items[0].account.statistic) {
                 const statisticCount = items[0].account.statistic.length;
                 for (let i = 1; i <= statisticCount; i++) {
                     statisticColumns.push({ field: `statistic_date_id_${i}`, header: `Дата статистики ${i}` });
