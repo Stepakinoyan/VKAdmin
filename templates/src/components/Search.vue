@@ -132,9 +132,19 @@ export default {
                 const newItem = { ...item };
                 if (item.account) {
                     Object.assign(newItem, item.account);
+
+                    // Calculate change in members count
+                    let previousMembersCount = null;
                     item.account.statistic.forEach((stat, index) => {
                         newItem[`statistic_date_id_${index + 1}`] = stat.date_id;
-                        newItem[`statistic_members_count_${index + 1}`] = stat.members_count;
+
+                        if (previousMembersCount !== null) {
+                            const change = stat.members_count - previousMembersCount;
+                            newItem[`statistic_members_count_${index + 1}`] = change;
+                        } else {
+                            newItem[`statistic_members_count_${index + 1}`] = stat.members_count;
+                        }
+                        previousMembersCount = stat.members_count;
                     });
                 } else {
                     const emptyFields = [

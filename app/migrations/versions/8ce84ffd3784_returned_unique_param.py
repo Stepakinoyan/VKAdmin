@@ -1,8 +1,8 @@
-"""Changed statistic foreign key to account_id
+"""Returned unique param
 
-Revision ID: 1bc0e9faf5ba
+Revision ID: 8ce84ffd3784
 Revises: 
-Create Date: 2024-05-20 19:38:06.502494
+Create Date: 2024-05-25 17:21:49.564272
 
 """
 from typing import Sequence, Union
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = '1bc0e9faf5ba'
+revision: str = '8ce84ffd3784'
 down_revision: Union[str, None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None

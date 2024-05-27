@@ -12,21 +12,17 @@ from app.vk.models import Account, Statistic
 router = APIRouter(prefix="/prepare", tags=["Добавление данных в БД"])
 
 
-def open_json(model: str):
-    with open(f"app/tests/{model}.json", encoding="utf-8") as file:
-        return json.load(file)
-
-
 @router.post("/prepare_db")
 async def prepare_db(session: AsyncSession = Depends(get_session)):
     def open_json(model: str):
         with open(f"app/tests/{model}.json", encoding="utf-8") as file:
             return json.load(file)
-
+        
+    users = open_json("users")
     organizations = open_json("organizations")
     accounts = open_json("accounts")
     statistic = open_json("statistic")
-    users = open_json("users")
+    
 
     for account in accounts:
         account["date_added"] = datetime.fromisoformat(account["date_added"])

@@ -41,6 +41,7 @@ class AccountBase(BaseModel):
 
 
 class OrganizationsBase(BaseModel):
+    id: int
     level: Optional[str]
     founder: Optional[str]
     name: Optional[str]
