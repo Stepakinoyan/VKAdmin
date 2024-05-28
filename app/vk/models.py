@@ -11,7 +11,9 @@ class Account(Base):
     __tablename__ = "account"
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    channel_id: Mapped[int] = mapped_column(ForeignKey("organizations.channel_id"), unique=True)
+    channel_id: Mapped[int] = mapped_column(
+        ForeignKey("organizations.channel_id"), unique=True
+    )
     screen_name: Mapped[str] = mapped_column()
     type: Mapped[str] = mapped_column()
     name: Mapped[str] = mapped_column()
@@ -48,6 +50,6 @@ class Statistic(Base):
     account_id: Mapped[int] = mapped_column(ForeignKey("account.id"))
     date_added: Mapped[datetime] = mapped_column(default=datetime.utcnow)
     members_count: Mapped[int] = mapped_column()
+    fulfillment_percentage: Mapped[int] = mapped_column()
 
     account: Mapped["Account"] = relationship("Account", back_populates="statistic")
-    

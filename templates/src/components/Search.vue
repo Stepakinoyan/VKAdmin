@@ -31,6 +31,7 @@
             <Column field="account.posts_30d" header="Посты за 30 дней"></Column>
             <Column field="account.post_date" header="Дата поста"></Column>
 
+            
             <Column v-for="(col, index) in statisticColumns" :key="index" :field="col.field" :header="col.header"></Column>
         </DataTable>
 

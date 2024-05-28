@@ -1,19 +1,18 @@
 import asyncio
-from datetime import datetime
 import time
+from datetime import datetime
 
 import httpx
 import redis.asyncio as redis
 from openpyxl import Workbook
 from rich.console import Console
 from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from app.config import settings
-from app.vk.models import Account
-from sqlalchemy.ext.asyncio import async_sessionmaker
-from app.vk.schemas import Organization
 from app.database import engine
+from app.vk.models import Account
+from app.vk.schemas import Account, Organization
 
 redis_ = redis.from_url(
     f"redis://{settings.REDIS_HOST}:{settings.REDIS_PORT}",
@@ -253,7 +252,6 @@ async def wall_get_data(group_id: int):
         return group_id
 
 
-
 """
 Светофор базируется на процентах исполнения основных требований: 
             подключение — 10 %,
@@ -266,29 +264,54 @@ async def wall_get_data(group_id: int):
 
 
 def get_percentage_of_fulfillment_of_basic_requirements(
-    organization: Organization,
+    organization: Organization, account: Account
 ) -> int:
     total_percentage = 0
 
+    # Подключение к компоненту «Госпаблики»
     if organization.get("connected"):
         total_percentage += 10
 
-    if organization.get("state_mark") == True:
+    # Госметка
+    if organization.get("state_mark"):
         total_percentage += 10
 
-    if organization.get("decoration"):
-        total_percentage += 20
+    # Оформление
+    has_avatar = account.get("has_avatar", False)
+    has_description = account.get("has_description", False)
+    has_cover = account.get("has_cover", False)
 
-    if organization.get("widgets"):
+    if has_avatar:
+        total_percentage += 5
+    if has_description:
+        total_percentage += 5
+    if has_cover:
         total_percentage += 10
 
-    if organization.get("activity"):
+    # Виджеты
+    widget_count = account.get("widget_count", 0)
+    if widget_count >= 2:
+        total_percentage += 10
+    elif widget_count == 1:
+        total_percentage += 5
+
+    # Активность
+    posts_7d = account.get("posts_7d", 0)
+    if posts_7d >= 3:
         total_percentage += 30
 
-    if organization.get("weekly_audience"):
-        total_percentage += 10
+    # Количество подписчиков
+    followers = account.get("members_count", 0)
 
-    if organization.get("average_publication_coverage"):
-        total_percentage += 5
+    # Общий охват аудитории за неделю
+    weekly_audience = organization.get("weekly_audience")
+    if followers > 0 and weekly_audience is not None:
+        audience_percentage = (weekly_audience / followers) * 100
+        if audience_percentage >= 70:
+            total_percentage += 10
+        elif audience_percentage >= 50:
+            total_percentage += 7
+        elif audience_percentage >= 30:
+            total_percentage += 5
 
     return total_percentage
