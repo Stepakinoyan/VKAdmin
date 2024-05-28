@@ -1,14 +1,15 @@
+import logging
+
 from fastapi.encoders import jsonable_encoder
 from sqlalchemy import and_, or_, select
-from sqlalchemy.orm import joinedload, selectinload
-from app.dao.dao import BaseDAO
-from app.organizations.models import Organizations
-from app.database import get_session
-from app.organizations.schemas import OrganizationsBase, Sphere, Stats
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import joinedload, selectinload
 
+from app.dao.dao import BaseDAO
+from app.database import get_session
+from app.organizations.models import Organizations
+from app.organizations.schemas import OrganizationsBase, Sphere, Stats
 from app.vk.models import Account
-import logging
 
 
 class OrganizationsDAO(BaseDAO):

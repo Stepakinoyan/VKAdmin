@@ -1,10 +1,11 @@
 import asyncio
-from datetime import datetime
 import logging
+from datetime import datetime
 
 import httpx
 import redis.asyncio as redis
-from fastapi import APIRouter, Depends, File, HTTPException, Request, UploadFile
+from fastapi import (APIRouter, Depends, File, HTTPException, Request,
+                     UploadFile)
 from fastapi.responses import FileResponse, RedirectResponse
 from rich.console import Console
 from sqlalchemy import select, update
@@ -13,10 +14,13 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.config import settings
 from app.database import get_session
 from app.organizations.models import Organizations
+from app.organizations.schemas import OrganizationResponse, OrganizationsBase
 from app.vk.dao import VkDAO
-from app.vk.funcs import call, fetch_gos_page, get_percentage_of_fulfillment_of_basic_requirements, save_accounts_to_xlsx, wall_get_data
-from app.vk.schemas import Organization
+from app.vk.funcs import (call, fetch_gos_page,
+                          get_percentage_of_fulfillment_of_basic_requirements,
+                          save_accounts_to_xlsx, wall_get_data)
 from app.vk.models import Account, Statistic
+from app.vk.schemas import Organization
 
 router = APIRouter(prefix="/vk", tags=["VK"])
 console = Console(color_system="truecolor", width=140)
@@ -93,17 +97,41 @@ async def callback(code: str, state: str = None):
 @router.get("/get_stat")
 async def get_stat(session: AsyncSession = Depends(get_session)):
     try:
-        # Получаем все ID из таблицы accounts
-        get_result = select(Account.id)
+        # Получаем все ID и channel_id из таблицы accounts
+        get_result = select(
+            Account.id,
+            Account.channel_id,
+            Account.has_avatar,
+            Account.has_description,
+            Account.has_cover,
+            Account.widget_count,
+            Account.posts_7d,
+            Account.members_count,
+        )
         result = await session.execute(get_result)
-        account_ids = result.scalars().all()
+        accounts = result.all()
+        account_map = {
+            account[1]: account for account in accounts
+        }  # channel_id -> account data tuple
+
+        # Получаем все организации и создаем словарь для быстрого поиска по channel_id
+        organizations_result = await session.execute(select(Organizations))
+        organizations_list = organizations_result.scalars().all()
+        organizations = {
+            org.channel_id: OrganizationsBase.model_validate(
+                org, from_attributes=True
+            ).model_dump()
+            for org in organizations_list
+        }
 
         # Разбиваем список по 500 значений
-        chunks = [account_ids[i : i + 500] for i in range(0, len(account_ids), 500)]
+        chunks = [accounts[i : i + 500] for i in range(0, len(accounts), 500)]
 
         for chunk in chunks:
             # Преобразуем chunk к формату, подходящему для запроса
-            group_ids = ",".join(str(item) for item in chunk)
+            group_ids = ",".join(
+                str(item[1]) for item in chunk
+            )  # item[1] это channel_id
             auth = settings.VK_SERVICE_TOKEN
 
             # Выполняем запрос, как в функции fgroup_info
@@ -121,17 +149,60 @@ async def get_stat(session: AsyncSession = Depends(get_session)):
                     date_str = datetime.now().strftime("%Y%m%d")
                     date_id = f"{date_str}{group['id']}"
 
+                    # Получаем account_id через channel_id
+                    account_data = account_map.get(group["id"])
+                    if not account_data:
+                        continue  # Если account_data не найден, пропускаем эту группу
+
+                    account_id = account_data[0]
+                    account_dict: Account = {
+                        "id": account_data[0],
+                        "channel_id": account_data[1],
+                        "screen_name": "",  # Заполните это поле, если у вас есть соответствующее значение
+                        "type": "",  # Заполните это поле, если у вас есть соответствующее значение
+                        "name": "",  # Заполните это поле, если у вас есть соответствующее значение
+                        "city": "",  # Заполните это поле, если у вас есть соответствующее значение
+                        "activity": "",  # Заполните это поле, если у вас есть соответствующее значение
+                        "verified": False,  # Заполните это поле, если у вас есть соответствующее значение
+                        "has_avatar": account_data[2],
+                        "has_cover": account_data[3],
+                        "has_description": account_data[4],
+                        "has_gos_badge": False,  # Заполните это поле, если у вас есть соответствующее значение
+                        "has_widget": False,  # Заполните это поле, если у вас есть соответствующее значение
+                        "widget_count": account_data[5],
+                        "members_count": account_data[6],
+                        "site": "",  # Заполните это поле, если у вас есть соответствующее значение
+                        "date_added": None,  # Заполните это поле, если у вас есть соответствующее значение
+                        "posts": 0,  # Заполните это поле, если у вас есть соответствующее значение
+                        "posts_1d": 0,  # Заполните это поле, если у вас есть соответствующее значение
+                        "posts_7d": account_data[7],
+                        "posts_30d": 0,  # Заполните это поле, если у вас есть соответствующее значение
+                        "post_date": None,  # Заполните это поле, если у вас есть соответствующее значение
+                    }
+
+                    # Получаем организацию для вычисления процента исполнения основных требований
+                    organization = organizations.get(group["id"])
+                    fulfillment_percentage = 0
+                    if organization:
+                        fulfillment_percentage = (
+                            get_percentage_of_fulfillment_of_basic_requirements(
+                                organization, account_dict
+                            )
+                        )
+
                     # Добавляем или обновляем значения в таблице статистики
                     stat = await session.get(Statistic, date_id)
                     if stat:
                         stat.members_count = group.get("members_count", 0)
                         stat.date_added = datetime.now()
+                        stat.fulfillment_percentage = fulfillment_percentage
                     else:
                         new_stat = Statistic(
                             date_id=date_id,
-                            account_id=group["id"],
+                            account_id=account_id,  # Используем account_id
                             date_added=datetime.now(),
                             members_count=group.get("members_count", 0),
+                            fulfillment_percentage=fulfillment_percentage,
                         )
                         session.add(new_stat)
 
@@ -149,16 +220,9 @@ async def get_stat(session: AsyncSession = Depends(get_session)):
 async def wall_get_all(session: AsyncSession = Depends(get_session)):
     result = await session.execute(select(Account.id))
     accounts = result.scalars().all()
-    # list = accounts[0:20]
-
-    # for i, group_id in enumerate(accounts):
-    #     wall = await wall_get(i, group_id, session)
-    #     print(f"{i}-{group_id}: {wall}")
 
     tasks = [VkDAO.wall_get_data(group_id) for group_id in accounts]
     batch_results = await asyncio.gather(*tasks)
-
-    # await session.commit()
 
     return {"status": f"completed: {len(batch_results)}", "data": batch_results}
 

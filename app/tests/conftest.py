@@ -26,7 +26,7 @@ async def prepare_database():
 
     organizations = open_json("organizations")
     accounts = open_json("accounts")
-    statistic = open_json("statistic")
+    # statistic = open_json("statistic")
     users = open_json("users")
 
     # Преобразование строк даты в объекты datetime
@@ -34,15 +34,15 @@ async def prepare_database():
         account["date_added"] = datetime.fromisoformat(account["date_added"])
         account["post_date"] = datetime.fromisoformat(account["post_date"])
 
-    for stat in statistic:
-        stat["date_added"] = datetime.fromisoformat(stat["date_added"])
+    # for stat in statistic:
+    #     stat["date_added"] = datetime.fromisoformat(stat["date_added"])
 
     async with async_session_maker() as session:
         for Model, values in [
             (Users, users),
             (Organizations, organizations),
             (Account, accounts),
-            (Statistic, statistic),
+            # (Statistic, statistic),
         ]:
             query = insert(Model).values(values)
             await session.execute(query)

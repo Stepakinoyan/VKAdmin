@@ -1,5 +1,6 @@
 from datetime import datetime
 from typing import Optional, TypedDict
+
 from pydantic import BaseModel
 
 
@@ -12,6 +13,7 @@ class StatisticBase(BaseModel):
     account_id: int
     date_added: Optional[datetime]
     members_count: int
+    fulfillment_percentage: int
 
 
 class AccountBase(BaseModel):
@@ -54,10 +56,10 @@ class OrganizationsBase(BaseModel):
     channel_id: Optional[int]
     url: Optional[str]
     address: Optional[str]
-    connected: Optional[str]
+    connected: Optional[bool]
     state_mark: Optional[bool]
-    decoration: Optional[str]
-    widgets: Optional[str]
+    decoration: Optional[bool]
+    widgets: Optional[bool]
     activity: Optional[str]
     followers: Optional[str]
     weekly_audience: Optional[str]
@@ -74,7 +76,7 @@ class OrganizationResponse(BaseModel):
     channel_id: Optional[int]
     url: Optional[str]
     address: Optional[str]
-    connected: Optional[str]
+    connected: Optional[bool]
     state_mark: Optional[bool]
 
     account: Optional[AccountBase]

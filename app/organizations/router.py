@@ -1,8 +1,9 @@
 from fastapi import APIRouter, Depends
+from sqlalchemy.ext.asyncio import AsyncSession
+
 from app.database import get_session
 from app.organizations.dao import OrganizationsDAO
 from app.organizations.params import FilterChannelsParams, FilterFounderParams
-from sqlalchemy.ext.asyncio import AsyncSession
 
 router = APIRouter(prefix="/filter", tags=["Фильтрация данных"])
 

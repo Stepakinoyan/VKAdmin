@@ -1,6 +1,8 @@
-from typing import Optional, TYPE_CHECKING
-from sqlalchemy.orm import Mapped, mapped_column, relationship
+from typing import TYPE_CHECKING, Optional
+
 from sqlalchemy import BigInteger
+from sqlalchemy.orm import Mapped, mapped_column, relationship
+
 from app.database import Base
 
 if TYPE_CHECKING:
@@ -25,10 +27,10 @@ class Organizations(Base):
     channel_id: Mapped[Optional[int]] = mapped_column(unique=True)
     url: Mapped[Optional[str]] = mapped_column()
     address: Mapped[Optional[str]] = mapped_column()
-    connected: Mapped[Optional[str]] = mapped_column()
+    connected: Mapped[Optional[bool]] = mapped_column()
     state_mark: Mapped[Optional[bool]] = mapped_column()
-    decoration: Mapped[Optional[str]] = mapped_column()
-    widgets: Mapped[Optional[str]] = mapped_column()
+    decoration: Mapped[Optional[bool]] = mapped_column()
+    widgets: Mapped[Optional[bool]] = mapped_column()
     activity: Mapped[Optional[str]] = mapped_column()
     followers: Mapped[Optional[str]] = mapped_column()
     weekly_audience: Mapped[Optional[str]] = mapped_column()
@@ -37,3 +39,6 @@ class Organizations(Base):
     account: Mapped[Optional["Account"]] = relationship(
         "Account", back_populates="organizations", uselist=False
     )
+
+
+

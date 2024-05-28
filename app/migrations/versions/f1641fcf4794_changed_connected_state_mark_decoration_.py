@@ -1,8 +1,8 @@
-"""Returned unique param
+"""Changed connected, state_mark, decoration, widgets type to bool to organizations
 
-Revision ID: 8ce84ffd3784
+Revision ID: f1641fcf4794
 Revises: 
-Create Date: 2024-05-25 17:21:49.564272
+Create Date: 2024-05-28 16:49:13.926187
 
 """
 from typing import Sequence, Union
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = '8ce84ffd3784'
+revision: str = 'f1641fcf4794'
 down_revision: Union[str, None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -34,10 +34,10 @@ def upgrade() -> None:
     sa.Column('channel_id', sa.Integer(), nullable=True),
     sa.Column('url', sa.String(), nullable=True),
     sa.Column('address', sa.String(), nullable=True),
-    sa.Column('connected', sa.String(), nullable=True),
+    sa.Column('connected', sa.Boolean(), nullable=True),
     sa.Column('state_mark', sa.Boolean(), nullable=True),
-    sa.Column('decoration', sa.String(), nullable=True),
-    sa.Column('widgets', sa.String(), nullable=True),
+    sa.Column('decoration', sa.Boolean(), nullable=True),
+    sa.Column('widgets', sa.Boolean(), nullable=True),
     sa.Column('activity', sa.String(), nullable=True),
     sa.Column('followers', sa.String(), nullable=True),
     sa.Column('weekly_audience', sa.String(), nullable=True),
@@ -83,6 +83,7 @@ def upgrade() -> None:
     sa.Column('account_id', sa.Integer(), nullable=False),
     sa.Column('date_added', sa.DateTime(), nullable=False),
     sa.Column('members_count', sa.Integer(), nullable=False),
+    sa.Column('fulfillment_percentage', sa.Integer(), nullable=False),
     sa.ForeignKeyConstraint(['account_id'], ['account.id'], ),
     sa.PrimaryKeyConstraint('date_id')
     )
