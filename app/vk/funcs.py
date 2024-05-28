@@ -12,6 +12,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.config import settings
 from app.vk.models import Account
 from sqlalchemy.ext.asyncio import async_sessionmaker
+from app.vk.schemas import Organization
 from app.database import engine
 
 redis_ = redis.from_url(
@@ -250,3 +251,44 @@ async def wall_get_data(group_id: int):
             return {group_id: "NO DATA"}
 
         return group_id
+
+
+
+"""
+Светофор базируется на процентах исполнения основных требований: 
+            подключение — 10 %,
+            госметка — 10 %,
+            оформление 20 %,
+            виджеты — 10 %,
+            активность — 30 %,
+            общий охват аудитории — 10 %,средний охват публикации — 5 %.
+"""
+
+
+def get_percentage_of_fulfillment_of_basic_requirements(
+    organization: Organization,
+) -> int:
+    total_percentage = 0
+
+    if organization.get("connected"):
+        total_percentage += 10
+
+    if organization.get("state_mark") == True:
+        total_percentage += 10
+
+    if organization.get("decoration"):
+        total_percentage += 20
+
+    if organization.get("widgets"):
+        total_percentage += 10
+
+    if organization.get("activity"):
+        total_percentage += 30
+
+    if organization.get("weekly_audience"):
+        total_percentage += 10
+
+    if organization.get("average_publication_coverage"):
+        total_percentage += 5
+
+    return total_percentage

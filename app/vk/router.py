@@ -12,8 +12,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import settings
 from app.database import get_session
+from app.organizations.models import Organizations
 from app.vk.dao import VkDAO
-from app.vk.funcs import call, fetch_gos_page, save_accounts_to_xlsx, wall_get_data
+from app.vk.funcs import call, fetch_gos_page, get_percentage_of_fulfillment_of_basic_requirements, save_accounts_to_xlsx, wall_get_data
+from app.vk.schemas import Organization
 from app.vk.models import Account, Statistic
 
 router = APIRouter(prefix="/vk", tags=["VK"])
@@ -111,6 +113,8 @@ async def get_stat(session: AsyncSession = Depends(get_session)):
                 auth,
             )
 
+            print(data)
+
             if "response" in data and "groups" in data["response"]:
                 for group in data["response"]["groups"]:
                     # Генерируем date_id
@@ -198,49 +202,3 @@ async def get_gos_bage(session: AsyncSession = Depends(get_session)):
         await session.commit()
 
     return {"updated_accounts": len(accounts)}
-
-
-# @router.get("/group_info")
-# async def group_info(group_ids: str):
-
-#     auth = await redis_.get(f"access_token")
-
-#     data = await call(
-#         "groups.getById",
-#         {
-#             "group_ids": group_ids,
-#             "fields": "counters,members_count,activity,verified,cover,description,site,phone,city,place,contacts,addresses,menu",
-#             # "fields" : "counters,members_count,activity,ban_info,city,contacts,cover,description,fixed_post,links,place,site,verified,wiki_page"
-#         },
-#         auth,
-#     )
-
-#     data = data["response"]["groups"][0]
-
-#     print(data)
-
-#     data["has_avatar"] = bool(data.get("photo_50"))
-#     data["has_cover"] = bool(data.get("cover", {}).get("enabled", 0))
-#     data["has_description"] = bool(data.get("description"))
-#     data["has_widget"] = bool(data.get("menu"))
-#     data["widget_count"] = len(data.get("menu", {}).get("items", []))
-
-#     return data
-
-# @router.get("/wall_get")
-# async def wall_get(group_id: int):
-
-#     result = await wall_get_data(group_id)
-#     print(result)
-
-#     return result
-
-# @router.get("/xlsx", tags=["accounts"])
-# async def download_accounts_xlsx(session: AsyncSession = Depends(get_session)):
-#     file_path = "accounts_data.xlsx"
-#     await save_accounts_to_xlsx(session=session, file_path=file_path)
-#     return FileResponse(
-#         file_path,
-#         media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-#         filename="accounts_data.xlsx",
-#     )

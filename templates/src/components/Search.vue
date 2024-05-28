@@ -1,9 +1,9 @@
 <template>
-    <main class="flex flex-col-reverse mt-5">
-        <DataTable :value="stats" responsiveLayout="scroll">
+    <main class="flex flex-col-reverse mt-2">
+        <DataTable :value="stats" :scrollable="isScrollable" :scrollHeight="isScrollable ? '779px' : 'auto'" class="mt-2 text-sm blue-table">
+            <Column field="name" header="Название" frozen></Column>
             <Column field="level" header="Уровень"></Column>
             <Column field="founder" header="Учредитель"></Column>
-            <Column field="name" header="Название"></Column>
             <Column field="the_main_state_registration_number" header="ОГРН"></Column>
             <Column field="status" header="Статус"></Column>
             <Column field="channel_id" header="ID канала"></Column>
@@ -31,32 +31,55 @@
             <Column field="account.posts_30d" header="Посты за 30 дней"></Column>
             <Column field="account.post_date" header="Дата поста"></Column>
 
-            <!-- Dynamic statistic columns -->
             <Column v-for="(col, index) in statisticColumns" :key="index" :field="col.field" :header="col.header"></Column>
         </DataTable>
 
         <div class="flex items-center flex-col lg:flex-row mb-1 w-4/5 space-y-1 lg:space-y-0">
-            <InputGroup class="ml-3">
+            <InputGroup class="ml-2">
                 <Dropdown v-model="selectedlevel" :options="levels" optionLabel="level" placeholder="Уровень" class="w-full md:w-14rem" @change="() => {getFounders(); getSpheres()}"/>
             </InputGroup>
 
-            <InputGroup class="ml-3">
+            <InputGroup class="ml-2">
                 <Dropdown v-model="selectedfounder" :options="founders" optionLabel="founder" placeholder="Учредитель" class="w-full md:w-14rem" @change="findSpheresByfounder"/>
             </InputGroup>
 
-            <InputGroup class="ml-3">
+            <InputGroup class="ml-2">
                 <Dropdown v-model="selectedsphere" :options="spheres" optionLabel="sphere" placeholder="Сфера" class="w-full md:w-14rem"/>
             </InputGroup>
-            <InputGroup class="space-x-3 ml-3">
+            <InputGroup class="space-x-2 ml-2">
                 <Checkbox v-model="checked" :binary="true"/>
                 <label>Сортировка по возрастанию</label> 
             </InputGroup>
-            <InputGroup class="ml-3">
+            <InputGroup class="ml-2">
                 <Button label="Применить" @click="getStats(selectedlevel, selectedfounder, selectedsphere, checked)"/>
             </InputGroup>
         </div>
     </main>
 </template>
+
+<style>
+.main {
+    margin-top: 2px;
+}
+
+.DataTable {
+    margin-top: 2px;
+    font-size: 0.875rem; /* Уменьшение размера шрифта */
+}
+
+.InputGroup {
+    margin-left: 2px;
+}
+
+.space-x-2 {
+    margin-left: 2px;
+}
+
+.mb-1 {
+    margin-bottom: 0.25rem;
+}
+</style>
+
 
 <script>
 import axios from "axios";
@@ -82,6 +105,10 @@ export default {
         }
     },
     methods: {
+        formatChange(value, isFirst) {
+            if (isFirst) return value;
+            return value > 0 ? `+${value}` : value;
+        },
         getFoundersByLevel(level) {
             axios.get(`/filter/get_founders?level=${level["level"]}`)
                 .then((founders) => {
@@ -140,9 +167,9 @@ export default {
 
                         if (previousMembersCount !== null) {
                             const change = stat.members_count - previousMembersCount;
-                            newItem[`statistic_members_count_${index + 1}`] = change;
+                            newItem[`statistic_members_count_${index + 1}`] = this.formatChange(change, false);
                         } else {
-                            newItem[`statistic_members_count_${index + 1}`] = stat.members_count;
+                            newItem[`statistic_members_count_${index + 1}`] = this.formatChange(stat.members_count, true);
                         }
                         previousMembersCount = stat.members_count;
                     });

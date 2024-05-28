@@ -1,7 +1,30 @@
 from datetime import datetime
+from typing import Optional, TypedDict
 
 from pydantic import BaseModel, Field
 
+class Organization(TypedDict):
+    id: int
+    level: Optional[str]
+    founder: Optional[str]
+    name: Optional[str]
+    reason: Optional[str]
+    the_main_state_registration_number: Optional[int]
+    sphere_1: Optional[str]
+    sphere_2: Optional[str]
+    sphere_3: Optional[str]
+    status: Optional[str]
+    channel_id: Optional[int]
+    url: Optional[str]
+    address: Optional[str]
+    connected: Optional[str]
+    state_mark: Optional[bool]
+    decoration: Optional[str]
+    widgets: Optional[str]
+    activity: Optional[str]
+    followers: Optional[str]
+    weekly_audience: Optional[str]
+    average_publication_coverage: Optional[str]
 
 class AccountDTO(BaseModel):
     id: int
