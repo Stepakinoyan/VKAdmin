@@ -9,7 +9,13 @@ from app.dao.dao import BaseDAO
 from app.database import get_session
 from app.organizations.funcs import get_unique_spheres
 from app.organizations.models import Organizations
-from app.organizations.schemas import OrganizationsBase, Sphere, Stats, StatsData
+from app.organizations.schemas import (
+    OrganizationsBase,
+    Sphere,
+    Stats,
+    StatsData,
+    Founder,
+)
 from app.vk.models import Account
 
 
@@ -17,7 +23,9 @@ class OrganizationsDAO(BaseDAO):
     model = Organizations
 
     @classmethod
-    async def get_all_stats(self, session: AsyncSession = get_session()):
+    async def get_all_stats(
+        self, session: AsyncSession = get_session()
+    ) -> list[StatsData]:
         get_stats = select(self.model).options(joinedload(self.model.account))
 
         results = await session.execute(get_stats)
@@ -30,7 +38,9 @@ class OrganizationsDAO(BaseDAO):
         return result
 
     @classmethod
-    async def get_founders_by_level(self, level: str, session=get_session()) -> list:
+    async def get_founders_by_level(
+        self, level: str, session=get_session()
+    ) -> list[Founder]:
         get_founders = (
             select(self.model.founder)
             .filter_by(level=level)

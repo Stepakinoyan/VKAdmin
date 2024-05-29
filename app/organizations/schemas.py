@@ -88,6 +88,9 @@ class Stats(BaseModel):
 class Sphere(TypedDict):
     sphere: str
 
+class Founder(TypedDict):
+    founder: str
+
 
 class StatisticData(TypedDict):
     date_id: str
