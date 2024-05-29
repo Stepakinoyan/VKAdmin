@@ -1,4 +1,4 @@
-from typing import Optional, Union
+from typing import Optional
 
 from pydantic import BaseModel, validator
 
@@ -14,7 +14,7 @@ class Item(BaseModel):
     sphere_3: Optional[str]
     status: Optional[str]
     channel_id: Optional[int]
-    url: Optional[Union[str, int]]
+    url: Optional[str | int]
     address: Optional[str]
     connected: Optional[bool]
     state_mark: Optional[bool]

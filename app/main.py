@@ -23,9 +23,8 @@ redis_ = redis.from_url(
 
 async def startup(_: FastAPI = app) -> None:
     console.rule("[bold white on blue] STARTUP ")
-    pattern = f"*"
+    pattern = "*"
     cursor = "0"
-    records = []
     while cursor != 0:
         cursor, keys = await redis_.scan(cursor, match=pattern)
         for key in keys:

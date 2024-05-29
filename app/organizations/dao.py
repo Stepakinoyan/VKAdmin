@@ -7,8 +7,9 @@ from sqlalchemy.orm import joinedload, selectinload
 
 from app.dao.dao import BaseDAO
 from app.database import get_session
+from app.organizations.funcs import get_unique_spheres
 from app.organizations.models import Organizations
-from app.organizations.schemas import OrganizationsBase, Sphere, Stats
+from app.organizations.schemas import OrganizationsBase, Sphere, Stats, StatsData
 from app.vk.models import Account
 
 
@@ -41,8 +42,9 @@ class OrganizationsDAO(BaseDAO):
         return results.mappings().all()
 
     @classmethod
-    async def get_sphere_by_level(self, level: str, session=get_session()) -> list:
-        spheres = []
+    async def get_sphere_by_level(
+        self, level: str, session=get_session()
+    ) -> list[Sphere]:
         get_founders = (
             select(self.model.sphere_1, self.model.sphere_2, self.model.sphere_3)
             .filter_by(level=level)
@@ -50,18 +52,13 @@ class OrganizationsDAO(BaseDAO):
         )
 
         results = await session.execute(get_founders)
-
-        for item in list(
-            set(filter(lambda item: item is not None, results.scalars().all()))
-        ):
-            sphere = Sphere(sphere=item).model_dump()
-            spheres.append(sphere)
-
-        return spheres
+        results = results.scalars().all()
+        return get_unique_spheres(results)
 
     @classmethod
-    async def get_sphere_by_founder(self, founder: str, session=get_session()) -> list:
-        spheres = []
+    async def get_sphere_by_founder(
+        self, founder: str, session=get_session()
+    ) -> list[Sphere]:
         get_founders = (
             select(self.model.sphere_1, self.model.sphere_2, self.model.sphere_3)
             .filter_by(founder=founder)
@@ -69,19 +66,14 @@ class OrganizationsDAO(BaseDAO):
         )
 
         results = await session.execute(get_founders)
+        results = results.scalars().all()
 
-        for item in list(
-            set(filter(lambda item: item is not None, results.scalars().all()))
-        ):
-            sphere = Sphere(sphere=item).model_dump()
-            spheres.append(sphere)
-
-        return spheres
+        return get_unique_spheres(results)
 
     @classmethod
     async def filter_channels(
         cls, level: str, founder: str, sphere: str, sort: bool, session=get_session()
-    ) -> list:
+    ) -> list[StatsData]:
         query = (
             select(cls.model)
             .options(selectinload(cls.model.account).joinedload(Account.statistic))

@@ -39,6 +39,3 @@ class Organizations(Base):
     account: Mapped[Optional["Account"]] = relationship(
         "Account", back_populates="organizations", uselist=False
     )
-
-
-

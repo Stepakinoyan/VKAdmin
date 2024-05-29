@@ -74,7 +74,6 @@ class VkDAO(BaseDAO):
                 settings.VK_SERVICE_TOKEN,
             )
 
-            # print(data)
 
             if "response" in data and data.get("response", {}).get("count") > 0:
 
@@ -119,7 +118,6 @@ class VkDAO(BaseDAO):
                 async with async_session() as session:
                     async with session.begin():
                         db_item = await session.get(self.model, group_id)
-                        # print(db_item)
                         if db_item:
                             db_item.posts = data["posts"]
                             db_item.posts_1d = data["posts_1d"]

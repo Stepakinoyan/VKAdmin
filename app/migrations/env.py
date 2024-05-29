@@ -12,9 +12,6 @@ sys.path.insert(0, dirname(dirname(dirname(abspath(__file__)))))
 from app.database import Base
 from app.config import settings
 
-from app.auth.models import Users
-from app.organizations.models import Organizations
-from app.vk.models import Account, Statistic
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
