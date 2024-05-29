@@ -4,7 +4,7 @@ from datetime import datetime
 
 import httpx
 import redis.asyncio as redis
-from fastapi import (APIRouter, Depends, Request)
+from fastapi import APIRouter, Depends, Request
 from fastapi.responses import RedirectResponse
 from rich.console import Console
 from sqlalchemy import select, update
@@ -15,8 +15,11 @@ from app.database import get_session
 from app.organizations.models import Organizations
 from app.organizations.schemas import OrganizationsBase
 from app.vk.dao import VkDAO
-from app.vk.funcs import (call, fetch_gos_page,
-                          get_percentage_of_fulfillment_of_basic_requirements)
+from app.vk.funcs import (
+    call,
+    fetch_gos_page,
+    get_percentage_of_fulfillment_of_basic_requirements,
+)
 from app.vk.models import Account, Statistic
 
 router = APIRouter(prefix="/vk", tags=["VK"])
@@ -39,7 +42,6 @@ def auth(request: Request):
 
 @router.get("/init")
 async def vk_init():
-
     url = f"https://oauth.vk.com/authorize?client_id={settings.CLIENT_ID}&display=page&redirect_uri={settings.REDIRECT_URI}&scope=friends,groups,stats,offline&response_type=code&v=5.131&state=init"
 
     return RedirectResponse(url, status_code=302)
@@ -78,7 +80,6 @@ async def callback(code: str, state: str = None):
         return RedirectResponse(url, status_code=302)
 
     if state == "init_groups":
-
         groups = data["groups"]
 
         print(groups)
@@ -138,8 +139,6 @@ async def get_stat(session: AsyncSession = Depends(get_session)):
                 auth,
             )
 
-            print(data)
-
             if "response" in data and "groups" in data["response"]:
                 for group in data["response"]["groups"]:
                     # Генерируем date_id
@@ -191,13 +190,13 @@ async def get_stat(session: AsyncSession = Depends(get_session)):
                     stat = await session.get(Statistic, date_id)
                     if stat:
                         stat.members_count = group.get("members_count", 0)
-                        stat.date_added = datetime.now().date
+                        stat.date_added = datetime.now().date()
                         stat.fulfillment_percentage = fulfillment_percentage
                     else:
                         new_stat = Statistic(
                             date_id=date_id,
                             account_id=account_id,  # Используем account_id
-                            date_added=datetime.now().date,
+                            date_added=datetime.now().date(),
                             members_count=group.get("members_count", 0),
                             fulfillment_percentage=fulfillment_percentage,
                         )
