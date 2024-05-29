@@ -6,7 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.auth.models import Users
 from app.database import get_session
 from app.organizations.models import Organizations
-from app.vk.models import Account, Statistic
+from app.vk.models import Account
 
 
 router = APIRouter(prefix="/prepare", tags=["Добавление данных в БД"])

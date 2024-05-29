@@ -9,7 +9,7 @@ from app.config import settings
 from app.database import Base, engine, async_session_maker
 from app.main import app as fastapi_app
 from app.organizations.models import Organizations
-from app.vk.models import Account, Statistic
+from app.vk.models import Account
 
 
 @pytest.fixture(scope="session", autouse=True)

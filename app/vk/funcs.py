@@ -12,7 +12,7 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 from app.config import settings
 from app.database import engine
 from app.vk.models import Account
-from app.vk.schemas import Account, Organization
+from app.vk.schemas import Organization
 
 redis_ = redis.from_url(
     f"redis://{settings.REDIS_HOST}:{settings.REDIS_PORT}",

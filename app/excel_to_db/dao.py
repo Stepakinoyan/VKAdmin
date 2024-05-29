@@ -38,7 +38,6 @@ class ExcelToDBDAO(BaseDAO):
 
     @classmethod
     async def excel_to_db(self, file: str, session: AsyncSession = get_session()):
-
         delete_data = delete(self.model)
         await session.execute(delete_data)
         await session.commit()
@@ -57,4 +56,3 @@ class ExcelToDBDAO(BaseDAO):
                 await session.commit()
             else:
                 pass
-            

@@ -14,7 +14,7 @@ async def get_all_stats(session: AsyncSession = Depends(get_session)):
 
 
 @router.get("/get_founders")
-async def filter_channels(
+async def get_founders(
     filterfounderparams: FilterFounderParams = Depends(),
     session: AsyncSession = Depends(get_session),
 ):
@@ -24,7 +24,7 @@ async def filter_channels(
 
 
 @router.get("/get_spheres_by_level")
-async def get_stats(
+async def get_spheres_by_level(
     filterfounderparams: FilterFounderParams = Depends(),
     session: AsyncSession = Depends(get_session),
 ):
@@ -34,7 +34,9 @@ async def get_stats(
 
 
 @router.get("/get_spheres_by_founder")
-async def get_stats(founder: str, session: AsyncSession = Depends(get_session)):
+async def get_spheres_by_founder(
+    founder: str, session: AsyncSession = Depends(get_session)
+):
     return await OrganizationsDAO.get_sphere_by_founder(
         founder=founder, session=session
     )

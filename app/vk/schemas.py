@@ -52,6 +52,11 @@ class Account(TypedDict):
     posts_30d: int
     post_date: Optional[datetime]
 
+class Statistic(BaseModel):
+    date_id: str
+    account_id: int
+    date_added: datetime = Field(default=datetime.utcnow)
+    members_count: int
 
 class AccountDTO(BaseModel):
     id: int
@@ -77,8 +82,4 @@ class AccountDTO(BaseModel):
     post_date: bool
 
 
-class Statistic(BaseModel):
-    date_id: str
-    account_id: int
-    date_added: datetime = Field(default=datetime.utcnow)
-    members_count: int
+

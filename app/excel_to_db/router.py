@@ -12,7 +12,7 @@ router = APIRouter(prefix="/excel", tags=["Добавление excel в БД"])
 @router.post("/upload")
 async def upload(
     file: UploadFile = File(...), session: AsyncSession = Depends(get_session)
-):
+) -> None:
     try:
         contents = file.file.read()
         with open(f"{file.filename}", "wb") as f:
