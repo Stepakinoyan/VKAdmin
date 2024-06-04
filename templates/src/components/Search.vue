@@ -1,6 +1,6 @@
 <template>
     <main class="flex flex-col-reverse mt-2">
-        <DataTable :value="stats" :scrollable="isScrollable" :scrollHeight="isScrollable ? '779px' : 'auto'" class="mt-2 text-sm blue-table">
+        <DataTable :value="stats" :scrollable="isScrollable" scrollHeight="779px" class="mt-2 text-sm blue-table" :rowStyle="rowStyle">
             <Column field="name" header="Название" frozen></Column>
             <Column field="level" header="Уровень"></Column>
             <Column field="founder" header="Учредитель"></Column>
@@ -30,174 +30,205 @@
             <Column field="account.posts_7d" header="Посты за 7 дней"></Column>
             <Column field="account.posts_30d" header="Посты за 30 дней"></Column>
             <Column field="account.post_date" header="Дата поста"></Column>
-
-            
             <Column v-for="(col, index) in statisticColumns" :key="index" :field="col.field" :header="col.header"></Column>
         </DataTable>
-
+    
         <div class="flex items-center flex-col lg:flex-row mb-1 w-4/5 space-y-1 lg:space-y-0">
             <InputGroup class="ml-2">
                 <Dropdown v-model="selectedlevel" :options="levels" optionLabel="level" placeholder="Уровень" class="w-full md:w-14rem" @change="() => {getFounders(); getSpheres()}"/>
             </InputGroup>
-
+    
             <InputGroup class="ml-2">
                 <Dropdown v-model="selectedfounder" :options="founders" optionLabel="founder" placeholder="Учредитель" class="w-full md:w-14rem" @change="findSpheresByfounder"/>
             </InputGroup>
-
+    
             <InputGroup class="ml-2">
                 <Dropdown v-model="selectedsphere" :options="spheres" optionLabel="sphere" placeholder="Сфера" class="w-full md:w-14rem"/>
             </InputGroup>
             <InputGroup class="space-x-2 ml-2">
                 <Checkbox v-model="checked" :binary="true"/>
-                <label>Сортировка по возрастанию</label> 
+                <label>Сортировка по возрастанию</label>
             </InputGroup>
             <InputGroup class="ml-2">
                 <Button label="Применить" @click="getStats(selectedlevel, selectedfounder, selectedsphere, checked)"/>
             </InputGroup>
         </div>
     </main>
-</template>
-
-<style>
-.main {
-    margin-top: 2px;
-}
-
-.DataTable {
-    margin-top: 2px;
-    font-size: 0.875rem; /* Уменьшение размера шрифта */
-}
-
-.InputGroup {
-    margin-left: 2px;
-}
-
-.space-x-2 {
-    margin-left: 2px;
-}
-
-.mb-1 {
-    margin-bottom: 0.25rem;
-}
-</style>
-
-
-<script>
-import axios from "axios";
-
-export default {
+    </template>
+    
+    <script>
+    import axios from "axios";
+    
+    export default {
     data() {
-        return {
-            selectedlevel: "",
-            selectedfounder: "",
-            selectedsphere: "",
-            founders: [],
-            spheres: [],
-            levels: [
-                { level: 'Министерство' },
-                { level: 'МО' },
-                { level: 'Ведомство' },
-                { level: 'Узкоспециальные' },
-                { level: 'Регион' }
-            ],
-            checked: false,
-            stats: [],
-            statisticColumns: []
-        }
+    return {
+    selectedlevel: "",
+    selectedfounder: "",
+    selectedsphere: "",
+    founders: [],
+    spheres: [],
+    levels: [
+    { level: 'Министерство' },
+    { level: 'МО' },
+    { level: 'Ведомство' },
+    { level: 'Узкоспециальные' },
+    { level: 'Регион' }
+    ],
+    checked: false,
+    stats: [],
+    statisticColumns: []
+    }
     },
     methods: {
-        formatChange(value, isFirst) {
-            if (isFirst) return value;
-            return value > 0 ? `+${value}` : value;
-        },
-        getFoundersByLevel(level) {
-            axios.get(`/filter/get_founders?level=${level["level"]}`)
-                .then((founders) => {
-                    this.founders = founders.data;
-                });
-        },
-        getSpheresByLevel(level) {
-            axios.get(`/filter/get_spheres_by_level?level=${level["level"]}`)
-                .then((spheres) => {
-                    this.spheres = spheres.data;
-                });
-        },
-        getSpheresByFounder(founder) {
-            axios.get(`/filter/get_spheres_by_founder?founder=${founder["founder"]}`)
-                .then((spheres) => {
-                    this.spheres = spheres.data;
-                });
-        },
-        getFounders() {
-            this.getFoundersByLevel(this.selectedlevel);
-        },
-        getSpheres() {
-            this.getSpheresByLevel(this.selectedlevel);
-        },
-        findSpheresByfounder() {
-            this.getSpheresByFounder(this.selectedfounder);
-        },
-        getStats(level, founder, sphere, sort) {
-            const levelParam = level ? `level=${level.level}` : '';
-            const founderParam = founder ? `founder=${founder.founder}` : '';
-            const sphereParam = sphere ? `sphere=${sphere.sphere}` : '';
-            const sortParam = typeof sort === 'boolean' ? `sort=${sort}` : '';
-
-            const queryParams = [levelParam, founderParam, sphereParam, sortParam].filter(param => param !== '').join('&');
-
-            axios.get(`/filter/get_stats?${queryParams}`)
-                .then((response) => {
-                    const items = response.data[0].items;
-                    this.stats = this.transformData(items);
-                    this.generateStatisticColumns(items);
-                })
-                .catch(error => {
-                    console.error('Error fetching stats:', error);
-                });
-        },
-        transformData(items) {
-            return items.map(item => {
-                const newItem = { ...item };
-                if (item.account) {
-                    Object.assign(newItem, item.account);
-
-                    // Calculate change in members count
-                    let previousMembersCount = null;
-                    item.account.statistic.forEach((stat, index) => {
-                        newItem[`statistic_date_id_${index + 1}`] = stat.date_id;
-
-                        if (previousMembersCount !== null) {
-                            const change = stat.members_count - previousMembersCount;
-                            newItem[`statistic_members_count_${index + 1}`] = this.formatChange(change, false);
-                        } else {
-                            newItem[`statistic_members_count_${index + 1}`] = this.formatChange(stat.members_count, true);
-                        }
-                        previousMembersCount = stat.members_count;
-                    });
-                } else {
-                    const emptyFields = [
-                        'screen_name', 'name', 'city', 'activity', 'verified', 'has_avatar', 'has_cover',
-                        'has_description', 'has_gos_badge', 'has_widget', 'widget_count', 'members_count',
-                        'site', 'date_added', 'posts', 'posts_1d', 'posts_7d', 'posts_30d', 'post_date'
-                    ];
-                    emptyFields.forEach(field => {
-                        newItem[`account.${field}`] = null;
-                    });
-                }
-                return newItem;
-            });
-        },
-        generateStatisticColumns(items) {
-            const statisticColumns = [];
-            if (items.length > 0 && items[0].account && items[0].account.statistic) {
-                const statisticCount = items[0].account.statistic.length;
-                for (let i = 1; i <= statisticCount; i++) {
-                    statisticColumns.push({ field: `statistic_date_id_${i}`, header: `Дата статистики ${i}` });
-                    statisticColumns.push({ field: `statistic_members_count_${i}`, header: `Кол-во участников (статистика) ${i}` });
-                }
-            }
-            this.statisticColumns = statisticColumns;
-        }
+    formatChange(value, isFirst) {
+    if (isFirst) return value;
+    return value > 0 ? `+${value}` : value;
+    },
+    getFoundersByLevel(level) {
+    axios.get(`/filter/get_founders?level=${level["level"]}`)
+    .then((founders) => {
+    this.founders = founders.data;
+    });
+    },
+    getSpheresByLevel(level) {
+    axios.get(`/filter/get_spheres_by_level?level=${level["level"]}`)
+    .then((spheres) => {
+    this.spheres = spheres.data;
+    });
+    },
+    getSpheresByFounder(founder) {
+        axios.get(`/filter/get_spheres_by_founder?founder=${founder["founder"]}`)
+        .then((spheres) => {
+            this.spheres = spheres.data;
+        });
+    },
+    getFounders() {
+        this.getFoundersByLevel(this.selectedlevel);
+    },
+    getSpheres() {
+        this.getSpheresByLevel(this.selectedlevel);
+    },
+    findSpheresByfounder() {
+        this.getSpheresByFounder(this.selectedfounder);
+    },
+    getStats(level, founder, sphere, sort) {
+    const levelParam = level ? `level=${level.level}` : '';
+    const founderParam = founder ? `founder=${founder.founder}` : '';
+    const sphereParam = sphere ? `sphere=${sphere.sphere}` : '';
+    const sortParam = typeof sort === 'boolean' ? `sort=${sort}` : '';
+    
+    const queryParams = [levelParam, founderParam, sphereParam, sortParam].filter(param => param !== '').join('&');
+    
+    axios.get(`/filter/get_stats?${queryParams}`)
+        .then((response) => {
+            const items = response.data[0].items;
+            this.stats = this.transformData(items);
+            this.generateStatisticColumns(items);
+        })
+    .catch(error => {
+    console.error('Error fetching stats:', error);
+    });
+    },
+    transformData(items) {
+    return items.map(item => {
+    const newItem = { ...item };
+    if (item.account) {
+    Object.assign(newItem, item.account);
+    
+    // Calculate change in members count
+    let previousMembersCount = null;
+    item.account.statistic.forEach((stat, index) => {
+    newItem[`statistic_date_id_${index + 1}`] = stat.date_id;
+    
+    if (previousMembersCount !== null) {
+    const change = stat.members_count - previousMembersCount;
+    newItem[`statistic_members_count_${index + 1}`] = this.formatChange(change, false);
+    } else {
+    newItem[`statistic_members_count_${index + 1}`] = this.formatChange(stat.members_count, true);
     }
-}
-</script>
+    previousMembersCount = stat.members_count;
+    });
+    } else {
+    const emptyFields = [
+    'screen_name', 'name', 'city', 'activity', 'verified', 'has_avatar', 'has_cover',
+    'has_description', 'has_gos_badge', 'has_widget', 'widget_count', 'members_count',
+    'site', 'date_added', 'posts', 'posts_1d', 'posts_7d', 'posts_30d', 'post_date'
+    ];
+    emptyFields.forEach(field => {
+    newItem[`account.${field}`] = null;
+    });
+    }
+    return newItem;
+    });
+    },
+    generateStatisticColumns(items) {
+    const statisticColumns = [];
+    if (items.length > 0 && items[0].account && items[0].account.statistic) {
+    const statisticCount = items[0].account.statistic.length;
+    for (let i = 1; i <= statisticCount; i++) {
+    // statisticColumns.push({ field: `statistic_date_id_${i}`, header: `Дата статистики ${i}` });
+    statisticColumns.push({ field: `statistic_members_count_${i}`, header: `Кол-во участников (статистика) ${i}` });
+    }
+    }
+    this.statisticColumns = statisticColumns;
+    },
+    // Method to calculate average fulfillment percentage
+    calculateAverageFulfillment(statistics) {
+    if (!statistics || statistics.length === 0) return 0;
+    const total = statistics.reduce((sum, stat) => sum + stat.fulfillment_percentage, 0);
+    return total / statistics.length;
+    },
+    // Method to determine row style based on average fulfillment percentage
+    rowStyle(rowData) {
+    const averageFulfillment = rowData.account && rowData.account.statistic ? this.calculateAverageFulfillment(rowData.account.statistic) : 0;
+    let backgroundColor = '';
+    let color = '';
+    
+    if (!rowData.account || (rowData.account && rowData.account.statistic && rowData.account.statistic.length === 0)) {
+        backgroundColor = '#ef4444'; // Красная зона
+    } else if (averageFulfillment >= 90) {
+        backgroundColor = '#22c55e'; // Зеленая зона
+    } else if (averageFulfillment >= 70) {
+        backgroundColor = '#eab308'; // Желтая зона
+        // color = 'black'; // Черный шрифт для всех ячеек кроме названий
+    } else {
+        backgroundColor = '#ef4444'; // Красная зона
+    }
+    
+    return { backgroundColor, color };
+    }
+    }
+    };
+    </script>
+    
+<style>
+    .main {
+    margin-top: 2px;
+    }
+    
+    .DataTable {
+    margin-top: 2px;
+    font-size: 0.875rem; /* Уменьшение размера шрифта */
+    }
+    
+    .InputGroup {
+    margin-left: 2px;
+    }
+    
+    .space-x-2 {
+    margin-left: 2px;
+    }
+    
+    .mb-1 {
+    margin-bottom: 0.25rem;
+    }
+    
+    .yellow-zone {
+    color: black;
+    }
+    
+    .yellow-zone-name {
+    color: inherit; /* наследует цвет из rowStyle */
+    }
+    </style>
+    

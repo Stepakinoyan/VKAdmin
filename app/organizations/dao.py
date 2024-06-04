@@ -7,7 +7,7 @@ from sqlalchemy.orm import joinedload, selectinload
 
 from app.dao.dao import BaseDAO
 from app.database import get_session
-from app.organizations.funcs import get_unique_spheres
+from app.organizations.funcs import get_unique_spheres, get_new_stats
 from app.organizations.models import Organizations
 from app.organizations.schemas import (
     OrganizationsBase,
@@ -39,7 +39,7 @@ class OrganizationsDAO(BaseDAO):
 
     @classmethod
     async def get_founders_by_level(
-        self, level: str, session=get_session()
+        self, level: str, session: AsyncSession = get_session()
     ) -> list[Founder]:
         get_founders = (
             select(self.model.founder)
@@ -53,7 +53,7 @@ class OrganizationsDAO(BaseDAO):
 
     @classmethod
     async def get_sphere_by_level(
-        self, level: str, session=get_session()
+        self, level: str, session: AsyncSession = get_session()
     ) -> list[Sphere]:
         get_founders = (
             select(self.model.sphere_1, self.model.sphere_2, self.model.sphere_3)
@@ -67,7 +67,7 @@ class OrganizationsDAO(BaseDAO):
 
     @classmethod
     async def get_sphere_by_founder(
-        self, founder: str, session=get_session()
+        self, founder: str, session: AsyncSession = get_session()
     ) -> list[Sphere]:
         get_founders = (
             select(self.model.sphere_1, self.model.sphere_2, self.model.sphere_3)
@@ -82,34 +82,42 @@ class OrganizationsDAO(BaseDAO):
 
     @classmethod
     async def filter_channels(
-        cls, level: str, founder: str, sphere: str, sort: bool, session=get_session()
+        cls, level: str, founder: str, sphere: str, sort: bool, session: AsyncSession = get_session()
     ) -> list[StatsData]:
-        query = (
-            select(cls.model)
-            .options(selectinload(cls.model.account).joinedload(Account.statistic))
-            .filter(
-                and_(
-                    cls.model.level.like(f"%{level}%"),
-                    cls.model.founder.like(f"%{founder}%"),
-                    or_(
-                        cls.model.sphere_1.like(f"%{sphere}%"),
-                        cls.model.sphere_2.like(f"%{sphere}%"),
-                        cls.model.sphere_3.like(f"%{sphere}%"),
-                    ),
+        try:
+            query = (
+                select(cls.model)
+                .options(selectinload(cls.model.account).joinedload(Account.statistic))
+                .filter(
+                    and_(
+                        cls.model.level.ilike(f"%{level}%"),  # Используем ilike для нечувствительного к регистру поиска
+                        cls.model.founder.ilike(f"%{founder}%"),
+                        or_(
+                            cls.model.sphere_1.ilike(f"%{sphere}%"),
+                            cls.model.sphere_2.ilike(f"%{sphere}%"),
+                            cls.model.sphere_3.ilike(f"%{sphere}%"),
+                        ),
+                    )
                 )
             )
-        )
 
-        if sort:
-            query = query.order_by(cls.model.followers.desc())
+            if sort:
+                query = query.order_by(cls.model.followers.desc())
 
-        try:
+            logging.debug(f"Executing query: {query}")
+
             results = await session.execute(query)
             res = results.scalars().all()
+            logging.debug(f"Query results: {res}")
+
             res = jsonable_encoder(res)
-            stats = [Stats(items=res).model_dump()]
+            stats = Stats(items=res)
+
+            for item in stats.items:
+                if item.account and item.account.statistic:
+                    item.account.statistic = get_new_stats(item.account.statistic)
         except Exception as e:
             logging.error("Error executing filter_channels query", exc_info=True)
             raise e
 
-        return stats
+        return [stats.model_dump()]

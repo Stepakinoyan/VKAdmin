@@ -1,5 +1,5 @@
-from app.organizations.schemas import Sphere
-
+from app.organizations.schemas import Sphere, StatisticBase
+from datetime import datetime
 
 def get_unique_spheres(items: list[Sphere]) -> list[Sphere]:
     """
@@ -13,3 +13,20 @@ def get_unique_spheres(items: list[Sphere]) -> list[Sphere]:
         spheres.append({"sphere": item})
 
     return spheres
+
+
+def get_new_stats(stats: list[StatisticBase]) -> list[StatisticBase]:
+    """
+
+    Возвращает список со статистикой на сегодняшнюю дату 
+
+    """
+    new_stats = []
+
+    now = datetime.now()
+    
+    for stat in stats:
+        if stat.date_added.month == now.month and stat.date_added.year == now.year:
+            new_stats.append(stat)
+    
+    return new_stats

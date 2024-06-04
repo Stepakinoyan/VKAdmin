@@ -13,17 +13,6 @@ def open_json(model: str):
         return json.load(file)
 
 
-# @router.post("/prepare")
-# async def prepare_db(session: AsyncSession = Depends(get_session)):
-#     users = open_json("users")
-
-#     for Model, values in [(Users, users)]:
-#         query = insert(Model).values(values)
-#         await session.execute(query)
-
-#     await session.commit()
-
-
 @router.post("/login")
 async def login_user(user_data: UserAuth, session: AsyncSession = Depends(get_session)):
     user = await authenticate_user(

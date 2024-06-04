@@ -19,7 +19,7 @@ import Column from 'primevue/column';
 import 'primeicons/primeicons.css';
 import Toast from 'primevue/toast';
 import ToastService from 'primevue/toastservice'; 
-
+import ColumnGroup from 'primevue/columngroup'; 
 import axios from 'axios';
 
 export const app = createApp(App)
@@ -37,6 +37,7 @@ app.component("InputMask", InputMask)
 app.component("Menubar", Menubar)
 app.component("Password", Password)
 app.component("Toast", Toast)
+app.component("ColumnGroup", ColumnGroup)
 
 
 app.use(VueCookies)
@@ -49,3 +50,6 @@ app.use(ToastService);
 app.use(router)
 
 app.mount('#app')
+
+
+    

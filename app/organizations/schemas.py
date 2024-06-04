@@ -7,7 +7,7 @@ from pydantic import BaseModel
 class StatisticBase(BaseModel):
     date_id: str
     account_id: int
-    date_added: Optional[datetime]
+    date_added: datetime
     members_count: int
     fulfillment_percentage: int
 
@@ -63,6 +63,7 @@ class OrganizationsBase(BaseModel):
 
 
 class OrganizationResponse(BaseModel):
+    id: int
     level: Optional[str]
     founder: Optional[str]
     name: Optional[str]
