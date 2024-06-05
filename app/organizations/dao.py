@@ -10,13 +10,14 @@ from app.database import get_session
 from app.organizations.funcs import get_unique_spheres, get_new_stats
 from app.organizations.models import Organizations
 from app.organizations.schemas import (
+    OrganizationResponse,
     OrganizationsBase,
     Sphere,
+    StatisticBase,
     Stats,
     StatsData,
     Founder,
 )
-from app.vk.models import Account
 
 
 class OrganizationsDAO(BaseDAO):
@@ -26,7 +27,7 @@ class OrganizationsDAO(BaseDAO):
     async def get_all_stats(
         self, session: AsyncSession = get_session()
     ) -> list[StatsData]:
-        get_stats = select(self.model).options(joinedload(self.model.account))
+        get_stats = select(self.model)
 
         results = await session.execute(get_stats)
 
@@ -82,15 +83,19 @@ class OrganizationsDAO(BaseDAO):
 
     @classmethod
     async def filter_channels(
-        cls, level: str, founder: str, sphere: str, sort: bool, session: AsyncSession = get_session()
+        cls,
+        level: str,
+        founder: str,
+        sphere: str,
+        session: AsyncSession = None,
     ) -> list[StatsData]:
         try:
             query = (
                 select(cls.model)
-                .options(selectinload(cls.model.account).joinedload(Account.statistic))
+                .options(selectinload(cls.model.statistic))
                 .filter(
                     and_(
-                        cls.model.level.ilike(f"%{level}%"),  # Используем ilike для нечувствительного к регистру поиска
+                        cls.model.level.ilike(f"%{level}%"),
                         cls.model.founder.ilike(f"%{founder}%"),
                         or_(
                             cls.model.sphere_1.ilike(f"%{sphere}%"),
@@ -101,8 +106,6 @@ class OrganizationsDAO(BaseDAO):
                 )
             )
 
-            if sort:
-                query = query.order_by(cls.model.followers.desc())
 
             logging.debug(f"Executing query: {query}")
 
@@ -110,12 +113,22 @@ class OrganizationsDAO(BaseDAO):
             res = results.scalars().all()
             logging.debug(f"Query results: {res}")
 
-            res = jsonable_encoder(res)
-            stats = Stats(items=res)
+            # Преобразуем результаты в объекты Pydantic
+            stats_items = []
+            for item in res:
+                organization_data = jsonable_encoder(item)
+                organization_data["statistic"] = [
+                    StatisticBase(**stat)
+                    for stat in organization_data.get("statistic", [])
+                ]
+                stats_items.append(OrganizationResponse(**organization_data))
+
+            stats = Stats(items=stats_items)
 
             for item in stats.items:
-                if item.account and item.account.statistic:
-                    item.account.statistic = get_new_stats(item.account.statistic)
+                if item.statistic:
+                    item.statistic = get_new_stats(item.statistic)
+
         except Exception as e:
             logging.error("Error executing filter_channels query", exc_info=True)
             raise e

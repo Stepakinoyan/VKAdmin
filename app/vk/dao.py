@@ -1,41 +1,45 @@
 import asyncio
+import json
 import time
 from datetime import datetime
 
-from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
-
+from sqlalchemy import update
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import sessionmaker
 from app.config import settings
 from app.dao.dao import BaseDAO
 from app.database import engine, get_session
 from app.vk.funcs import call
-from app.vk.models import Account
+from app.organizations.models import Organizations
+
+semaphore = asyncio.Semaphore(3)
 
 
 class VkDAO(BaseDAO):
-    model = Account
+    model = Organizations
 
     @classmethod
     async def upsert_account(self, data: dict, session: AsyncSession = get_session()):
-        account = await session.get(self.model, data["id"])
-        if account:
+        organization = await session.get(self.model, data["id"])
+        if organization:
             # Update the existing record
-            account.screen_name = data["screen_name"]
-            account.type = data["type"]
-            account.name = data["name"]
-            account.city = data.get("city", {}).get("title", "")
-            account.activity = data.get("activity", "")
-            account.verified = bool(data.get("verified"))
-            account.has_avatar = bool(data.get("photo_50"))
-            account.has_cover = bool(data.get("cover", {}).get("enabled"))
-            account.has_description = bool(data.get("description"))
-            account.has_widget = bool(data.get("menu"))
-            account.widget_count = len(data.get("menu", {}).get("items", []))
-            account.members_count = data.get("members_count", 0)
-            account.site = data.get("site", "")
-            account.date_added = datetime.now()
+            organization.screen_name = data["screen_name"]
+            organization.type = data["type"]
+            organization.name = data["name"]
+            organization.city = data.get("city", {}).get("title", "")
+            organization.activity = data.get("activity", "")
+            organization.verified = bool(data.get("verified"))
+            organization.has_avatar = bool(data.get("photo_50"))
+            organization.has_cover = bool(data.get("cover", {}).get("enabled"))
+            organization.has_description = bool(data.get("description"))
+            organization.has_widget = bool(data.get("menu"))
+            organization.widget_count = len(data.get("menu", {}).get("items", []))
+            organization.members_count = data.get("members_count", 0)
+            organization.site = data.get("site", "")
+            organization.date_added = datetime.now()
         else:
             # Insert a new record
-            account = Account(
+            organization = Organizations(
                 id=data["id"],
                 screen_name=data["screen_name"],
                 type=data["type"],
@@ -52,14 +56,11 @@ class VkDAO(BaseDAO):
                 site=data.get("site", ""),
                 date_added=datetime.now(),
             )
-            session.add(account)
+            session.add(organization)
 
     @classmethod
-    async def wall_get_data(self, group_id: int, session: AsyncSession = get_session()):
-        semaphore = asyncio.Semaphore(3)
-
+    async def wall_get_data(self, group_id: int):
         async with semaphore:
-
             data = await call(
                 "wall.get",
                 {
@@ -74,9 +75,9 @@ class VkDAO(BaseDAO):
                 settings.VK_SERVICE_TOKEN,
             )
 
+            # print(data)
 
             if "response" in data and data.get("response", {}).get("count") > 0:
-
                 print(f">> {data['response']['count']}")
 
                 # Получаем текущую дату в unix timestamp
@@ -112,12 +113,13 @@ class VkDAO(BaseDAO):
                 data["first_item_date"] = dates[0]
                 data["last_item_date"] = dates[-1]
 
-                async_session = async_sessionmaker(
+                async_session = sessionmaker(
                     engine, class_=AsyncSession, expire_on_commit=False
                 )
                 async with async_session() as session:
                     async with session.begin():
-                        db_item = await session.get(self.model, group_id)
+                        db_item = await session.get(Organizations, group_id)
+                        # print(db_item)
                         if db_item:
                             db_item.posts = data["posts"]
                             db_item.posts_1d = data["posts_1d"]
@@ -140,3 +142,5 @@ class VkDAO(BaseDAO):
                 print(f"{group_id}: NO DATA", data)
 
                 return {group_id: "NO DATA"}
+
+            return group_id

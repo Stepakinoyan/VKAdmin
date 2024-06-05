@@ -5,18 +5,18 @@ from httpx import AsyncClient
 
 
 @pytest.mark.parametrize(
-    "level,founder,sphere,sort",
+    "level,founder,sphere",
     [
-        ("МО", "Архаринский", "Школы", False),
-        ("МО", "Архаринский", "Детские сады", True),
+        ("МО", "Архаринский", "Школы"),
+        ("МО", "Архаринский", "Детские сады"),
     ],
 )
 async def test_get_founder_by_level(
-    level: str, founder: str, sphere: str, sort: bool, ac: AsyncClient
+    level: str, founder: str, sphere: str, ac: AsyncClient
 ):
     response = await ac.get(
         "/filter/get_stats",
-        params={"level": level, "founder": founder, "sphere": sphere, "sort": sort},
+        params={"level": level, "founder": founder, "sphere": sphere},
     )
 
     print(response.json())

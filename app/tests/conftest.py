@@ -1,15 +1,15 @@
 import json
 import pytest
 from datetime import datetime
-from httpx import AsyncClient
-from sqlalchemy import insert
+from sqlalchemy.dialects.postgresql import insert as pg_insert
 
 from app.auth.models import Users
 from app.config import settings
 from app.database import Base, engine, async_session_maker
 from app.main import app as fastapi_app
 from app.organizations.models import Organizations
-from app.vk.models import Account, Statistic
+from httpx import AsyncClient
+
 
 
 @pytest.fixture(scope="session", autouse=True)
@@ -25,28 +25,20 @@ async def prepare_database():
             return json.load(file)
 
     organizations = open_json("organizations")
-    accounts = open_json("accounts")
-    statistic = open_json("statistic")
     users = open_json("users")
 
-    # Преобразование строк даты в объекты datetime
-    for account in accounts:
-        account["date_added"] = datetime.fromisoformat(account["date_added"])
-        account["post_date"] = datetime.fromisoformat(account["post_date"])
-
-    for stat in statistic:
-        stat["date_added"] = datetime.fromisoformat(stat["date_added"])
+    for organization in organizations:
+        organization["date_added"] = datetime.fromisoformat(organization["date_added"])
 
     async with async_session_maker() as session:
         for Model, values in [
             (Users, users),
             (Organizations, organizations),
-            (Account, accounts),
-            (Statistic, statistic),
         ]:
-            query = insert(Model).values(values)
-            await session.execute(query)
-
+            for i in range(0, len(values), 1000):  # Разбиваем на батчи по 1000 записей
+                batch = values[i:i+1000]
+                query = pg_insert(Model).values(batch)
+                await session.execute(query)
         await session.commit()
 
 

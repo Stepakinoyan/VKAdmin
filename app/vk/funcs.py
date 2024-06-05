@@ -11,8 +11,10 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from app.config import settings
 from app.database import engine
-from app.vk.models import Account
+from app.organizations.models import Organizations
+from fake_useragent import UserAgent
 from app.vk.schemas import Organization
+from typing import TypeAlias
 
 redis_ = redis.from_url(
     f"redis://{settings.REDIS_HOST}:{settings.REDIS_PORT}",
@@ -76,25 +78,25 @@ def load_vk_links(file_path: str) -> list:
     return chunks
 
 
-async def fetch_gos_page(url, account_id):
+async def fetch_gos_page(url, organization_id):
     headers = {
         "Accept-Language": "ru-RU,ru;q=0.9",
-        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/115.0.0.0 Safari/537.36",
+        "User-Agent": UserAgent().random,
     }
-    async with httpx.AsyncClient(follow_redirects=True, timeout=30.0) as client:
+    async with httpx.AsyncClient(follow_redirects=True, timeout=80.0) as client:
         response = await client.get(url, headers=headers)
         if response.status_code == 200 and "GovernmentCommunityBadge" in response.text:
-            print(f"{account_id}: {url}")
-            return account_id
+            print(f"{organization_id}: {url}")
+            return organization_id
         elif response.status_code in [400, 401, 403, 500]:
-            print(f"[{response.status_code}] {account_id}: {url}")
+            print(f"[{response.status_code}] {organization_id}: {url}")
     return None
 
 
 async def save_accounts_to_xlsx(file_path: str, session: AsyncSession):
     # 1. Fetch all data from the accounts table
-    result = await session.execute(select(Account))
-    accounts = result.scalars().all()
+    result = await session.execute(select(Organizations))
+    organizations = result.scalars().all()
 
     # 2. Create a new XLSX workbook and sheet
     wb = Workbook()
@@ -128,30 +130,30 @@ async def save_accounts_to_xlsx(file_path: str, session: AsyncSession):
     ws.append(headers)
 
     # Append account data to the sheet
-    for account in accounts:
+    for organization in organizations:
         ws.append(
             [
-                account.id,
-                account.screen_name,
-                account.type,
-                account.name,
-                account.city,
-                account.activity,
-                account.verified,
-                account.has_avatar,
-                account.has_cover,
-                account.has_description,
-                account.has_gos_badge,
-                account.has_widget,
-                account.widget_count,
-                account.members_count,
-                account.site,
-                account.date_added,
-                account.posts,
-                account.posts_1d,
-                account.posts_7d,
-                account.posts_30d,
-                account.post_date,
+                organization.id,
+                organization.screen_name,
+                organization.type,
+                organization.name,
+                organization.city,
+                organization.activity,
+                organization.verified,
+                organization.has_avatar,
+                organization.has_cover,
+                organization.has_description,
+                organization.has_gos_badge,
+                organization.has_widget,
+                organization.widget_count,
+                organization.members_count,
+                organization.site,
+                organization.date_added,
+                organization.posts,
+                organization.posts_1d,
+                organization.posts_7d,
+                organization.posts_30d,
+                organization.post_date,
             ]
         )
 
@@ -163,9 +165,7 @@ semaphore = asyncio.Semaphore(3)
 
 
 async def wall_get_data(group_id: int):
-
     async with semaphore:
-
         data = await call(
             "wall.get",
             {
@@ -183,7 +183,6 @@ async def wall_get_data(group_id: int):
         # print(data)
 
         if "response" in data and data.get("response", {}).get("count") > 0:
-
             print(f">> {data['response']['count']}")
 
             # Получаем текущую дату в unix timestamp
@@ -224,7 +223,7 @@ async def wall_get_data(group_id: int):
             )
             async with async_session() as session:
                 async with session.begin():
-                    db_item = await session.get(Account, group_id)
+                    db_item = await session.get(Organizations, group_id)
                     # print(db_item)
                     if db_item:
                         db_item.posts = data["posts"]
@@ -262,56 +261,66 @@ async def wall_get_data(group_id: int):
             общий охват аудитории — 10 %,средний охват публикации — 5 %.
 """
 
+Precent: TypeAlias = int | float
+
 
 def get_percentage_of_fulfillment_of_basic_requirements(
-    organization: Organization, account: Account
-) -> int:
-    total_percentage = 0
+    organization: Organization,
+) -> Precent:
+    percentage = 0
 
-    # Подключение к компоненту «Госпаблики»
-    if organization.get("connected"):
-        total_percentage += 10
+    # Подключение к компоненту «Госпаблики» (10 %)
+    if organization.get("has_gos_badge") is True:
+        percentage += 10
 
-    # Госметка
-    if organization.get("state_mark"):
-        total_percentage += 10
+    # Госметка (10 %)
+    if organization.get("verified") is True:
+        percentage += 10
 
-    # Оформление
-    has_avatar = account.get("has_avatar", False)
-    has_description = account.get("has_description", False)
-    has_cover = account.get("has_cover", False)
+    # Оформление (20 %)
+    if organization.get("has_avatar") is True:
+        percentage += 5
+    if organization.get("has_description") is True:
+        percentage += 5
+    if organization.get("has_cover") is True:
+        percentage += 10
 
-    if has_avatar:
-        total_percentage += 5
-    if has_description:
-        total_percentage += 5
-    if has_cover:
-        total_percentage += 10
+    # Виджеты (10 %)
+    widget_count = organization.get("widget_count")
+    if widget_count is not None:
+        if widget_count >= 2:
+            percentage += 10
+        elif widget_count == 1:
+            percentage += 5
 
-    # Виджеты
-    widget_count = account.get("widget_count", 0)
-    if widget_count >= 2:
-        total_percentage += 10
-    elif widget_count == 1:
-        total_percentage += 5
+    # Активность (30 %)
+    posts_30d = organization.get("posts_30d")
+    if posts_30d is not None and posts_30d >= 3:
+        percentage += 30
 
-    # Активность
-    posts_7d = account.get("posts_7d", 0)
-    if posts_7d >= 3:
-        total_percentage += 30
+    # Общий охват аудитории за неделю (10 %)
+    members_count = organization.get("members_count")
+    if members_count is not None and members_count > 0:
+        reach_percentage = 0  # Предположим, что охват в процентах от количества подписчиков вычисляется извне
+        if reach_percentage > 70:
+            percentage += 10
+        elif 50 <= reach_percentage <= 70:
+            percentage += 7
+        elif 30 <= reach_percentage < 50:
+            percentage += 5
 
-    # Количество подписчиков
-    followers = account.get("members_count", 0)
+    posts_7d = organization.get("posts_30d")
+    posts = organization.get("posts")
+    if (
+        posts_7d is not None
+        and posts is not None
+        and posts_7d > 0
+        and members_count is not None
+        and members_count > 0
+    ):
+        avg_reach_per_post = posts / posts_30d
+        avg_reach_percentage = (avg_reach_per_post / members_count) * 100
+        if avg_reach_percentage > 70:
+            percentage += 5
 
-    # Общий охват аудитории за неделю
-    weekly_audience = organization.get("weekly_audience")
-    if followers > 0 and weekly_audience is not None:
-        audience_percentage = (weekly_audience / followers) * 100
-        if audience_percentage >= 70:
-            total_percentage += 10
-        elif audience_percentage >= 50:
-            total_percentage += 7
-        elif audience_percentage >= 30:
-            total_percentage += 5
-
-    return total_percentage
+    return percentage
