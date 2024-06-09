@@ -1,26 +1,26 @@
 
 <template>
     <div class="flex items-center justify-center h-screen">
-    <form class="space-y-0.5">
-      <InputGroup>
-          <InputGroupAddon>
-              <i class="pi pi-at"></i>
-          </InputGroupAddon>
-          <InputText v-model="email" placeholder="email@example.com" />
-      </InputGroup>
-      <InputGroup>
-          <InputGroupAddon>
-              <i class="pi pi-user"></i>
-          </InputGroupAddon>
-          <Password v-model="password" :feedback="false" toggleMask placeholder="Введите пароль"/>
-      </InputGroup>
-      <InputGroup class="mt-1 flex justify-center ">
-        <p class="text-red-600">{{ message }}</p>
-      </InputGroup>
-      <InputGroup class="mt-1 flex justify-center ">
-        <Button label="Войти" @click="authorization()"/>
-      </InputGroup>
-    </form>
+        <form class="space-y-0.5">
+        <InputGroup>
+            <InputGroupAddon>
+                <i class="pi pi-at"></i>
+            </InputGroupAddon>
+            <InputText v-model="email" placeholder="email@example.com" />
+        </InputGroup>
+        <InputGroup>
+            <InputGroupAddon>
+                <i class="pi pi-user"></i>
+            </InputGroupAddon>
+            <Password v-model="password" :feedback="false" toggleMask placeholder="Введите пароль"/>
+        </InputGroup>
+        <InputGroup class="mt-1 flex justify-center ">
+            <p class="text-red-600">{{ message }}</p>
+        </InputGroup>
+        <InputGroup class="mt-1 flex justify-center ">
+            <Button label="Войти" @click="authorization()"/>
+        </InputGroup>
+        </form>
     </div>
 
 

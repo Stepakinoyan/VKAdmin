@@ -1,14 +1,10 @@
 <script setup>
-import MenuBar from "../components/MenuBar.vue"
 import Search from "../components/Search.vue"
 </script>
 
 <template>
   <div class="bg-slate-300" style="height: 100vh;">
-    <header>
-      <MenuBar/>
-    </header>
-    <div>
+    <div class="pt-8">
       <Search/>
     </div>
   </div>

@@ -51,5 +51,6 @@ async def get_stats(
         level=filterchannelsparams.level,
         founder=filterchannelsparams.founder,
         sphere=filterchannelsparams.sphere,
+        zone=filterchannelsparams.zone,
         session=session,
     )

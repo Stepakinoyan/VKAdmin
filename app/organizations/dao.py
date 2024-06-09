@@ -1,7 +1,7 @@
 import logging
 
 from fastapi.encoders import jsonable_encoder
-from sqlalchemy import and_, or_, select
+from sqlalchemy import and_, desc, func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload, selectinload
 
@@ -18,6 +18,7 @@ from app.organizations.schemas import (
     StatsData,
     Founder,
 )
+from app.vk.models import Statistic
 
 
 class OrganizationsDAO(BaseDAO):
@@ -87,11 +88,42 @@ class OrganizationsDAO(BaseDAO):
         level: str,
         founder: str,
         sphere: str,
-        session: AsyncSession = None,
-    ) -> list[StatsData]:
+        zone: str,
+        session: AsyncSession,
+    ) -> list:
         try:
+            # Подзапрос для получения последней статистики по organization_id
+            latest_statistic_subquery = (
+                select(
+                    Statistic.organization_id,
+                    func.max(Statistic.date_added).label("max_date_added"),
+                )
+                .group_by(Statistic.organization_id)
+                .subquery()
+            )
+
+            # Подключение последней записи статистики
+            latest_statistic_alias = (
+                select(Statistic)
+                .join(
+                    latest_statistic_subquery,
+                    and_(
+                        Statistic.organization_id
+                        == latest_statistic_subquery.c.organization_id,
+                        Statistic.date_added
+                        == latest_statistic_subquery.c.max_date_added,
+                    ),
+                )
+                .subquery()
+            )
+
+            # Основной запрос с подзапросом для фильтрации по последней статистике
             query = (
                 select(cls.model)
+                .outerjoin(
+                    latest_statistic_alias,
+                    latest_statistic_alias.c.organization_id == cls.model.id,
+                )
                 .options(selectinload(cls.model.statistic))
                 .filter(
                     and_(
@@ -106,14 +138,28 @@ class OrganizationsDAO(BaseDAO):
                 )
             )
 
+            # Условие на основе зоны выполнения
+            if zone == "90-100%":
+                query = query.where(
+                    latest_statistic_alias.c.fulfillment_percentage >= 90
+                )
+            elif zone == "70-89%":
+                query = query.where(
+                    (latest_statistic_alias.c.fulfillment_percentage >= 70)
+                    & (
+                        latest_statistic_alias.c.fulfillment_percentage <= 89
+                    )  # Исправил диапазон до 89, чтобы избежать пересечения
+                )
+            elif zone == "0-69%":
+                query = query.where(
+                    latest_statistic_alias.c.fulfillment_percentage <= 69
+                )
 
-            logging.debug(f"Executing query: {query}")
-
+            # Выполнение запроса
             results = await session.execute(query)
             res = results.scalars().all()
-            logging.debug(f"Query results: {res}")
 
-            # Преобразуем результаты в объекты Pydantic
+            # Преобразование результатов в Pydantic объекты
             stats_items = []
             for item in res:
                 organization_data = jsonable_encoder(item)

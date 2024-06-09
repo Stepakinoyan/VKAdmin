@@ -32,13 +32,13 @@ class ExcelToDBDAO(BaseDAO):
         await session.execute(delete_data)
         await session.commit()
 
-        excel_data_df = pandas.read_excel(file).rename(columns=db_columns)
+        excel_df = pandas.read_excel(file).rename(columns=db_columns)
 
-        thisisjson = excel_data_df.to_json(orient="records")
+        excel_df_json = excel_df.to_json(orient="records")
 
-        thisisjson_dict = json.loads(thisisjson)
+        convert_to_json = json.loads(excel_df_json)
 
-        for column in thisisjson_dict:
+        for column in convert_to_json:
             item = Item(**column)
             if item.channel_id != 0 and item.channel_id != None:
                 add_data = insert(self.model).values(item.model_dump())

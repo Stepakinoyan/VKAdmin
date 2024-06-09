@@ -44,6 +44,7 @@ class OrganizationsBase(BaseModel):
     posts_30d: Optional[int]
     post_date: Optional[datetime]
 
+
 class OrganizationsForStatistic(BaseModel):
     level: Optional[str]
     founder: Optional[str]

@@ -83,14 +83,18 @@ async def fetch_gos_page(url, organization_id):
         "Accept-Language": "ru-RU,ru;q=0.9",
         "User-Agent": UserAgent().random,
     }
-    async with httpx.AsyncClient(follow_redirects=True, timeout=80.0) as client:
-        response = await client.get(url, headers=headers)
-        if response.status_code == 200 and "GovernmentCommunityBadge" in response.text:
-            print(f"{organization_id}: {url}")
-            return organization_id
-        elif response.status_code in [400, 401, 403, 500]:
-            print(f"[{response.status_code}] {organization_id}: {url}")
-    return None
+    async with semaphore:
+        async with httpx.AsyncClient(follow_redirects=True, timeout=80.0) as client:
+            response = await client.get(url, headers=headers)
+            if (
+                response.status_code == 200
+                and "GovernmentCommunityBadge" in response.text
+            ):
+                print(f"{organization_id}: {url}")
+                return organization_id
+            elif response.status_code in [400, 401, 403, 500]:
+                print(f"[{response.status_code}] {organization_id}: {url}")
+        return None
 
 
 async def save_accounts_to_xlsx(file_path: str, session: AsyncSession):
@@ -261,7 +265,7 @@ async def wall_get_data(group_id: int):
             общий охват аудитории — 10 %,средний охват публикации — 5 %.
 """
 
-Precent: TypeAlias = int | float
+Precent: TypeAlias = int
 
 
 def get_percentage_of_fulfillment_of_basic_requirements(
@@ -321,6 +325,6 @@ def get_percentage_of_fulfillment_of_basic_requirements(
         avg_reach_per_post = posts / posts_30d
         avg_reach_percentage = (avg_reach_per_post / members_count) * 100
         if avg_reach_percentage > 70:
-            percentage += 5
+            percentage += 20
 
     return percentage

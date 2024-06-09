@@ -3,7 +3,7 @@ import App from './App.vue'
 import router from './router'
 import VueCookies from 'vue-cookies'
 import './style.css'
-import Lara from '@/presets/lara';
+// import Lara from '@/presets/lara';
 import PrimeVue from 'primevue/config';
 import InputText from 'primevue/inputtext';
 import Button from 'primevue/button';
@@ -16,15 +16,18 @@ import Dropdown from 'primevue/dropdown';
 import Password from 'primevue/password';
 import Checkbox from 'primevue/checkbox';
 import Column from 'primevue/column';
-import 'primeicons/primeicons.css';
 import Toast from 'primevue/toast';
 import ToastService from 'primevue/toastservice'; 
 import ColumnGroup from 'primevue/columngroup'; 
+import 'primevue/resources/themes/lara-light-green/theme.css';
+import 'primevue/resources/primevue.min.css'; 
+import 'primeicons/primeicons.css';     
+
 import axios from 'axios';
 
 export const app = createApp(App)
 axios.defaults.withCredentials = true;
-axios.defaults.baseURL = 'http://localhost:8000/';
+axios.defaults.baseURL = 'http://localhost:7777/';
 app.component('DataTable', DataTable);
 app.component('Column', Column);
 app.component('Dropdown', Dropdown);
@@ -39,12 +42,11 @@ app.component("Password", Password)
 app.component("Toast", Toast)
 app.component("ColumnGroup", ColumnGroup)
 
-
 app.use(VueCookies)
 
 app.use(PrimeVue, {
     unstyled: false,
-    pt: Lara
+    // pt: Lara
 });
 app.use(ToastService);
 app.use(router)

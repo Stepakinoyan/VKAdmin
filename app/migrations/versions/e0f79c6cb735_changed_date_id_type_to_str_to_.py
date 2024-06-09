@@ -1,8 +1,8 @@
-"""Changed statistic type to list to organizations
+"""Changed date_id type to str to statistic table back
 
-Revision ID: 1e0427812221
+Revision ID: e0f79c6cb735
 Revises: 
-Create Date: 2024-06-04 22:10:02.131004
+Create Date: 2024-06-06 16:25:43.033330
 
 """
 from typing import Sequence, Union
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = '1e0427812221'
+revision: str = 'e0f79c6cb735'
 down_revision: Union[str, None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None

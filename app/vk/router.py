@@ -1,8 +1,6 @@
 import asyncio
-import json
 import logging
 from datetime import datetime
-import time
 
 import httpx
 import redis.asyncio as redis
@@ -102,7 +100,6 @@ async def callback(code: str, state: str = None):
 @router.get("/get_stat")
 async def get_stat(session: AsyncSession = Depends(get_session)):
     try:
-        # Получаем все организации и создаем словарь для быстрого поиска по channel_id
         organizations_result = await session.execute(select(Organizations))
         organizations_list = organizations_result.scalars().all()
         organizations = {
@@ -112,7 +109,6 @@ async def get_stat(session: AsyncSession = Depends(get_session)):
             for org in organizations_list
         }
 
-        # Разбиваем список по 500 значений
         chunks = [
             organizations_list[i : i + 500]
             for i in range(0, len(organizations_list), 500)
@@ -122,45 +118,37 @@ async def get_stat(session: AsyncSession = Depends(get_session)):
         updated_organizations = []
 
         for chunk in chunks:
-            # Преобразуем chunk к формату, подходящему для запроса
             group_ids = ",".join(str(org.channel_id) for org in chunk)
             auth = settings.VK_SERVICE_TOKEN
 
-            # Указываем все необходимые поля в запросе
             fields = (
                 "members_count,city,status,verified,description,cover,activity,menu"
             )
 
-            # Выполняем запрос, как в функции fgroup_info
             data = await call(
                 "groups.getById", {"group_ids": group_ids, "fields": fields}, auth
             )
             logging.info(f"API response: {data}")
 
-            # Проверка типа данных
             if not isinstance(data, dict):
                 raise TypeError(
                     f"Expected data to be a dictionary, got {type(data)} instead"
                 )
 
-            # Проверка на наличие ошибок в ответе API
             if "error" in data:
                 raise ValueError(f"API error: {data['error']}")
 
             response = data["response"]
 
             for group in response["groups"]:
-                # Генерируем date_id
                 date_str = datetime.now().strftime("%Y%m%d")
                 date_id = f"{date_str}{group['id']}"
 
-                # Получаем организацию через channel_id
                 organization = organizations.get(group["id"])
 
                 if not organization:
-                    continue  # Если organization не найдена, пропускаем эту группу
+                    continue
 
-                # Обновляем данные организации из ответа API
                 organization["city"] = (
                     group.get("city", {}).get("title")
                     if isinstance(group.get("city"), dict)
@@ -190,27 +178,33 @@ async def get_stat(session: AsyncSession = Depends(get_session)):
                     True if group.get("cover").get("enabled") else False
                 )
                 organization["members_count"] = group.get("members_count", 0)
+                organization["has_gos_badge"] = organization["has_gos_badge"]
+                organization["posts"] = organization["posts"]
+                organization["posts_1d"] = organization["posts_1d"]
+                organization["posts_7d"] = organization["posts_7d"]
+                organization["posts_30d"] = organization["posts_30d"]
 
                 updated_organizations.append(organization)
 
-                # Создаем или обновляем запись в статистике
                 stat = await session.get(Statistic, date_id)
                 if stat:
                     stat.members_count = group.get("members_count", 0)
                     stat.date_added = datetime.now().date()
+                    stat.fulfillment_percentage = get_percentage_of_fulfillment_of_basic_requirements(organization)
                 else:
                     new_stat = Statistic(
                         date_id=date_id,
                         organization_id=organization["id"],
                         date_added=datetime.now().date(),
                         members_count=group.get("members_count", 0),
-                        fulfillment_percentage=0,
+                        fulfillment_percentage=get_percentage_of_fulfillment_of_basic_requirements(organization),
                     )
-                    all_stats.append(
-                        StatisticBase.model_validate(new_stat, from_attributes=True)
+                    validated_stat = StatisticBase.model_validate(
+                        new_stat, from_attributes=True
                     )
+                    all_stats.append(validated_stat)
+                    logging.info(f"Added new_stat: {validated_stat}")
 
-        # Вставляем или обновляем данные организаций в базу данных
         for organization in updated_organizations:
             stmt = (
                 insert(Organizations)
@@ -220,49 +214,39 @@ async def get_stat(session: AsyncSession = Depends(get_session)):
             await session.execute(stmt)
         await session.commit()
 
-        # Теперь считаем fulfillment_percentage и обновляем записи в базе данных
         organizations = {
             org.id: OrganizationsForStatistic.model_validate(
                 org, from_attributes=True
             ).model_dump()
             for org in organizations_list
         }
+
         for stat in all_stats:
             organization = organizations.get(stat.organization_id)
             if organization:
-                fulfillment_percentage = get_percentage_of_fulfillment_of_basic_requirements(organization)
+                fulfillment_percentage = (
+                    get_percentage_of_fulfillment_of_basic_requirements(organization)
+                )
                 stat.fulfillment_percentage = fulfillment_percentage
 
-                add_stat = insert(Statistic).values(StatisticBase.model_validate(stat, from_attributes=True).model_dump())
-                try:
-                    await session.execute(add_stat)
-                except Exception as e:
-                    logging.error(f"Failed to insert stat {stat.date_id}: {e}")
+                add_stat = insert(Statistic).values(
+                    StatisticBase.model_validate(
+                        stat, from_attributes=True
+                    ).model_dump()
+                ).on_conflict_do_update(
+                    index_elements=["date_id"],
+                    set_={
+                        "members_count": stat.members_count,
+                        "fulfillment_percentage": stat.fulfillment_percentage,
+                        "date_added": stat.date_added,
+                    }
+                )
+                await session.execute(add_stat)
 
         await session.commit()
         return {"status": "completed"}
-        # for stat in all_stats:
-        #     organization = organizations.get(stat.organization_id)
-        #     if organization:
-        #         print(organization)
-        #         fulfillment_percentage = get_percentage_of_fulfillment_of_basic_requirements(organization)
-                
-                    
-        #         stat.fulfillment_percentage = fulfillment_percentage
 
-        #         # add_stat = (
-        #         #     insert(Statistic)
-        #         #     .values(StatisticBase.model_validate(stat, from_attributes=True).model_dump())
-        #         #     .on_conflict_do_update(
-        #         #         index_elements=["date_id"], set_=StatisticBase.model_validate(stat, from_attributes=True).model_dump()
-        #         #     )
-        #         # )
-        #         add_stat = insert(Statistic).values(StatisticBase.model_validate(stat, from_attributes=True).model_dump())
 
-        #         await session.execute(add_stat)
-
-        # await session.commit()
-        # return {"status": "completed"}
     except Exception as e:
         logging.error(f"An error occurred: {e}")
         await session.rollback()
@@ -293,9 +277,9 @@ async def get_gos_bage(session: AsyncSession = Depends(get_session)):
     for i in range(0, len(accounts), batch_size):
         batch = accounts[i : i + batch_size]
         all_ids_in_batch = [account.id for account in batch]
-        
+
         tasks = [
-            fetch_gos_page(f"https://vk.com/{account.screen_name}", account.id) 
+            fetch_gos_page(f"https://vk.com/{account.screen_name}", account.id)
             for account in batch
         ]
         batch_results = await asyncio.gather(*tasks)
@@ -320,10 +304,8 @@ async def get_gos_bage(session: AsyncSession = Depends(get_session)):
             )
 
         await session.commit()
-        
+
         # Пауза между батчами
         await asyncio.sleep(pause_duration)
 
     return {"updated_accounts": len(accounts)}
-
-
