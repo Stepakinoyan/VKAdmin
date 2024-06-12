@@ -1,4 +1,5 @@
 import asyncio
+import json
 import logging
 from datetime import datetime
 
@@ -141,6 +142,9 @@ async def get_stat(session: AsyncSession = Depends(get_session)):
             response = data["response"]
 
             for group in response["groups"]:
+                print(group)
+                with open("data.json", 'w') as file:
+                    json.dump(group, file, indent=4)
                 date_str = datetime.now().strftime("%Y%m%d")
                 date_id = f"{date_str}{group['id']}"
 

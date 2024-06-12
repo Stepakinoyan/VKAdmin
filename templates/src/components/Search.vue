@@ -1,40 +1,108 @@
 <template>
     <main class="flex flex-col-reverse mt-2">
-        <!-- scrollHeight="746px" -->
-        <DataTable :value="stats" paginator :rowsPerPageOptions="[10, 20, 50]" :rows="10" scrollHeight="calc(100vh - 164px)" removableSort  :scrollable="isScrollable" :sortField="'fulfillment_percentage'" :sortOrder="-1" class="mt-2 text-sm blue-table h-max-[839px]" :rowStyle="rowStyle">
-            <Column field="name" sortable header="Название" frozen class="px-7 text-xs py-7"></Column>
-            <Column field="fulfillment_percentage" sortable header="Процент выполнения" class="text-black"></Column>
-            <Column v-for="(col, index) in statisticColumns" :key="index" :field="col.field" sortable :header="col.header" class="text-black"></Column>
-            <Column field="level" sortable header="Уровень" class="text-black"></Column>
-            <Column field="founder" sortable header="Учредитель" class="text-black"></Column>
-            <Column field="the_main_state_registration_number" sortable header="ОГРН" class="text-black"></Column>
-            <Column field="status" sortable header="Статус" class="text-black" style="min-width: 300px"></Column>
-            <Column field="channel_id" sortable header="ID канала" class="text-black"></Column>
-            <Column field="url" sortable header="URL" class="text-black"></Column>
-            <Column field="address" sortable header="Адрес" class="text-black"></Column>
-            <Column field="connected" sortable header="Связь" class="text-black"></Column>
-            <Column field="state_mark" sortable header="Гос. отметка" class="text-black"></Column>
-            <Column field="screen_name" sortable header="Имя в VK" class="text-black"></Column>
-            <Column field="name" sortable header="Имя аккаунта" class="text-xs text-black"></Column>
-            <Column field="city" sortable header="Город" class="text-black"></Column>
-            <Column field="activity" sortable header="Активность" class="text-black"></Column>
-            <Column field="verified" sortable header="Проверен" class="text-black"></Column>
-            <Column field="has_avatar" sortable header="Аватар" class="text-black"></Column>
-            <Column field="has_cover" sortable header="Обложка" class="text-black"></Column>
-            <Column field="has_description" sortable header="Описание" class="text-black"></Column>
-            <Column field="has_gos_badge" sortable header="Гос. значок" class="text-black"></Column>
-            <Column field="has_widget" sortable header="Виджет" class="text-black"></Column>
-            <Column field="widget_count" sortable header="Кол-во виджетов" class="text-black"></Column>
-            <Column field="members_count" sortable header="Кол-во участников" class="text-black"></Column>
-            <Column field="site" sortable header="Сайт" class="text-black"></Column>
-            <Column field="posts" sortable header="Посты" class="text-black"></Column>
-            <Column field="posts_1d" sortable header="Посты за 1 день" class="text-black"></Column>
-            <Column field="posts_7d" sortable header="Посты за 7 дней" class="text-black"></Column>
-            <Column field="posts_30d" sortable header="Посты за 30 дней" class="text-black"></Column>
-            <Column field="post_date" sortable header="Дата поста" class="text-black"></Column>
-        </DataTable>
+        <DataTable
+        :value="stats"
+        :loading="loading"
+        size="small"
+        paginator
+        :rowsPerPageOptions="[20, 50]"
+        :rows="20"
+        removableSort
+        resizableColumns
+        columnResizeMode="fit"
+        scrollHeight="calc(100vh - 164px)"
+        :scrollable="isScrollable"
+        :sortField="'fulfillment_percentage'"
+        :sortOrder="-1"
+        class="mt-2 text-sm"
+        :rowStyle="rowStyle"
+        tableStyle="min-width: 50rem"   
+    >
+        <Column field="name" sortable header="Название" frozen class="px-4 text-xs" style="min-width: 170px;"></Column>
+        <Column field="fulfillment_percentage" sortable header="Процент выполнения" class="text-black text-xs"></Column>
+        <Column v-for="(col, index) in statisticColumns" :key="index" :field="col.field" sortable :header="col.header" class="text-black"></Column>
+        <Column field="members_count" sortable header="Всего участников" class="text-black text-xs"></Column>
+        <Column field="verified" sortable header="Проверен" class="text-black text-xs">
+            <template #body="slotProps">
+                <i v-if="slotProps.data.verified" class="pi pi-check-circle" style="color: green; font-size: 1.25rem"></i>
+                <i v-else class="pi pi-times-circle" style="color: red; font-size: 1.25rem"></i>
+            </template>
+        </Column>
+        <Column field="has_avatar" sortable header="Аватар" class="text-black">
+            <template #body="slotProps">
+                <i v-if="slotProps.data.has_avatar" class="pi pi-check-circle" style="color: green; font-size: 1.25rem"></i>
+                <i v-else class="pi pi-times-circle" style="color: red; font-size: 1.25rem"></i>
+            </template>
+        </Column>
+        <Column field="has_cover" sortable header="Обложка" class="text-black">
+            <template #body="slotProps">
+                <i v-if="slotProps.data.has_cover" class="pi pi-check-circle" style="color: green; font-size: 1.25rem"></i>
+                <i v-else class="pi pi-times-circle" style="color: red; font-size: 1.25rem"></i>
+            </template>
+        </Column>
+        <Column field="has_description" sortable header="Описание" class="text-black">
+            <template #body="slotProps">
+                <i v-if="slotProps.data.has_description" class="pi pi-check-circle" style="color: green; font-size: 1.25rem"></i>
+                <i v-else class="pi pi-times-circle" style="color: red; font-size: 1.25rem"></i>
+            </template>
+        </Column>
+        <Column field="has_gos_badge" sortable header="Гос. метка" class="text-black">
+            <template #body="slotProps">
+                <i v-if="slotProps.data.has_gos_badge" class="pi pi-check-circle" style="color: green; font-size: 1.25rem"></i>
+                <i v-else class="pi pi-times-circle" style="color: red; font-size: 1.25rem"></i>
+            </template>
+        </Column>
+        <Column field="has_widget" sortable header="Виджет" class="text-black">
+            <template #body="slotProps">
+                <i v-if="slotProps.data.has_widget" class="pi pi-check-circle" style="color: green; font-size: 1.25rem"></i>
+                <i v-else class="pi pi-times-circle" style="color: red; font-size: 1.25rem"></i>
+            </template>
+        </Column>
+        <Column field="widget_count" sortable header="Кол-во виджетов" class="text-black text-xs"></Column>
+        <Column field="posts" sortable header="Посты" class="text-black text-xs"></Column>
+        <Column field="posts_1d" sortable header="Посты за 1 день" class="text-black text-xs"></Column>
+        <Column field="posts_7d" sortable header="Посты за 7 дней" class="text-black"></Column>
+        <Column field="posts_30d" sortable header="Посты за 30 дней" class="text-black text-xs"></Column>
+        <Column field="post_date" sortable header="Дата последнего сбора" class="text-black text-xs"></Column>
+        <Column field="level" sortable header="Уровень" class="text-black text-xs"></Column>
+        <Column field="founder" sortable header="Учредитель" class="text-black text-xs"></Column>
+        <Column field="the_main_state_registration_number" sortable header="ОГРН" class="text-black text-xs"></Column>
+        <Column field="status" sortable header="Статус" class="text-black" style="min-width: 300px"></Column>
+        <Column field="channel_id" sortable header="ID канала" class="text-black"></Column>
+        <Column field="url" sortable header="URL" class="text-black text-xs"></Column>
+        <Column field="screen_name" sortable header="Имя в VK" class="text-black text-xs"></Column>
+        <Column field="name" sortable header="Имя аккаунта" class="text-xs text-black"></Column>
+        <Column field="city" sortable header="Город" class="text-black text-xs"></Column>
+        <Column field="activity" sortable header="Тип" class="text-black text-xs"></Column>
 
-        <div class="flex items-center flex-col lg:flex-row mb-1 w-4/5 space-y-1 lg:space-y-0">
+        <template #empty>
+            <tr>
+                <td colspan="30" class="text-center p-4">
+                    Ничего не найдено
+                </td>
+            </tr>
+        </template>
+        
+
+        <template #paginator="{ state, firstPage, lastPage, totalPages, previousPage, nextPage }">
+                <div class="flex justify-center items-center mt-2 fixed-paginator">
+                    <button @click="firstPage" :disabled="state.firstPage">««</button>
+                    <button @click="previousPage" :disabled="state.firstPage">«</button>
+                    <span v-for="page in totalPages" :key="page" class="px-1">
+                        <button
+                            :class="{'bg-green-500 text-white': state.currentPage === page, 'bg-white': state.currentPage !== page}"
+                            @click="state.changePage(page)"
+                        >
+                            {{ page }}
+                        </button>
+                    </span>
+                    <button @click="nextPage" :disabled="state.lastPage">»</button>
+                    <button @click="lastPage" :disabled="state.lastPage">»»</button>
+                </div>
+            </template>
+    </DataTable>
+
+    <div class="flex items-center flex-col lg:flex-row mb-1 space-y-1 lg:space-y-0">
             <InputGroup class="ml-2">
                 <Dropdown v-model="selectedlevel" :options="levels" optionLabel="level" placeholder="Уровень" class="w-full md:w-14rem" @change="onLevelChange"/>
             </InputGroup>
@@ -57,14 +125,15 @@
                     @change="onZoneChange"
                 />
             </InputGroup>
-
-            <InputGroup class="ml-2 space-x-4">
-                <Button label="Сбросить" @click="resetFilters" />
-                <i class="pi pi-sign-out cursor-pointer" style="font-size: 2rem" @click="SignOut()"></i>
-            </InputGroup>
-
             
-        </div>
+            <InputGroup class="ml-2" @click="resetFilters()">
+                <i class="pi pi-filter-slash cursor-pointer" style="font-size: 1.25rem"></i>   
+            </InputGroup>
+            <InputGroup class="flex justify-end mr-4">
+                <i class="pi pi-sign-out cursor-pointer" style="font-size: 1.25rem" @click="SignOut()"></i>
+            </InputGroup>
+    </div>
+        
     </main>
 </template>
 
@@ -75,6 +144,7 @@ import axios from "axios";
 export default {
     data() {
         return {
+            loading: false,
             selectedlevel: null,
             selectedfounder: null,
             selectedsphere: null,
@@ -95,7 +165,8 @@ export default {
                 { level: 'ВУЗ' }
             ],
             stats: [],
-            statisticColumns: []
+            statisticColumns: [],
+            
         }
     },
     mounted() {
@@ -103,11 +174,13 @@ export default {
     },
     methods: {
         loadAllData() {
+            this.loading = true;
             axios.get('/filter/get_stats')
                 .then(response => {
                     const items = response.data[0].items;
                     this.stats = this.transformData(items);
                     this.generateStatisticColumns(items);
+                    this.loading = false;
                 })
                 .catch(error => {
                     console.error('Error fetching stats:', error);
@@ -208,6 +281,7 @@ export default {
             }
         },
         loadFilteredData() {
+            this.loading = true;
             const levelParam = this.selectedlevel ? `level=${this.selectedlevel.level}` : '';
             const founderParam = this.selectedfounder ? `founder=${this.selectedfounder.founder}` : '';
             const sphereParam = this.selectedsphere ? `sphere=${this.selectedsphere.sphere}` : '';
@@ -222,6 +296,7 @@ export default {
                     const items = response.data[0].items;
                     this.stats = this.transformData(items);
                     this.generateStatisticColumns(items);
+                    this.loading = false;
                 })
                 .catch(error => {
                     console.error('Error fetching stats:', error);
@@ -234,6 +309,7 @@ export default {
             this.selectedzone = null;
             this.founders = [];
             this.spheres = [];
+            this.stats = []
             this.loadAllData();
         },
         SignOut(){
@@ -244,8 +320,9 @@ export default {
 };
 </script>
 
-
 <style>
+
+
 .main {
     margin-top: 2px;
 }
@@ -253,6 +330,15 @@ export default {
 .DataTable {
     margin-top: 2px;
     font-size: 0.875rem;
+    min-height: calc(100vh - 164px); /* Обеспечивает минимальную высоту */
+    display: flex;
+    flex-direction: column;
+}
+
+
+
+.p-datatable-tbody tr {
+    height: 100%; /* Заполнить высоту пустыми строками */
 }
 
 .InputGroup {
@@ -273,5 +359,16 @@ export default {
 
 .yellow-zone-name {
     color: inherit;
+}
+
+.p-datatable-empty-message {
+    text-align: center;
+    padding: 1rem;
+}
+
+.p-paginator-page.p-highlight {
+    background-color: #4caf50;
+    color: white;
+    border: none;
 }
 </style>
