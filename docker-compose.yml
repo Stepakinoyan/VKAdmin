@@ -40,5 +40,15 @@ services:
     depends_on:
       - api
 
+  scheduler:
+    build:
+      context: .
+    command: sh -c "taskiq scheduler app.tasks.vk_stat:scheduler"
+    env_file:
+      - .env-non-dev
+    depends_on:
+      - redis
+
+
 volumes:
   postgresdata:

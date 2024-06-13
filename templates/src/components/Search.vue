@@ -1,90 +1,85 @@
 <template>
     <main class="flex flex-col-reverse mt-2">
         <DataTable
-        :value="stats"
-        :loading="loading"
-        size="small"
-        paginator
-        :rowsPerPageOptions="[20, 50]"
-        :rows="20"
-        removableSort
-        resizableColumns
-        columnResizeMode="fit"
-        scrollHeight="calc(100vh - 164px)"
-        :scrollable="isScrollable"
-        :sortField="'fulfillment_percentage'"
-        :sortOrder="-1"
-        class="mt-2 text-sm"
-        :rowStyle="rowStyle"
-        tableStyle="min-width: 50rem"   
-    >
-        <Column field="name" sortable header="Название" frozen class="px-4 text-xs" style="min-width: 170px;"></Column>
-        <Column field="fulfillment_percentage" sortable header="Процент выполнения" class="text-black text-xs"></Column>
-        <Column v-for="(col, index) in statisticColumns" :key="index" :field="col.field" sortable :header="col.header" class="text-black"></Column>
-        <Column field="members_count" sortable header="Всего участников" class="text-black text-xs"></Column>
-        <Column field="verified" sortable header="Проверен" class="text-black text-xs">
-            <template #body="slotProps">
-                <i v-if="slotProps.data.verified" class="pi pi-check-circle" style="color: green; font-size: 1.25rem"></i>
-                <i v-else class="pi pi-times-circle" style="color: red; font-size: 1.25rem"></i>
-            </template>
-        </Column>
-        <Column field="has_avatar" sortable header="Аватар" class="text-black">
-            <template #body="slotProps">
-                <i v-if="slotProps.data.has_avatar" class="pi pi-check-circle" style="color: green; font-size: 1.25rem"></i>
-                <i v-else class="pi pi-times-circle" style="color: red; font-size: 1.25rem"></i>
-            </template>
-        </Column>
-        <Column field="has_cover" sortable header="Обложка" class="text-black">
-            <template #body="slotProps">
-                <i v-if="slotProps.data.has_cover" class="pi pi-check-circle" style="color: green; font-size: 1.25rem"></i>
-                <i v-else class="pi pi-times-circle" style="color: red; font-size: 1.25rem"></i>
-            </template>
-        </Column>
-        <Column field="has_description" sortable header="Описание" class="text-black">
-            <template #body="slotProps">
-                <i v-if="slotProps.data.has_description" class="pi pi-check-circle" style="color: green; font-size: 1.25rem"></i>
-                <i v-else class="pi pi-times-circle" style="color: red; font-size: 1.25rem"></i>
-            </template>
-        </Column>
-        <Column field="has_gos_badge" sortable header="Гос. метка" class="text-black">
-            <template #body="slotProps">
-                <i v-if="slotProps.data.has_gos_badge" class="pi pi-check-circle" style="color: green; font-size: 1.25rem"></i>
-                <i v-else class="pi pi-times-circle" style="color: red; font-size: 1.25rem"></i>
-            </template>
-        </Column>
-        <Column field="has_widget" sortable header="Виджет" class="text-black">
-            <template #body="slotProps">
-                <i v-if="slotProps.data.has_widget" class="pi pi-check-circle" style="color: green; font-size: 1.25rem"></i>
-                <i v-else class="pi pi-times-circle" style="color: red; font-size: 1.25rem"></i>
-            </template>
-        </Column>
-        <Column field="widget_count" sortable header="Кол-во виджетов" class="text-black text-xs"></Column>
-        <Column field="posts" sortable header="Посты" class="text-black text-xs"></Column>
-        <Column field="posts_1d" sortable header="Посты за 1 день" class="text-black text-xs"></Column>
-        <Column field="posts_7d" sortable header="Посты за 7 дней" class="text-black"></Column>
-        <Column field="posts_30d" sortable header="Посты за 30 дней" class="text-black text-xs"></Column>
-        <Column field="post_date" sortable header="Дата последнего сбора" class="text-black text-xs"></Column>
-        <Column field="level" sortable header="Уровень" class="text-black text-xs"></Column>
-        <Column field="founder" sortable header="Учредитель" class="text-black text-xs"></Column>
-        <Column field="the_main_state_registration_number" sortable header="ОГРН" class="text-black text-xs"></Column>
-        <Column field="status" sortable header="Статус" class="text-black" style="min-width: 300px"></Column>
-        <Column field="channel_id" sortable header="ID канала" class="text-black"></Column>
-        <Column field="url" sortable header="URL" class="text-black text-xs"></Column>
-        <Column field="screen_name" sortable header="Имя в VK" class="text-black text-xs"></Column>
-        <Column field="name" sortable header="Имя аккаунта" class="text-xs text-black"></Column>
-        <Column field="city" sortable header="Город" class="text-black text-xs"></Column>
-        <Column field="activity" sortable header="Тип" class="text-black text-xs"></Column>
+            :value="stats"
+            :loading="loading"
+            paginator
+            :rowsPerPageOptions="[20, 50]"
+            :rows="20"
+            removableSort
+            scrollable
+            scrollHeight="calc(100vh - 164px)"
+            :sortField="'fulfillment_percentage'"
+            :sortOrder="-1"
+            :rowStyle="rowStyle"
+            tableStyle="min-width: 50rem"   
+        >
+            <Column field="name" sortable header="Название" class="text-xs text-align: left;" style="max-width: 267px;" frozen></Column>
+            <Column field="fulfillment_percentage" sortable header="% Вып-я" class="text-black text-xs text-center px-0.5" ></Column>
+            <Column v-for="(col, index) in statisticColumns" :key="index" :field="col.field" sortable :header="col.header" class="text-black text-xs text-center"></Column>
+            <Column field="members_count" sortable header="Участники" class="text-black text-xs text-center"></Column>
+            <Column field="verified" sortable header="Проверен" class="text-black text-xs text-center">
+                <template #body="slotProps" style="font-size: 1.5rem">
+                    <i v-if="slotProps.data.verified" class="pi pi-check-circle" style="color: green;"></i>
+                    <i v-else class="pi pi-times-circle" style="color: red;"></i>
+                </template>
+            </Column>
+            <Column field="has_avatar" sortable header="Аватар" class="text-black text-xs text-center">
+                <template #body="slotProps">
+                    <i v-if="slotProps.data.has_avatar" class="pi pi-check-circle" style="color: green; font-size: 1.25rem"></i>
+                    <i v-else class="pi pi-times-circle" style="color: red; font-size: 1.25rem"></i>
+                </template>
+            </Column>
+            <Column field="has_cover" sortable header="Обложка" class="text-black text-xs text-center">
+                <template #body="slotProps">
+                    <i v-if="slotProps.data.has_cover" class="pi pi-check-circle" style="color: green; font-size: 1.25rem"></i>
+                    <i v-else class="pi pi-times-circle" style="color: red; font-size: 1.25rem"></i>
+                </template>
+            </Column>
+            <Column field="has_description" sortable header="Описание" class="text-black text-xs text-center">
+                <template #body="slotProps">
+                    <i v-if="slotProps.data.has_description" class="pi pi-check-circle" style="color: green; font-size: 1.25rem"></i>
+                    <i v-else class="pi pi-times-circle" style="color: red; font-size: 1.25rem"></i>
+                </template>
+            </Column>
+            <Column field="has_gos_badge" sortable header="Гос. метка" class="text-black text-xs text-center">
+                <template #body="slotProps">
+                    <i v-if="slotProps.data.has_gos_badge" class="pi pi-check-circle" style="color: green; font-size: 1.25rem"></i>
+                    <i v-else class="pi pi-times-circle" style="color: red; font-size: 1.25rem"></i>
+                </template>
+            </Column>
+            <Column field="has_widget" sortable header="Виджет" class="text-black text-xs text-center">
+                <template #body="slotProps">
+                    <i v-if="slotProps.data.has_widget" class="pi pi-check-circle" style="color: green; font-size: 1.25rem"></i>
+                    <i v-else class="pi pi-times-circle" style="color: red; font-size: 1.25rem"></i>
+                </template>
+            </Column>
+            <Column field="widget_count" sortable header="Виджеты" class="text-black text-xs text-center"></Column>
+            <Column field="posts" sortable header="Посты" class="text-black text-xs text-center"></Column>
+            <Column field="posts_1d" sortable header="1 день" class="text-black text-xs text-center"></Column>
+            <Column field="posts_7d" sortable header="7 дней" class="text-black text-xs text-center"></Column>
+            <Column field="posts_30d" sortable header="30 дней" class="text-black text-xs text-center"></Column>
+            <Column field="post_date" sortable header="Дата сбора" class="text-black text-xs text-center"></Column>
+            <Column field="level" sortable header="Уровень" class="text-black text-xs text-center"></Column>
+            <Column field="founder" sortable header="Учред." class="text-black text-xs text-center"></Column>
+            <Column field="the_main_state_registration_number" sortable header="ОГРН" class="text-black text-xs text-center"></Column>
+            <Column field="status" sortable header="Статус" class="text-black text-xs text-center" style="min-width: 150px"></Column>
+            <Column field="channel_id" sortable header="ID" class="text-black text-xs text-center"></Column>
+            <Column field="url" sortable header="URL" class="text-black text-xs text-center"></Column>
+            <Column field="screen_name" sortable header="Имя VK" class="text-black text-xs text-center"></Column>
+            <Column field="name" sortable header="Акк. имя" class="text-black px-auto text-center" style="font-size: 0.7rem"></Column>
+            <Column field="city" sortable header="Город" class="text-black text-xs text-center"></Column>
+            <Column field="activity" sortable header="Тип" class="text-black text-xs text-center"></Column>
 
-        <template #empty>
-            <tr>
-                <td colspan="30" class="text-center p-4">
-                    Ничего не найдено
-                </td>
-            </tr>
-        </template>
-        
+            <template #empty>
+                <tr>
+                    <td colspan="30" class="text-center p-4">
+                        Ничего не найдено
+                    </td>
+                </tr>
+            </template>
 
-        <template #paginator="{ state, firstPage, lastPage, totalPages, previousPage, nextPage }">
+            <template #paginator="{ state, firstPage, lastPage, totalPages, previousPage, nextPage }">
                 <div class="flex justify-center items-center mt-2 fixed-paginator">
                     <button @click="firstPage" :disabled="state.firstPage">««</button>
                     <button @click="previousPage" :disabled="state.firstPage">«</button>
@@ -100,7 +95,7 @@
                     <button @click="lastPage" :disabled="state.lastPage">»»</button>
                 </div>
             </template>
-    </DataTable>
+        </DataTable>
 
     <div class="flex items-center flex-col lg:flex-row mb-1 space-y-1 lg:space-y-0">
             <InputGroup class="ml-2">
@@ -204,7 +199,7 @@ export default {
             if (items.length > 0 && items[0].statistic) {
                 const statisticCount = items[0].statistic.length;
                 for (let i = 1; i <= statisticCount; i++) {
-                    statisticColumns.push({ field: `statistic_members_count_${i}`, header: `Кол-во участников (статистика) ${i}` });
+                    statisticColumns.push({ field: `statistic_members_count_${i}`, header: `Участников ${i}` });
                 }
             }
             this.statisticColumns = statisticColumns;

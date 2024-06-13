@@ -20,7 +20,6 @@ import Dropdown from 'primevue/dropdown';
 import Password from 'primevue/password';
 import Checkbox from 'primevue/checkbox';
 import Column from 'primevue/column';
-import Toast from 'primevue/toast';
 import ToastService from 'primevue/toastservice'; 
 import ColumnGroup from 'primevue/columngroup'; 
 import InputIcon from 'primevue/inputicon';
@@ -41,7 +40,6 @@ app.component("InputGroupAddon", InputGroupAddon);
 app.component("InputMask", InputMask)
 app.component("Menubar", Menubar)
 app.component("Password", Password)
-app.component("Toast", Toast)
 app.component("ColumnGroup", ColumnGroup)
 app.component("IconField", IconField)
 app.component("InputIcon", InputIcon)
