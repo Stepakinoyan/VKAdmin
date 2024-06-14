@@ -35,6 +35,11 @@ class Settings(BaseSettings):
     REDIS_HOST: str
     REDIS_PORT: int
 
+    MQ_HOST: str
+    RABBITMQ_DEFAULT_USER: str
+    RABBITMQ_DEFAULT_PASS: str
+    MQ_PORT: int
+
     model_config = SettingsConfigDict(env_file=".env")
 
     @property
@@ -44,6 +49,10 @@ class Settings(BaseSettings):
     @property
     def get_test_database_url(self) -> str:
         return f"postgresql+asyncpg://{self.TEST_DB_USER}:{self.TEST_DB_PASS}@{self.TEST_DB_HOST}:{self.TEST_DB_PORT}/{self.TEST_DB_NAME}"
+    
+    @property
+    def mq_url(self):
+        return f"amqp://{self.RABBITMQ_DEFAULT_USER}:{self.RABBITMQ_DEFAULT_PASS}@{self.MQ_HOST}:{self.MQ_PORT}/"
 
 
 settings = Settings()

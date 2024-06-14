@@ -26,7 +26,7 @@ mypy = "^1.10.0"
 httpx = {extras = ["http2"], version = "^0.27.0"}
 fake-useragent = "^1.5.1"
 taskiq = "^0.11.4"
-taskiq-redis = "^1.0.0"
+taskiq-faststream = {extras = ["nats"], version = "^0.1.8"}
 
 
 [build-system]

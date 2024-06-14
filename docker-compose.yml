@@ -11,12 +11,28 @@ services:
       POSTGRES_DB: postgres
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
+    volumes:
+      - postgresdata:/var/lib/postgresql/data
 
   redis:
     image: redis:latest
     container_name: vkadmin_redis
     ports:
       - 6379:6379
+
+  nats:
+    image: 'nats:latest'
+    ports:
+      - "4222:4222"
+  
+  scheduler:
+    build:
+      context: .
+    command: sh -c "taskiq scheduler app.tasks.vk_stat:scheduler"
+    env_file:
+      - .env-non-dev
+    depends_on:
+      - nats
 
   api:
     build:
@@ -27,6 +43,7 @@ services:
     depends_on: 
       - db
       - redis
+      - nats
     command: sh -c "alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port 8000"
     ports:
       - 7777:8000
@@ -39,16 +56,6 @@ services:
       - 5468:80
     depends_on:
       - api
-
-  scheduler:
-    build:
-      context: .
-    command: sh -c "taskiq scheduler app.tasks.vk_stat:scheduler"
-    env_file:
-      - .env-non-dev
-    depends_on:
-      - redis
-
 
 volumes:
   postgresdata:

@@ -288,6 +288,21 @@ files = [
 ]
 
 [[package]]
+name = "fast-depends"
+version = "2.4.4"
+description = "FastDepends - extracted and cleared from HTTP domain logic FastAPI Dependency Injection System. Async and sync are both supported."
+optional = false
+python-versions = ">=3.8"
+files = [
+    {file = "fast_depends-2.4.4-py3-none-any.whl", hash = "sha256:dfb68f97a9e0219500ef7bbf7bf99ce1e7b64204f51d7fa5f3348dc428080fd0"},
+    {file = "fast_depends-2.4.4.tar.gz", hash = "sha256:57754c01ba90d0359df39eb5628a54b6663301f8023d5d1bc2c35d39e636a80d"},
+]
+
+[package.dependencies]
+anyio = ">=3.0.0,<5.0.0"
+pydantic = ">=1.7.4,<1.8 || >1.8,<1.8.1 || >1.8.1,<3.0.0"
+
+[[package]]
 name = "fastapi"
 version = "0.111.0"
 description = "FastAPI framework, high performance, easy to learn, fast to code, ready for production"
@@ -334,6 +349,39 @@ typer = ">=0.12.3"
 
 [package.extras]
 standard = ["fastapi", "uvicorn[standard] (>=0.15.0)"]
+
+[[package]]
+name = "faststream"
+version = "0.5.12"
+description = "FastStream: the simplest way to work with a messaging queues"
+optional = false
+python-versions = ">=3.8"
+files = [
+    {file = "faststream-0.5.12-py3-none-any.whl", hash = "sha256:7a814e03c03ff5650f9a18fb71999ba048aab658463407c44ea855d7f9e69486"},
+    {file = "faststream-0.5.12.tar.gz", hash = "sha256:03699127ad2922b688ba9cd484391b4cc2facbbd9bcc053a01d5e192712514e1"},
+]
+
+[package.dependencies]
+anyio = ">=3.7.1,<5"
+fast-depends = ">=2.4.0b0,<2.5.0"
+nats-py = {version = ">=2.3.1,<=3.0.0", optional = true, markers = "extra == \"nats\""}
+typer = ">=0.9,<0.12 || >0.12,<1"
+typing-extensions = ">=4.8.0"
+
+[package.extras]
+confluent = ["confluent-kafka (>=2,<3)"]
+dev = ["aio-pika (>=9,<10)", "aiokafka (>=0.9,<0.11)", "bandit (==1.7.8)", "cairosvg", "codespell (==2.3.0)", "confluent-kafka (>=2,<3)", "confluent-kafka-stubs", "coverage[toml] (==7.5.3)", "detect-secrets (==1.5.0)", "dirty-equals (==0.7.1.post0)", "email-validator (==2.1.1)", "fastapi (==0.111.0)", "griffe-typingdoc (==0.2.5)", "httpx (==0.27.0)", "mdx-include (==1.4.2)", "mike (==2.1.1)", "mkdocs-git-revision-date-localized-plugin (==1.2.6)", "mkdocs-glightbox (==0.4.0)", "mkdocs-literate-nav (==0.6.1)", "mkdocs-macros-plugin (==1.0.5)", "mkdocs-material (==9.5.26)", "mkdocs-minify-plugin (==0.8.0)", "mkdocs-static-i18n (==1.2.3)", "mkdocstrings[python] (==0.25.1)", "mypy (==1.10.0)", "nats-py (>=2.3.1,<=3.0.0)", "opentelemetry-sdk (>=1.24.0,<2.0.0)", "pillow", "pre-commit (==3.5.0)", "pre-commit (==3.7.1)", "pydantic-settings (>=2.0.0,<3.0.0)", "pytest (==8.2.2)", "pytest-asyncio (==0.23.7)", "pyyaml (==6.0.1)", "redis (>=5.0.0,<6.0.0)", "requests", "ruff (==0.4.8)", "semgrep (==1.75.0)", "types-deprecated", "types-docutils", "types-pygments", "types-pyyaml", "types-redis", "types-setuptools", "types-ujson", "typing-extensions (>=4.8.0,<4.12.1)", "watchfiles (==0.22.0)"]
+devdocs = ["cairosvg", "griffe-typingdoc (==0.2.5)", "mdx-include (==1.4.2)", "mike (==2.1.1)", "mkdocs-git-revision-date-localized-plugin (==1.2.6)", "mkdocs-glightbox (==0.4.0)", "mkdocs-literate-nav (==0.6.1)", "mkdocs-macros-plugin (==1.0.5)", "mkdocs-material (==9.5.26)", "mkdocs-minify-plugin (==0.8.0)", "mkdocs-static-i18n (==1.2.3)", "mkdocstrings[python] (==0.25.1)", "pillow", "requests"]
+kafka = ["aiokafka (>=0.9,<0.11)"]
+lint = ["aio-pika (>=9,<10)", "aiokafka (>=0.9,<0.11)", "bandit (==1.7.8)", "codespell (==2.3.0)", "confluent-kafka (>=2,<3)", "confluent-kafka-stubs", "mypy (==1.10.0)", "nats-py (>=2.3.1,<=3.0.0)", "opentelemetry-sdk (>=1.24.0,<2.0.0)", "redis (>=5.0.0,<6.0.0)", "ruff (==0.4.8)", "semgrep (==1.75.0)", "types-deprecated", "types-docutils", "types-pygments", "types-pyyaml", "types-redis", "types-setuptools", "types-ujson"]
+nats = ["nats-py (>=2.3.1,<=3.0.0)"]
+optionals = ["aio-pika (>=9,<10)", "aiokafka (>=0.9,<0.11)", "confluent-kafka (>=2,<3)", "nats-py (>=2.3.1,<=3.0.0)", "opentelemetry-sdk (>=1.24.0,<2.0.0)", "redis (>=5.0.0,<6.0.0)"]
+otel = ["opentelemetry-sdk (>=1.24.0,<2.0.0)"]
+rabbit = ["aio-pika (>=9,<10)"]
+redis = ["redis (>=5.0.0,<6.0.0)"]
+test-core = ["coverage[toml] (==7.5.3)", "dirty-equals (==0.7.1.post0)", "pytest (==8.2.2)", "pytest-asyncio (==0.23.7)", "typing-extensions (>=4.8.0,<4.12.1)"]
+testing = ["coverage[toml] (==7.5.3)", "dirty-equals (==0.7.1.post0)", "email-validator (==2.1.1)", "fastapi (==0.111.0)", "httpx (==0.27.0)", "pydantic-settings (>=2.0.0,<3.0.0)", "pytest (==8.2.2)", "pytest-asyncio (==0.23.7)", "pyyaml (==6.0.1)", "typing-extensions (>=4.8.0,<4.12.1)", "watchfiles (==0.22.0)"]
+types = ["aio-pika (>=9,<10)", "aiokafka (>=0.9,<0.11)", "confluent-kafka (>=2,<3)", "confluent-kafka-stubs", "mypy (==1.10.0)", "nats-py (>=2.3.1,<=3.0.0)", "opentelemetry-sdk (>=1.24.0,<2.0.0)", "redis (>=5.0.0,<6.0.0)", "types-deprecated", "types-docutils", "types-pygments", "types-pyyaml", "types-redis", "types-setuptools", "types-ujson"]
 
 [[package]]
 name = "greenlet"
@@ -796,6 +844,21 @@ files = [
     {file = "mypy_extensions-1.0.0-py3-none-any.whl", hash = "sha256:4392f6c0eb8a5668a69e23d168ffa70f0be9ccfd32b5cc2d26a34ae5b844552d"},
     {file = "mypy_extensions-1.0.0.tar.gz", hash = "sha256:75dbf8955dc00442a438fc4d0666508a9a97b6bd41aa2f0ffe9d2f2725af0782"},
 ]
+
+[[package]]
+name = "nats-py"
+version = "2.7.2"
+description = "NATS client for Python"
+optional = false
+python-versions = ">=3.7"
+files = [
+    {file = "nats-py-2.7.2.tar.gz", hash = "sha256:0c97b4a57bed0ef1ff9ae6c19bc115ec7ca8ede5ab3e001fd00a377056a547cf"},
+]
+
+[package.extras]
+aiohttp = ["aiohttp"]
+fast-parse = ["fast-mail-parser"]
+nkeys = ["nkeys"]
 
 [[package]]
 name = "numpy"
@@ -1654,19 +1717,30 @@ files = [
 ]
 
 [[package]]
-name = "taskiq-redis"
-version = "1.0.0"
-description = "Redis integration for taskiq"
+name = "taskiq-faststream"
+version = "0.1.8"
+description = "FastStream - taskiq integration to schedule FastStream tasks"
 optional = false
-python-versions = "<4.0.0,>=3.8.1"
+python-versions = ">=3.8"
 files = [
-    {file = "taskiq_redis-1.0.0-py3-none-any.whl", hash = "sha256:867949594e63402bdb8378fcc9f1e4e1a18360cb7d3da30fe06d8c33cb74822f"},
-    {file = "taskiq_redis-1.0.0.tar.gz", hash = "sha256:45b2ac312a61725b4a5bdc5595f160d83986eac21eb5bc080ede5e6272d87d61"},
+    {file = "taskiq_faststream-0.1.8-py3-none-any.whl", hash = "sha256:44c50a4808f8bb4657eceb21cf22c8fc1905b248e10de94fed85172909266262"},
+    {file = "taskiq_faststream-0.1.8.tar.gz", hash = "sha256:d93a57409f3cabb908ac356e26b04bfb3f289247d8b8c6e58cf87ee2117579b0"},
 ]
 
 [package.dependencies]
-redis = ">=5,<6"
-taskiq = ">=0.11.1,<1"
+faststream = [
+    {version = ">=0.3.14,<0.6.0"},
+    {version = "*", extras = ["nats"], optional = true, markers = "extra == \"nats\""},
+]
+taskiq = ">=0.10.0,<1.0.0"
+
+[package.extras]
+dev = ["coverage[toml] (>=7.2.0,<8.0.0)", "faststream[kafka]", "faststream[nats]", "faststream[rabbit]", "faststream[redis]", "mypy (>=1.8.0,<1.10.0)", "pre-commit (>=3.6.0,<4.0.0)", "pytest (>=7.4.0,<9)", "ruff (==0.4.1)"]
+kafka = ["faststream[kafka]"]
+nats = ["faststream[nats]"]
+rabbit = ["faststream[rabbit]"]
+redis = ["faststream[redis]"]
+test = ["coverage[toml] (>=7.2.0,<8.0.0)", "faststream[kafka]", "faststream[nats]", "faststream[rabbit]", "faststream[redis]", "pytest (>=7.4.0,<9)"]
 
 [[package]]
 name = "typer"
@@ -2049,4 +2123,4 @@ test = ["big-O", "importlib-resources", "jaraco.functools", "jaraco.itertools", 
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.11"
-content-hash = "4ce1c4d23c4f006ef181cd27e16cab1e2852d88cd4b29a40b23ff046636fd8a6"
+content-hash = "83d6985943af4bfbe880faf23ad28f622bc385577903e77fdc771e9591acfb85"
