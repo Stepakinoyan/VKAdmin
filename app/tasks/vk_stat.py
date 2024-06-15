@@ -10,17 +10,17 @@ broker = NatsBroker(servers="nats://nats:4222")
 async def handler():
     async with httpx.AsyncClient() as client:
         try:
-            get_gos_bage = await client.get(
+            get_gos_bage = await client.post(
                 "http://api:8000/vk/get_gos_bage", timeout=6000
             )
             print(f"/vk/get_gos_bage: {get_gos_bage.status_code}")
 
-            wall_get_all = await client.get(
+            wall_get_all = await client.post(
                 "http://api:8000/vk/wall_get_all", timeout=6000
             )
             print(f"/vk/wall_get_all: {wall_get_all.status_code}")
 
-            get_stat = await client.get("http://api:8000/vk/get_stat", timeout=6000)
+            get_stat = await client.post("http://api:8000/vk/get_stat", timeout=6000)
             print(f"/vk/get_stat: {get_stat.status_code}")
 
         except httpx.HTTPStatusError as e:

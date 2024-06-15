@@ -1,3 +1,4 @@
+import logging
 from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -47,10 +48,13 @@ async def get_stats(
     filterchannelsparams: FilterChannelsParams = Depends(),
     session: AsyncSession = Depends(get_session),
 ):
-    return await OrganizationsDAO.filter_channels(
-        level=filterchannelsparams.level,
-        founder=filterchannelsparams.founder,
-        sphere=filterchannelsparams.sphere,
-        zone=filterchannelsparams.zone,
-        session=session,
-    )
+    try:
+        return await OrganizationsDAO.filter_channels(
+            level=filterchannelsparams.level,
+            founder=filterchannelsparams.founder,
+            sphere=filterchannelsparams.sphere,
+            zone=filterchannelsparams.zone,
+            session=session,
+        )
+    except Exception as e:
+        logging.error(f"An error occurred: {e}")

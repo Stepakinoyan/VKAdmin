@@ -98,7 +98,7 @@ async def callback(code: str, state: str = None):
     return data
 
 
-@router.get("/get_stat")
+@router.post("/get_stat")
 async def get_stat(session: AsyncSession = Depends(get_session)):
     try:
         organizations_result = await session.execute(select(Organizations))
@@ -259,7 +259,7 @@ async def get_stat(session: AsyncSession = Depends(get_session)):
         await session.close()
 
 
-@router.get("/wall_get_all")
+@router.post("/wall_get_all")
 async def wall_get_all(session: AsyncSession = Depends(get_session)):
     result = await session.execute(select(Organizations.id))
     organizations = result.scalars().all()
@@ -270,10 +270,10 @@ async def wall_get_all(session: AsyncSession = Depends(get_session)):
     return {"status": f"completed: {len(batch_results)}", "data": batch_results}
 
 
-@router.get("/get_gos_bage")
+@router.post("/get_gos_bage")
 async def get_gos_bage(session: AsyncSession = Depends(get_session)):
     batch_size = 50
-    pause_duration = 5  # Время паузы в секундах между батчами
+    pause_duration = 5
 
     result = await session.execute(select(Organizations.id, Organizations.screen_name))
     accounts = result.all()
@@ -282,16 +282,12 @@ async def get_gos_bage(session: AsyncSession = Depends(get_session)):
         batch = accounts[i : i + batch_size]
         all_ids_in_batch = [account.id for account in batch]
 
-        tasks = [
-            fetch_gos_page(f"https://vk.com/{account.screen_name}", account.id)
-            for account in batch
-        ]
-        batch_results = await asyncio.gather(*tasks)
+        tasks = [fetch_gos_page(f"https://vk.com/{account.screen_name}", account.id) for account in batch]
+        batch_results = await asyncio.gather(*tasks, return_exceptions=True)
 
-        found_ids = [account_id for account_id in batch_results if account_id]
+        found_ids = [account_id for account_id in batch_results if account_id and not isinstance(account_id, Exception)]
         not_found_ids = list(set(all_ids_in_batch) - set(found_ids))
 
-        # Обновляем записи с найденным GovernmentCommunityBadge
         if found_ids:
             await session.execute(
                 update(Organizations)
@@ -299,7 +295,6 @@ async def get_gos_bage(session: AsyncSession = Depends(get_session)):
                 .values(has_gos_badge=True)
             )
 
-        # Обновляем записи без GovernmentCommunityBadge
         if not_found_ids:
             await session.execute(
                 update(Organizations)
@@ -309,7 +304,6 @@ async def get_gos_bage(session: AsyncSession = Depends(get_session)):
 
         await session.commit()
 
-        # Пауза между батчами
         await asyncio.sleep(pause_duration)
 
     return {"updated_accounts": len(accounts)}

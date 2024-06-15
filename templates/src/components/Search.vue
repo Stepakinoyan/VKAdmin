@@ -8,10 +8,11 @@
             :rows="20"
             removableSort
             scrollable
-            scrollHeight="calc(100vh - 164px)"
+            scrollHeight="calc(100vh - 157px)"
             :sortField="'fulfillment_percentage'"
             :sortOrder="-1"
             :rowStyle="rowStyle"
+            class="ml-2.5"
             tableStyle="min-width: 50rem"   
         >
             <Column field="name" sortable header="Название" class="text-xs text-align: left;" style="max-width: 267px;" frozen></Column>
@@ -85,7 +86,7 @@
                     <button @click="previousPage" :disabled="state.firstPage">«</button>
                     <span v-for="page in totalPages" :key="page" class="px-1">
                         <button
-                            :class="{'bg-green-500 text-white': state.currentPage === page, 'bg-white': state.currentPage !== page}"
+                            :class="{'text-white': state.currentPage === page, 'bg-white': state.currentPage !== page}"
                             @click="state.changePage(page)"
                         >
                             {{ page }}
@@ -99,15 +100,15 @@
 
     <div class="flex items-center flex-col lg:flex-row mb-1 space-y-1 lg:space-y-0">
             <InputGroup class="ml-2">
-                <Dropdown v-model="selectedlevel" :options="levels" optionLabel="level" placeholder="Уровень" class="w-full md:w-14rem" @change="onLevelChange"/>
+                <Dropdown v-model="selectedlevel" :options="levels" optionLabel="level" placeholder="Уровень" class="w-full md:w-14rem" @change="onLevelChange" :pt="DropdownStyle"/>
             </InputGroup>
 
             <InputGroup class="ml-2">
-                <Dropdown v-model="selectedfounder" :options="founders" optionLabel="founder" placeholder="Учредитель" class="w-full md:w-14rem" @change="onFounderChange"/>
+                <Dropdown v-model="selectedfounder" :options="founders" optionLabel="founder" placeholder="Учредитель" class="w-full md:w-14rem" @change="onFounderChange" :pt="DropdownStyle" :disabled="!selectedlevel"/>
             </InputGroup>
 
             <InputGroup class="ml-2">
-                <Dropdown v-model="selectedsphere" :options="spheres" optionLabel="sphere" placeholder="Сфера" class="w-full md:w-14rem" @change="onSphereChange"/>
+                <Dropdown v-model="selectedsphere" :options="spheres" optionLabel="sphere" placeholder="Сфера" class="w-full md:w-14rem" @change="onSphereChange" :pt="DropdownStyle"/>
             </InputGroup>
 
             <InputGroup class="ml-2">
@@ -118,7 +119,8 @@
                     placeholder="Зона"
                     class="w-full md:w-14rem"
                     @change="onZoneChange"
-                />
+                    :pt="DropdownStyle"
+                    />
             </InputGroup>
             
             <InputGroup class="ml-2" @click="resetFilters()">
@@ -140,6 +142,34 @@ export default {
     data() {
         return {
             loading: false,
+            DropdownStyle: {
+                root: ({ props, state, parent }) => ({
+                    class: [
+                        // Display and Position
+                        'inline-flex',
+                        'relative',
+                        // Shape
+                        { 'rounded-md': parent.instance.$name !== 'InputGroup' },
+                        { 'first:rounded-l-md rounded-none last:rounded-r-md': parent.instance.$name == 'InputGroup' },
+                        { 'border-0 border-y border-l last:border-r': parent.instance.$name == 'InputGroup' },
+                        { 'first:ml-0 ml-[-1px]': parent.instance.$name == 'InputGroup' && !props.showButtons },
+                        // Color and Background
+                        'bg-white-0 dark:bg-white-900',
+                        // Invalid State
+                        { 'border-red-500 dark:border-red-400': props.invalid },
+                        // Transitions
+                        'transition-all',
+                        'duration-200',
+                        // States
+                        { 'hover:border-blue': !props.invalid },
+                        { 'outline-none outline-offset-0 ring ring-blue-400/50 dark:ring-blue-300/50': state.focused },
+                        // Misc
+                        'cursor-pointer',
+                        'select-none',
+                        { 'opacity-60': props.disabled, 'pointer-events-none': props.disabled, 'cursor-default': props.disabled }
+                        ]
+                    })
+            },
             selectedlevel: null,
             selectedfounder: null,
             selectedsphere: null,
@@ -224,22 +254,22 @@ export default {
             return { backgroundColor };
         },
         onLevelChange() {
-            this.selectedfounder = null;  // Сбросить учредителя
-            this.selectedsphere = null;   // Сбросить сферу
-            this.getFounders();           // Обновить список учредителей
-            this.getSpheres();            // Обновить список сфер
-            this.loadFilteredData();      // Загрузить отфильтрованные данные
+            this.selectedfounder = null;
+            this.selectedsphere = null; 
+            this.getFounders();           
+            this.getSpheres();            
+            this.loadFilteredData();      
         },
         onFounderChange() {
-            this.selectedsphere = null;   // Сбросить сферу
-            this.getSpheres();            // Обновить список сфер
-            this.loadFilteredData();      // Загрузить отфильтрованные данные
+            this.selectedsphere = null;
+            this.getSpheres();           
+            this.loadFilteredData();     
         },
         onSphereChange() {
-            this.loadFilteredData();      // Загрузить отфильтрованные данные
+            this.loadFilteredData();     
         },
         onZoneChange() {
-            this.loadFilteredData();      // Загрузить отфильтрованные данные
+            this.loadFilteredData();     
         },
         getFounders() {
             if (this.selectedlevel) {
@@ -263,7 +293,8 @@ export default {
                     .catch(error => {
                         console.error('Error fetching spheres:', error);
                     });
-            } else if (this.selectedfounder) {
+            } else 
+            if (this.selectedfounder) {
                 axios.get(`/filter/get_spheres_by_founder?founder=${this.selectedfounder.founder}`)
                     .then(response => {
                         this.spheres = response.data;
@@ -271,7 +302,15 @@ export default {
                     .catch(error => {
                         console.error('Error fetching spheres:', error);
                     });
-            } else {
+            } else if (this.selectedfounder & this.selectedlevel) {
+                axios.get(`/filter/get_spheres_by_founder?founder=${this.selectedfounder.founder}`)
+                    .then(response => {
+                        this.spheres = response.data;
+                    })
+                    .catch(error => {
+                        console.error('Error fetching spheres:', error);
+                    });
+                } else  {
                 this.spheres = [];
             }
         },
@@ -362,7 +401,7 @@ export default {
 }
 
 .p-paginator-page.p-highlight {
-    background-color: #4caf50;
+    background-color: #3b82f6;
     color: white;
     border: none;
 }
