@@ -20,10 +20,11 @@ import Dropdown from 'primevue/dropdown';
 import Password from 'primevue/password';
 import Checkbox from 'primevue/checkbox';
 import Column from 'primevue/column';
-import ToastService from 'primevue/toastservice'; 
 import ColumnGroup from 'primevue/columngroup'; 
 import InputIcon from 'primevue/inputicon';
 import IconField from 'primevue/iconfield';
+import Paginator from 'primevue/paginator';
+
 import axios from 'axios';
 
 export const app = createApp(App)
@@ -43,11 +44,11 @@ app.component("Password", Password)
 app.component("ColumnGroup", ColumnGroup)
 app.component("IconField", IconField)
 app.component("InputIcon", InputIcon)
+app.component("Paginator", Paginator)
 
 app.use(VueCookies)
 
 app.use(PrimeVue);
-app.use(ToastService);
 app.use(router)
 
 app.mount('#app')

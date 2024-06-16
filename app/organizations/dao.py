@@ -83,6 +83,20 @@ class OrganizationsDAO(BaseDAO):
         return get_unique_spheres(results)
 
     @classmethod
+    async def get_sphere_by_founder_and_level(
+        self, founder: str, level: str, session: AsyncSession = get_session()
+    ):
+        get_founders = (
+            select(self.model.sphere_1, self.model.sphere_2, self.model.sphere_3)
+            .filter_by(level=level, founder=founder)
+            .distinct(self.model.sphere_1, self.model.sphere_2, self.model.sphere_3)
+        )
+
+        results = await session.execute(get_founders)
+        results = results.scalars().all()
+        return get_unique_spheres(results)
+
+    @classmethod
     async def filter_channels(
         cls,
         level: str,

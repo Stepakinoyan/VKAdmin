@@ -1,4 +1,5 @@
 import logging
+from typing import Literal
 from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -40,6 +41,19 @@ async def get_spheres_by_founder(
 ):
     return await OrganizationsDAO.get_sphere_by_founder(
         founder=founder, session=session
+    )
+
+
+@router.get("/get_sphere_by_founder_and_level")
+async def get_unique_spheres_by_founder_and_level(
+    level: Literal[
+        "Министерство", "МО", "Ведомство", "Законодательный орган", "Другое", "ВУЗ"
+    ],
+    founder: str,
+    session: AsyncSession = Depends(get_session),
+):
+    return await OrganizationsDAO.get_sphere_by_founder_and_level(
+        founder=founder, level=level, session=session
     )
 
 

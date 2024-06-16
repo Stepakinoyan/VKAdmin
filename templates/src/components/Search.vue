@@ -4,17 +4,17 @@
             :value="stats"
             :loading="loading"
             paginator
-            :rowsPerPageOptions="[20, 50]"
             :rows="20"
             removableSort
             scrollable
-            scrollHeight="calc(100vh - 157px)"
+            scrollHeight="calc(100vh - 158px)"
             :sortField="'fulfillment_percentage'"
             :sortOrder="-1"
             :rowStyle="rowStyle"
             class="ml-2.5"
-            tableStyle="min-width: 50rem"   
-        >
+            tableStyle="min-width: 50rem"
+        >            
+
             <Column field="name" sortable header="Название" class="text-xs text-align: left;" style="max-width: 267px;" frozen></Column>
             <Column field="fulfillment_percentage" sortable header="% Вып-я" class="text-black text-xs text-center px-0.5" ></Column>
             <Column v-for="(col, index) in statisticColumns" :key="index" :field="col.field" sortable :header="col.header" class="text-black text-xs text-center"></Column>
@@ -79,23 +79,7 @@
                     </td>
                 </tr>
             </template>
-
-            <template #paginator="{ state, firstPage, lastPage, totalPages, previousPage, nextPage }">
-                <div class="flex justify-center items-center mt-2 fixed-paginator">
-                    <button @click="firstPage" :disabled="state.firstPage">««</button>
-                    <button @click="previousPage" :disabled="state.firstPage">«</button>
-                    <span v-for="page in totalPages" :key="page" class="px-1">
-                        <button
-                            :class="{'text-white': state.currentPage === page, 'bg-white': state.currentPage !== page}"
-                            @click="state.changePage(page)"
-                        >
-                            {{ page }}
-                        </button>
-                    </span>
-                    <button @click="nextPage" :disabled="state.lastPage">»</button>
-                    <button @click="lastPage" :disabled="state.lastPage">»»</button>
-                </div>
-            </template>
+        
         </DataTable>
 
     <div class="flex items-center flex-col lg:flex-row mb-1 space-y-1 lg:space-y-0">
@@ -285,7 +269,15 @@ export default {
             }
         },
         getSpheres() {
-            if (this.selectedlevel) {
+            if (this.selectedfounder && this.selectedlevel) {
+                axios.get(`/filter/get_sphere_by_founder_and_level?founder=${this.selectedfounder.founder}&level=${this.selectedlevel.level}`)
+                    .then(response => {
+                        this.spheres = response.data;
+                    })
+                    .catch(error => {
+                        console.error('Error fetching spheres:', error);
+                    });
+            } else if (this.selectedlevel) {
                 axios.get(`/filter/get_spheres_by_level?level=${this.selectedlevel.level}`)
                     .then(response => {
                         this.spheres = response.data;
@@ -293,8 +285,7 @@ export default {
                     .catch(error => {
                         console.error('Error fetching spheres:', error);
                     });
-            } else 
-            if (this.selectedfounder) {
+            } else if (this.selectedfounder) {
                 axios.get(`/filter/get_spheres_by_founder?founder=${this.selectedfounder.founder}`)
                     .then(response => {
                         this.spheres = response.data;
@@ -302,15 +293,7 @@ export default {
                     .catch(error => {
                         console.error('Error fetching spheres:', error);
                     });
-            } else if (this.selectedfounder & this.selectedlevel) {
-                axios.get(`/filter/get_spheres_by_founder?founder=${this.selectedfounder.founder}`)
-                    .then(response => {
-                        this.spheres = response.data;
-                    })
-                    .catch(error => {
-                        console.error('Error fetching spheres:', error);
-                    });
-                } else  {
+            } else {
                 this.spheres = [];
             }
         },
@@ -355,21 +338,9 @@ export default {
 </script>
 
 <style>
-
-
 .main {
     margin-top: 2px;
 }
-
-.DataTable {
-    margin-top: 2px;
-    font-size: 0.875rem;
-    min-height: calc(100vh - 164px); /* Обеспечивает минимальную высоту */
-    display: flex;
-    flex-direction: column;
-}
-
-
 
 .p-datatable-tbody tr {
     height: 100%; /* Заполнить высоту пустыми строками */
@@ -405,4 +376,5 @@ export default {
     color: white;
     border: none;
 }
+
 </style>

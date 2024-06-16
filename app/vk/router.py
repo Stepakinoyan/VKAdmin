@@ -8,7 +8,7 @@ import redis.asyncio as redis
 from fastapi import APIRouter, Depends, Request
 from fastapi.responses import RedirectResponse
 from rich.console import Console
-from sqlalchemy import delete, select, update
+from sqlalchemy import select, update
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -27,6 +27,7 @@ from app.vk.funcs import (
     get_percentage_of_fulfillment_of_basic_requirements,
 )
 from app.vk.models import Statistic
+import pytz
 
 router = APIRouter(prefix="/vk", tags=["VK"])
 console = Console(color_system="truecolor", width=140)
@@ -67,7 +68,6 @@ async def callback(code: str, state: str = None):
         )
     data = resp.json()
 
-    print(data)
 
     if state == "init":
         auth = data["access_token"]
@@ -75,11 +75,9 @@ async def callback(code: str, state: str = None):
 
         groups = await call("groups.get", {"filter": "admin"}, auth)
 
-        print(groups)
 
         group_ids = ",".join(str(item) for item in groups["response"]["items"])
 
-        print(group_ids)
 
         url = f"https://oauth.vk.com/authorize?client_id={settings.CLIENT_ID}&display=page&redirect_uri={settings.REDIRECT_URI}&group_ids={group_ids}&scope=messages,stories,manage,app_widget&response_type=code&v=5.131&state=init_groups"
 
@@ -88,7 +86,6 @@ async def callback(code: str, state: str = None):
     if state == "init_groups":
         groups = data["groups"]
 
-        print(groups)
 
         for group in groups:
             await redis_.set(f"access_token_{group['group_id']}", group["access_token"])
@@ -101,6 +98,7 @@ async def callback(code: str, state: str = None):
 @router.post("/get_stat")
 async def get_stat(session: AsyncSession = Depends(get_session)):
     try:
+        amurtime = pytz.timezone("Asia/Yakutsk")
         organizations_result = await session.execute(select(Organizations))
         organizations_list = organizations_result.scalars().all()
         organizations = {
@@ -142,11 +140,11 @@ async def get_stat(session: AsyncSession = Depends(get_session)):
             response = data["response"]
 
             for group in response["groups"]:
-                print(group)
                 with open("data.json", 'w') as file:
                     json.dump(group, file, indent=4)
-                date_str = datetime.now().strftime("%Y%m%d")
+                date_str = datetime.now(amurtime).strftime("%Y%m%d")
                 date_id = f"{date_str}{group['id']}"
+                print(f"Generated date_id: {date_id}")
 
                 organization = organizations.get(group["id"])
 
@@ -193,7 +191,7 @@ async def get_stat(session: AsyncSession = Depends(get_session)):
                 stat = await session.get(Statistic, date_id)
                 if stat:
                     stat.members_count = group.get("members_count", 0)
-                    stat.date_added = datetime.now().date()
+                    stat.date_added = datetime.now(amurtime).date()
                     stat.fulfillment_percentage = get_percentage_of_fulfillment_of_basic_requirements(organization)
                 else:
                     new_stat = Statistic(
