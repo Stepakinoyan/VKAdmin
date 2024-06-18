@@ -159,6 +159,7 @@ async def get_stat(session: AsyncSession = Depends(get_session)):
                 organization["screen_name"] = group.get("screen_name")
                 organization["status"] = group.get("status")
                 organization["verified"] = True if group.get("verified") else False
+                organization["date_added"] = datetime.now(amurtime).date()
                 organization["has_description"] = (
                     True if group.get("description") else False
                 )
@@ -169,6 +170,7 @@ async def get_stat(session: AsyncSession = Depends(get_session)):
                     or group.get("photo_200")
                     else False
                 )
+                organization["activity"] = group.get("activity")
                 organization["activity"] = group.get("activity")
                 organization["has_widget"] = bool(group.get("menu"))
                 organization["widget_count"] = len(
@@ -197,7 +199,7 @@ async def get_stat(session: AsyncSession = Depends(get_session)):
                     new_stat = Statistic(
                         date_id=date_id,
                         organization_id=organization["id"],
-                        date_added=datetime.now().date(),
+                        date_added=datetime.now(amurtime).date(),
                         members_count=group.get("members_count", 0),
                         fulfillment_percentage=get_percentage_of_fulfillment_of_basic_requirements(organization),
                     )

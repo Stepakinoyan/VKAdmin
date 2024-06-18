@@ -1,122 +1,155 @@
 <template>
     <main class="flex flex-col-reverse mt-2">
-        <DataTable
-            :value="stats"
-            :loading="loading"
-            paginator
-            :rows="20"
-            removableSort
-            scrollable
-            scrollHeight="calc(100vh - 158px)"
-            :sortField="'fulfillment_percentage'"
-            :sortOrder="-1"
-            :rowStyle="rowStyle"
-            class="ml-2.5"
-            tableStyle="min-width: 50rem"
-        >            
-
-            <Column field="name" sortable header="Название" class="text-xs text-align: left;" style="max-width: 267px;" frozen></Column>
-            <Column field="fulfillment_percentage" sortable header="% Вып-я" class="text-black text-xs text-center px-0.5" ></Column>
-            <Column v-for="(col, index) in statisticColumns" :key="index" :field="col.field" sortable :header="col.header" class="text-black text-xs text-center"></Column>
-            <Column field="members_count" sortable header="Участники" class="text-black text-xs text-center"></Column>
-            <Column field="verified" sortable header="Проверен" class="text-black text-xs text-center">
-                <template #body="slotProps" style="font-size: 1.5rem">
-                    <i v-if="slotProps.data.verified" class="pi pi-check-circle" style="color: green;"></i>
-                    <i v-else class="pi pi-times-circle" style="color: red;"></i>
-                </template>
-            </Column>
-            <Column field="has_avatar" sortable header="Аватар" class="text-black text-xs text-center">
-                <template #body="slotProps">
-                    <i v-if="slotProps.data.has_avatar" class="pi pi-check-circle" style="color: green; font-size: 1.25rem"></i>
-                    <i v-else class="pi pi-times-circle" style="color: red; font-size: 1.25rem"></i>
-                </template>
-            </Column>
-            <Column field="has_cover" sortable header="Обложка" class="text-black text-xs text-center">
-                <template #body="slotProps">
-                    <i v-if="slotProps.data.has_cover" class="pi pi-check-circle" style="color: green; font-size: 1.25rem"></i>
-                    <i v-else class="pi pi-times-circle" style="color: red; font-size: 1.25rem"></i>
-                </template>
-            </Column>
-            <Column field="has_description" sortable header="Описание" class="text-black text-xs text-center">
-                <template #body="slotProps">
-                    <i v-if="slotProps.data.has_description" class="pi pi-check-circle" style="color: green; font-size: 1.25rem"></i>
-                    <i v-else class="pi pi-times-circle" style="color: red; font-size: 1.25rem"></i>
-                </template>
-            </Column>
-            <Column field="has_gos_badge" sortable header="Гос. метка" class="text-black text-xs text-center">
-                <template #body="slotProps">
-                    <i v-if="slotProps.data.has_gos_badge" class="pi pi-check-circle" style="color: green; font-size: 1.25rem"></i>
-                    <i v-else class="pi pi-times-circle" style="color: red; font-size: 1.25rem"></i>
-                </template>
-            </Column>
-            <Column field="has_widget" sortable header="Виджет" class="text-black text-xs text-center">
-                <template #body="slotProps">
-                    <i v-if="slotProps.data.has_widget" class="pi pi-check-circle" style="color: green; font-size: 1.25rem"></i>
-                    <i v-else class="pi pi-times-circle" style="color: red; font-size: 1.25rem"></i>
-                </template>
-            </Column>
-            <Column field="widget_count" sortable header="Виджеты" class="text-black text-xs text-center"></Column>
-            <Column field="posts" sortable header="Посты" class="text-black text-xs text-center"></Column>
-            <Column field="posts_1d" sortable header="1 день" class="text-black text-xs text-center"></Column>
-            <Column field="posts_7d" sortable header="7 дней" class="text-black text-xs text-center"></Column>
-            <Column field="posts_30d" sortable header="30 дней" class="text-black text-xs text-center"></Column>
-            <Column field="post_date" sortable header="Дата сбора" class="text-black text-xs text-center"></Column>
-            <Column field="level" sortable header="Уровень" class="text-black text-xs text-center"></Column>
-            <Column field="founder" sortable header="Учред." class="text-black text-xs text-center"></Column>
-            <Column field="the_main_state_registration_number" sortable header="ОГРН" class="text-black text-xs text-center"></Column>
-            <Column field="status" sortable header="Статус" class="text-black text-xs text-center" style="min-width: 150px"></Column>
-            <Column field="channel_id" sortable header="ID" class="text-black text-xs text-center"></Column>
-            <Column field="url" sortable header="URL" class="text-black text-xs text-center"></Column>
-            <Column field="screen_name" sortable header="Имя VK" class="text-black text-xs text-center"></Column>
-            <Column field="name" sortable header="Акк. имя" class="text-black px-auto text-center" style="font-size: 0.7rem"></Column>
-            <Column field="city" sortable header="Город" class="text-black text-xs text-center"></Column>
-            <Column field="activity" sortable header="Тип" class="text-black text-xs text-center"></Column>
-
-            <template #empty>
-                <tr>
-                    <td colspan="30" class="text-center p-4">
-                        Ничего не найдено
-                    </td>
-                </tr>
+      <DataTable
+        :value="stats"
+        :loading="loading"
+        paginator
+        :rows="20"
+        :rowsPerPageOptions="[20, 50]"
+        removableSort
+        scrollable
+        scrollHeight="calc(100vh - 153px)"
+        :sortField="'fulfillment_percentage'"
+        :sortOrder="-1"
+        class="ml-2.5"
+        tableStyle="min-width: 50rem"
+      >
+        <Column
+          field="name"
+          sortable
+          header="Название"
+          class="text-xs cursor-pointer text-left"
+          style="min-width: 240px;"
+          frozen
+        >
+          <template #body="slotProps">
+            <span @click="openDialog(slotProps.data)" class="hover:underline">{{ slotProps.data.name }}</span>
+          </template>
+        </Column>
+        <Column
+          field="fulfillment_percentage"
+          sortable
+          header="% Вып-я"
+          class="text-black text-xs text-center px-0.5"
+        >
+          <template #body="slotProps">
+            <Tag v-if="slotProps.data.fulfillment_percentage >= 90" severity="success">
+              {{ slotProps.data.fulfillment_percentage }}%
+            </Tag>
+            <Tag v-else-if="slotProps.data.fulfillment_percentage >= 70" severity="warn">
+              {{ slotProps.data.fulfillment_percentage }}%
+            </Tag>
+            <Tag v-else severity="danger">{{ slotProps.data.fulfillment_percentage }}%</Tag>
+          </template>
+        </Column>
+        <Column
+          v-for="(col, index) in statisticColumns"
+          :key="index"
+          :field="col.field"
+          sortable
+          :header="col.header"
+          class="text-black text-xs text-center"
+        ></Column>
+        <Column field="members_count" sortable header="Участники" class="text-black text-xs text-center"></Column>
+        <Column field="verified" sortable header="Проверен" class="text-black text-xs text-center">
+          <template #body="slotProps" style="font-size: 1.5rem">
+            <i v-if="slotProps.data.verified" class="pi pi-check-circle" style="color: green;"></i>
+            <i v-else class="pi pi-times-circle" style="color: red;"></i>
+          </template>
+        </Column>
+        <Column field="has_avatar" sortable header="Аватар" class="text-black text-xs text-center">
+          <template #body="slotProps" style="font-size: 1.5rem">
+            <i v-if="slotProps.data.has_avatar" class="pi pi-check-circle" style="color: green;"></i>
+            <i v-else class="pi pi-times-circle" style="color: red;"></i>
+          </template>
+        </Column>
+        <Column field="has_cover" sortable header="Обложка" class="text-black text-xs text-center">
+          <template #body="slotProps" style="font-size: 1.5rem">
+            <i v-if="slotProps.data.has_cover" class="pi pi-check-circle" style="color: green;"></i>
+            <i v-else class="pi pi-times-circle" style="color: red;"></i>
+          </template>
+        </Column>
+        <Column field="has_description" sortable header="Описание" class="text-black text-xs text-center">
+          <template #body="slotProps" style="font-size: 1.5rem">
+            <i v-if="slotProps.data.has_description" class="pi pi-check-circle" style="color: green;"></i>
+            <i v-else class="pi pi-times-circle" style="color: red;"></i>
+          </template>
+        </Column>
+        <Column field="has_gos_badge" sortable header="Гос. метка" class="text-black text-xs text-center">
+          <template #body="slotProps" style="font-size: 1.5rem">
+            <i v-if="slotProps.data.has_gos_badge" class="pi pi-check-circle" style="color: green;"></i>
+            <i v-else class="pi pi-times-circle" style="color: red;"></i>
+          </template>
+        </Column>
+        <Column field="has_widget" sortable header="Виджет" class="text-black text-xs text-center">
+          <template #body="slotProps" style="font-size: 1.5rem">
+            <i v-if="slotProps.data.has_widget" class="pi pi-check-circle" style="color: green;"></i>
+            <i v-else class="pi pi-times-circle" style="color: red;"></i>
+          </template>
+        </Column>
+        <Column field="widget_count" sortable header="Виджеты" class="text-black text-xs text-center"></Column>
+        <Column field="posts" sortable header="Посты" class="text-black text-xs text-center"></Column>
+        <Column field="posts_1d" sortable header="1 день" class="text-black text-xs text-center"></Column>
+        <Column field="posts_7d" sortable header="7 дней" class="text-black text-xs text-center"></Column>
+        <Column field="posts_30d" sortable header="30 дней" class="text-black text-xs text-center"></Column>
+        <Column field="date_added" sortable header="Дата сбора" class="text-black text-xs text-center"></Column>
+        <Column field="level" sortable header="Уровень" class="text-black text-xs text-center"></Column>
+        <Column field="founder" sortable header="Учред." class="text-black text-xs text-center"></Column>
+        <Column field="activity" sortable header="Тип" class="text-black text-xs text-center"></Column>
+  
+        <template #empty>
+          <tr>
+            <td colspan="30" class="text-center p-4">
+              Ничего не найдено
+            </td>
+          </tr>
+        </template>
+      </DataTable>
+  
+      <Dialog v-model:visible="dialogVisible" :style="{ width: '75vw' }" modal>
+        <DataTable :value="[selectedItem]" scrollable scrollHeight="flex" tableStyle="min-width: 50rem">
+          <Column field="the_main_state_registration_number" header="ОГРН"></Column>
+          <Column field="status" header="Статус"></Column>
+          <Column field="channel_id" header="ID"></Column>
+          <Column field="url" header="URL">
+            <template #body="slotProps">
+              <a :href="slotProps.data.url" class="text-cyan-400 underline" target="_blank">{{ slotProps.data.url }}</a>
             </template>
-        
+          </Column>
+          <Column field="name" header="Акк. имя"></Column>
+          <Column field="city" header="Город"></Column>
         </DataTable>
-
-    <div class="flex items-center flex-col lg:flex-row mb-1 space-y-1 lg:space-y-0">
-            <InputGroup class="ml-2">
-                <Dropdown v-model="selectedlevel" :options="levels" optionLabel="level" placeholder="Уровень" class="w-full md:w-14rem" @change="onLevelChange" :pt="DropdownStyle"/>
-            </InputGroup>
-
-            <InputGroup class="ml-2">
-                <Dropdown v-model="selectedfounder" :options="founders" optionLabel="founder" placeholder="Учредитель" class="w-full md:w-14rem" @change="onFounderChange" :pt="DropdownStyle" :disabled="!selectedlevel"/>
-            </InputGroup>
-
-            <InputGroup class="ml-2">
-                <Dropdown v-model="selectedsphere" :options="spheres" optionLabel="sphere" placeholder="Сфера" class="w-full md:w-14rem" @change="onSphereChange" :pt="DropdownStyle"/>
-            </InputGroup>
-
-            <InputGroup class="ml-2">
-                <Dropdown
-                    v-model="selectedzone"
-                    :options="zones"
-                    optionLabel="zone"
-                    placeholder="Зона"
-                    class="w-full md:w-14rem"
-                    @change="onZoneChange"
-                    :pt="DropdownStyle"
-                    />
-            </InputGroup>
-            
-            <InputGroup class="ml-2" @click="resetFilters()">
-                <i class="pi pi-filter-slash cursor-pointer" style="font-size: 1.25rem"></i>   
-            </InputGroup>
-            <InputGroup class="flex justify-end mr-4">
-                <i class="pi pi-sign-out cursor-pointer" style="font-size: 1.25rem" @click="SignOut()"></i>
-            </InputGroup>
-    </div>
+        <template #footer>
+          <Button label="Ok" severity="info" icon="pi pi-check" @click="dialogVisible = false" />
+        </template>
+      </Dialog>
+  
+      <div class="flex items-center flex-col lg:flex-row mb-1 space-y-1 lg:space-y-0">
+        <InputGroup class="ml-2">
+          <Select v-model="selectedlevel" :options="levels" optionLabel="level" placeholder="Уровень" class="w-full md:w-56" :class="$style.mydropdown" @change="onLevelChange" />
+        </InputGroup>
+  
+        <InputGroup class="ml-2">
+          <Select v-model="selectedfounder" :options="founders" optionLabel="founder" placeholder="Учредитель" class="w-full md:w-56" @change="onFounderChange" :disabled="!selectedlevel"/>
+        </InputGroup>
+  
+        <InputGroup class="ml-2">
+          <Select v-model="selectedsphere" :options="spheres" optionLabel="sphere" placeholder="Сфера" class="w-full md:w-56" @change="onSphereChange"/>
+        </InputGroup>
+        <InputGroup class="ml-2">
+          <Select v-model="selectedzone" :options="zones" optionLabel="zone" placeholder="% выполнения" class="w-full md:w-14rem" @change="onZoneChange"/>
+        </InputGroup>
         
+        <InputGroup class="ml-2">
+          <Button icon="pi pi-filter-slash" severity="secondary" class="w-10 h-10" @click="resetFilters()"></Button>
+        </InputGroup>
+        
+        <InputGroup class="flex justify-end mr-4">
+          <Button icon="pi pi-sign-out" severity="secondary" class="w-10 h-10" @click="SignOut()"></Button>
+        </InputGroup>
+      </div>
     </main>
-</template>
+  </template>
 
 <script>
 import VueCookies from 'vue-cookies'
@@ -126,34 +159,7 @@ export default {
     data() {
         return {
             loading: false,
-            DropdownStyle: {
-                root: ({ props, state, parent }) => ({
-                    class: [
-                        // Display and Position
-                        'inline-flex',
-                        'relative',
-                        // Shape
-                        { 'rounded-md': parent.instance.$name !== 'InputGroup' },
-                        { 'first:rounded-l-md rounded-none last:rounded-r-md': parent.instance.$name == 'InputGroup' },
-                        { 'border-0 border-y border-l last:border-r': parent.instance.$name == 'InputGroup' },
-                        { 'first:ml-0 ml-[-1px]': parent.instance.$name == 'InputGroup' && !props.showButtons },
-                        // Color and Background
-                        'bg-white-0 dark:bg-white-900',
-                        // Invalid State
-                        { 'border-red-500 dark:border-red-400': props.invalid },
-                        // Transitions
-                        'transition-all',
-                        'duration-200',
-                        // States
-                        { 'hover:border-blue': !props.invalid },
-                        { 'outline-none outline-offset-0 ring ring-blue-400/50 dark:ring-blue-300/50': state.focused },
-                        // Misc
-                        'cursor-pointer',
-                        'select-none',
-                        { 'opacity-60': props.disabled, 'pointer-events-none': props.disabled, 'cursor-default': props.disabled }
-                        ]
-                    })
-            },
+            dialogVisible: false,
             selectedlevel: null,
             selectedfounder: null,
             selectedsphere: null,
@@ -182,6 +188,10 @@ export default {
         this.loadAllData();
     },
     methods: {
+        openDialog(item){
+            this.selectedItem = item;
+            this.dialogVisible = true;
+        },
         loadAllData() {
             this.loading = true;
             axios.get('/filter/get_stats')
@@ -228,11 +238,11 @@ export default {
             let backgroundColor = '';
 
             if (averageFulfillment >= 90) {
-                backgroundColor = '#f0fdf4';  // Зеленый
+                backgroundColor = '#E6F4EA';  // Зеленый
             } else if (averageFulfillment >= 70) {
-                backgroundColor = '#fefce8';  // Желтый
+                backgroundColor = '#FDF4E4';  // Желтый
             } else {
-                backgroundColor = '#fef2f2';  // Красный
+                backgroundColor = '#FDEAEA';  // Красный
             }
 
             return { backgroundColor };
@@ -338,43 +348,8 @@ export default {
 </script>
 
 <style>
-.main {
-    margin-top: 2px;
+html{
+  scrollbar-width: thin;
 }
-
-.p-datatable-tbody tr {
-    height: 100%; /* Заполнить высоту пустыми строками */
-}
-
-.InputGroup {
-    margin-left: 2px;
-}
-
-.space-x-2 {
-    margin-left: 2px;
-}
-
-.mb-1 {
-    margin-bottom: 0.25rem;
-}
-
-.yellow-zone {
-    color: black;
-}
-
-.yellow-zone-name {
-    color: inherit;
-}
-
-.p-datatable-empty-message {
-    text-align: center;
-    padding: 1rem;
-}
-
-.p-paginator-page.p-highlight {
-    background-color: #3b82f6;
-    color: white;
-    border: none;
-}
-
 </style>
+

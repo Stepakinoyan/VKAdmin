@@ -31,7 +31,10 @@ async def startup(_: FastAPI = app) -> None:
             print(key)
 
 
-origins = ["http://localhost:5468", "http://localhost:5173"]
+origins = [
+    "http://localhost:5468",
+    "http://localhost:5173"
+]
 
 
 app.add_middleware(
