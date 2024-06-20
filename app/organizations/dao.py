@@ -1,9 +1,9 @@
 import logging
 
 from fastapi.encoders import jsonable_encoder
-from sqlalchemy import and_, desc, func, or_, select
+from sqlalchemy import and_, func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import joinedload, selectinload
+from sqlalchemy.orm import selectinload
 
 from app.dao.dao import BaseDAO
 from app.database import get_session
@@ -12,13 +12,11 @@ from app.organizations.models import Organizations
 from app.organizations.schemas import (
     OrganizationResponse,
     OrganizationsBase,
-    Sphere,
     StatisticBase,
     Stats,
     StatsData,
     Founder,
 )
-from app.vk.models import Statistic
 
 
 class OrganizationsDAO(BaseDAO):
@@ -54,51 +52,27 @@ class OrganizationsDAO(BaseDAO):
         return results.mappings().all()
 
     @classmethod
-    async def get_sphere_by_level(
-        self, level: str, session: AsyncSession = get_session()
-    ) -> list[Sphere]:
-        get_founders = (
-            select(self.model.sphere_1, self.model.sphere_2, self.model.sphere_3)
-            .filter_by(level=level)
-            .distinct(self.model.sphere_1, self.model.sphere_2, self.model.sphere_3)
-        )
-
-        results = await session.execute(get_founders)
-        results = results.scalars().all()
-        return get_unique_spheres(results)
-
-    @classmethod
-    async def get_sphere_by_founder(
-        self, founder: str, session: AsyncSession = get_session()
-    ) -> list[Sphere]:
-        get_founders = (
-            select(self.model.sphere_1, self.model.sphere_2, self.model.sphere_3)
-            .filter_by(founder=founder)
-            .distinct(self.model.sphere_1, self.model.sphere_2, self.model.sphere_3)
-        )
-
-        results = await session.execute(get_founders)
-        results = results.scalars().all()
-
-        return get_unique_spheres(results)
-
-    @classmethod
-    async def get_sphere_by_founder_and_level(
-        self, founder: str, level: str, session: AsyncSession = get_session()
+    async def get_spheres_by(
+        self, level: str, founder: str, session: AsyncSession = get_session()
     ):
-        get_founders = (
+        get_spheres = (
             select(self.model.sphere_1, self.model.sphere_2, self.model.sphere_3)
-            .filter_by(level=level, founder=founder)
+            .where(
+                and_(
+                    self.model.level.ilike(f"%{level}%"),
+                    self.model.founder.ilike(f"%{founder}%"),
+                )
+            )
             .distinct(self.model.sphere_1, self.model.sphere_2, self.model.sphere_3)
         )
 
-        results = await session.execute(get_founders)
+        results = await session.execute(get_spheres)
         results = results.scalars().all()
         return get_unique_spheres(results)
 
     @classmethod
     async def filter_channels(
-        cls,
+        self,
         level: str,
         founder: str,
         sphere: str,
@@ -106,47 +80,18 @@ class OrganizationsDAO(BaseDAO):
         session: AsyncSession,
     ) -> list:
         try:
-            # Подзапрос для получения последней статистики по organization_id
-            latest_statistic_subquery = (
-                select(
-                    Statistic.organization_id,
-                    func.max(Statistic.date_added).label("max_date_added"),
-                )
-                .group_by(Statistic.organization_id)
-                .subquery()
-            )
-
-            # Подключение последней записи статистики
-            latest_statistic_alias = (
-                select(Statistic)
-                .join(
-                    latest_statistic_subquery,
-                    and_(
-                        Statistic.organization_id
-                        == latest_statistic_subquery.c.organization_id,
-                        Statistic.date_added
-                        == latest_statistic_subquery.c.max_date_added,
-                    ),
-                )
-                .subquery()
-            )
-
             # Основной запрос с подзапросом для фильтрации по последней статистике
             query = (
-                select(cls.model)
-                .outerjoin(
-                    latest_statistic_alias,
-                    latest_statistic_alias.c.organization_id == cls.model.id,
-                )
-                .options(selectinload(cls.model.statistic))
+                select(self.model)
+                .options(selectinload(self.model.statistic))
                 .filter(
                     and_(
-                        cls.model.level.ilike(f"%{level}%"),
-                        cls.model.founder.ilike(f"%{founder}%"),
+                        self.model.level.ilike(f"%{level}%"),
+                        self.model.founder.ilike(f"%{founder}%"),
                         or_(
-                            cls.model.sphere_1.ilike(f"%{sphere}%"),
-                            cls.model.sphere_2.ilike(f"%{sphere}%"),
-                            cls.model.sphere_3.ilike(f"%{sphere}%"),
+                            self.model.sphere_1.ilike(f"%{sphere}%"),
+                            self.model.sphere_2.ilike(f"%{sphere}%"),
+                            self.model.sphere_3.ilike(f"%{sphere}%"),
                         ),
                     )
                 )
@@ -154,20 +99,11 @@ class OrganizationsDAO(BaseDAO):
 
             # Условие на основе зоны выполнения
             if zone == "90-100%":
-                query = query.where(
-                    latest_statistic_alias.c.fulfillment_percentage >= 90
-                )
+                query = query.where(self.model.average_fulfillment_percentage >= 90)
             elif zone == "70-89%":
-                query = query.where(
-                    (latest_statistic_alias.c.fulfillment_percentage >= 70)
-                    & (
-                        latest_statistic_alias.c.fulfillment_percentage <= 89
-                    )  # Исправил диапазон до 89, чтобы избежать пересечения
-                )
+                query = query.where(self.model.average_fulfillment_percentage >= 70)
             elif zone == "0-69%":
-                query = query.where(
-                    latest_statistic_alias.c.fulfillment_percentage <= 69
-                )
+                query = query.where(self.model.average_fulfillment_percentage <= 69)
 
             # Выполнение запроса
             results = await session.execute(query)

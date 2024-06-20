@@ -4,7 +4,7 @@ from typing import Optional, TypedDict
 from pydantic import BaseModel, Field
 
 
-class Organization(TypedDict):
+class OrganizationType(TypedDict):
     level: Optional[str]
     founder: Optional[str]
     name: Optional[str]
@@ -17,7 +17,6 @@ class Organization(TypedDict):
     sphere_2: Optional[str]
     sphere_3: Optional[str]
     activity: Optional[str]
-    verified: bool
     channel_id: int
     has_avatar: bool
     has_cover: bool
@@ -36,8 +35,17 @@ class Organization(TypedDict):
     post_date: datetime
 
 
-class Statistic(BaseModel):
+class StatisticType(TypedDict):
+    date_id: str
+    organization_id: int
+    date_added: datetime
+    members_count: int
+    fulfillment_percentage: int
+
+
+class SchemaStatistic(BaseModel):
     date_id: str
     organization_id: int
     date_added: datetime = Field(default=datetime.utcnow)
     members_count: int
+    fulfillment_percentage: int

@@ -28,7 +28,6 @@ class VkDAO(BaseDAO):
             organization.name = data["name"]
             organization.city = data.get("city", {}).get("title", "")
             organization.activity = data.get("activity", "")
-            organization.verified = bool(data.get("verified"))
             organization.has_avatar = bool(data.get("photo_50"))
             organization.has_cover = bool(data.get("cover", {}).get("enabled"))
             organization.has_description = bool(data.get("description"))
@@ -46,7 +45,6 @@ class VkDAO(BaseDAO):
                 name=data["name"],
                 city=data.get("city", {}).get("title", ""),
                 activity=data.get("activity", ""),
-                verified=bool(data.get("verified", 0)),
                 has_avatar=bool(data.get("photo_50")),
                 has_cover=bool(data.get("cover", {}).get("enabled")),
                 has_description=bool(data.get("description")),

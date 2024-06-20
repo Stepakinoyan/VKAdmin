@@ -28,7 +28,6 @@ class Organizations(Base):
     sphere_2: Mapped[Optional[str]] = mapped_column()
     sphere_3: Mapped[Optional[str]] = mapped_column()
     activity: Mapped[Optional[str]] = mapped_column()
-    verified: Mapped[Optional[bool]] = mapped_column()
     channel_id: Mapped[Optional[int]] = mapped_column(unique=True)
     has_avatar: Mapped[Optional[bool]] = mapped_column()
     has_cover: Mapped[Optional[bool]] = mapped_column()
@@ -49,3 +48,5 @@ class Organizations(Base):
     statistic: Mapped[Optional[list["Statistic"]]] = relationship(
         "Statistic", back_populates="organizations"
     )
+
+    average_fulfillment_percentage: Mapped[Optional[int]] = mapped_column(default=0)

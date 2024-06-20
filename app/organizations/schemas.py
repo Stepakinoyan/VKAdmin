@@ -26,7 +26,6 @@ class OrganizationsBase(BaseModel):
     sphere_2: Optional[str]
     sphere_3: Optional[str]
     activity: Optional[str]
-    verified: Optional[bool]
     channel_id: Optional[int]
     has_avatar: Optional[bool]
     has_cover: Optional[bool]
@@ -43,6 +42,8 @@ class OrganizationsBase(BaseModel):
     posts_7d: Optional[int]
     posts_30d: Optional[int]
     post_date: Optional[datetime]
+
+    average_fulfillment_percentage: Optional[int | float]
 
 
 class OrganizationsForStatistic(BaseModel):
@@ -58,7 +59,6 @@ class OrganizationsForStatistic(BaseModel):
     sphere_2: Optional[str]
     sphere_3: Optional[str]
     activity: Optional[str]
-    verified: Optional[bool]
     channel_id: Optional[int]
     has_avatar: Optional[bool]
     has_cover: Optional[bool]
@@ -75,6 +75,8 @@ class OrganizationsForStatistic(BaseModel):
     posts_7d: Optional[int]
     posts_30d: Optional[int]
     post_date: Optional[datetime]
+
+    average_fulfillment_percentage: Optional[int | float]
 
 
 class OrganizationResponse(BaseModel):
@@ -91,7 +93,6 @@ class OrganizationResponse(BaseModel):
     sphere_2: Optional[str]
     sphere_3: Optional[str]
     activity: Optional[str]
-    verified: Optional[bool]
     channel_id: Optional[int]
     has_avatar: Optional[bool]
     has_cover: Optional[bool]
@@ -110,6 +111,8 @@ class OrganizationResponse(BaseModel):
     post_date: Optional[datetime]
 
     statistic: Optional[list[StatisticBase]]
+
+    average_fulfillment_percentage: Optional[int | float]
 
 
 class Stats(BaseModel):
@@ -149,3 +152,5 @@ class StatsData(TypedDict):
     state_mark: Optional[bool]
 
     statistic: Optional[StatisticBase]
+
+    average_fulfillment_percentage: int | float

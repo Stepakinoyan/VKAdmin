@@ -13,7 +13,7 @@ from app.config import settings
 from app.database import engine
 from app.organizations.models import Organizations
 from fake_useragent import UserAgent
-from app.vk.schemas import Organization
+from app.vk.schemas import OrganizationType, StatisticType
 from typing import TypeAlias
 
 redis_ = redis.from_url(
@@ -115,7 +115,6 @@ async def save_accounts_to_xlsx(file_path: str, session: AsyncSession):
         "name",
         "city",
         "activity",
-        "verified",
         "has_avatar",
         "has_cover",
         "has_description",
@@ -143,7 +142,6 @@ async def save_accounts_to_xlsx(file_path: str, session: AsyncSession):
                 organization.name,
                 organization.city,
                 organization.activity,
-                organization.verified,
                 organization.has_avatar,
                 organization.has_cover,
                 organization.has_description,
@@ -269,17 +267,13 @@ Precent: TypeAlias = int
 
 
 def get_percentage_of_fulfillment_of_basic_requirements(
-    organization: Organization,
+    organization: OrganizationType,
 ) -> Precent:
     percentage = 0
 
     # Подключение к компоненту «Госпаблики» (10 %)
     if organization.get("has_gos_badge") is True:
-        percentage += 10
-
-    # Госметка (10 %)
-    if organization.get("verified") is True:
-        percentage += 10
+        percentage += 20
 
     # Оформление (20 %)
     if organization.get("has_avatar") is True:
@@ -328,3 +322,14 @@ def get_percentage_of_fulfillment_of_basic_requirements(
             percentage += 20
 
     return percentage
+
+
+def get_average_fulfillment_percentage(statistics: list[StatisticType]) -> int:
+    if not statistics:
+        return 0
+
+    # Извлечение процентов выполнения
+    fulfillment_percentages = [stat.fulfillment_percentage for stat in statistics]
+
+    # Возвращаем среднее арифметическое всех процентов выполнения
+    return round(sum(fulfillment_percentages) / len(fulfillment_percentages))

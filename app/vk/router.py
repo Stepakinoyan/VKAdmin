@@ -2,8 +2,10 @@ import asyncio
 import json
 import logging
 from datetime import datetime
+import time
 
 import httpx
+from pydantic import ValidationError
 import redis.asyncio as redis
 from fastapi import APIRouter, Depends, Request
 from fastapi.responses import RedirectResponse
@@ -14,6 +16,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import settings
 from app.database import get_session
+from app.organizations.funcs import get_new_stats
 from app.organizations.models import Organizations
 from app.organizations.schemas import (
     OrganizationsBase,
@@ -21,9 +24,11 @@ from app.organizations.schemas import (
     StatisticBase,
 )
 from app.vk.dao import VkDAO
+from app.vk.schemas import SchemaStatistic
 from app.vk.funcs import (
     call,
     fetch_gos_page,
+    get_average_fulfillment_percentage,
     get_percentage_of_fulfillment_of_basic_requirements,
 )
 from app.vk.models import Statistic
@@ -68,16 +73,13 @@ async def callback(code: str, state: str = None):
         )
     data = resp.json()
 
-
     if state == "init":
         auth = data["access_token"]
         await redis_.set("access_token", auth)
 
         groups = await call("groups.get", {"filter": "admin"}, auth)
 
-
         group_ids = ",".join(str(item) for item in groups["response"]["items"])
-
 
         url = f"https://oauth.vk.com/authorize?client_id={settings.CLIENT_ID}&display=page&redirect_uri={settings.REDIRECT_URI}&group_ids={group_ids}&scope=messages,stories,manage,app_widget&response_type=code&v=5.131&state=init_groups"
 
@@ -85,7 +87,6 @@ async def callback(code: str, state: str = None):
 
     if state == "init_groups":
         groups = data["groups"]
-
 
         for group in groups:
             await redis_.set(f"access_token_{group['group_id']}", group["access_token"])
@@ -99,8 +100,17 @@ async def callback(code: str, state: str = None):
 async def get_stat(session: AsyncSession = Depends(get_session)):
     try:
         amurtime = pytz.timezone("Asia/Yakutsk")
+
+        # Получение списка организаций
         organizations_result = await session.execute(select(Organizations))
         organizations_list = organizations_result.scalars().all()
+
+        logging.debug(f"Fetched organizations: {len(organizations_list)}")  # Отладка
+
+        if not organizations_list:
+            logging.warning("No organizations found")  # Отладка
+            return {"status": "No organizations found"}
+
         organizations = {
             org.channel_id: OrganizationsBase.model_validate(
                 org, from_attributes=True
@@ -113,16 +123,17 @@ async def get_stat(session: AsyncSession = Depends(get_session)):
             for i in range(0, len(organizations_list), 500)
         ]
 
+        logging.debug(f"Chunks created: {len(chunks)}")  # Отладка
+
         all_stats = []
         updated_organizations = []
 
         for chunk in chunks:
+            logging.debug("Processing chunk")  # Отладка
+
             group_ids = ",".join(str(org.channel_id) for org in chunk)
             auth = settings.VK_SERVICE_TOKEN
-
-            fields = (
-                "members_count,city,status,verified,description,cover,activity,menu"
-            )
+            fields = "members_count,city,status,description,cover,activity,menu"
 
             data = await call(
                 "groups.getById", {"group_ids": group_ids, "fields": fields}, auth
@@ -137,86 +148,90 @@ async def get_stat(session: AsyncSession = Depends(get_session)):
             if "error" in data:
                 raise ValueError(f"API error: {data['error']}")
 
-            response = data["response"]
+            response = data.get("response", [])
+            logging.debug(f"API response content: {response}")
 
             for group in response["groups"]:
-                with open("data.json", 'w') as file:
-                    json.dump(group, file, indent=4)
+                logging.debug(f"Processing group: {group['id']}")  # Отладка
+
                 date_str = datetime.now(amurtime).strftime("%Y%m%d")
                 date_id = f"{date_str}{group['id']}"
-                print(f"Generated date_id: {date_id}")
+                logging.info(f"Generated date_id: {date_id}")
 
                 organization = organizations.get(group["id"])
 
                 if not organization:
+                    logging.warning(
+                        f"No organization found for group id: {group['id']}"
+                    )
                     continue
 
-                organization["city"] = (
-                    group.get("city", {}).get("title")
-                    if isinstance(group.get("city"), dict)
-                    else None
+                organization.update(
+                    {
+                        "city": group.get("city", {}).get("title")
+                        if isinstance(group.get("city"), dict)
+                        else None,
+                        "screen_name": group.get("screen_name"),
+                        "status": group.get("status"),
+                        "date_added": datetime.now(amurtime).date(),
+                        "has_description": bool(group.get("description")),
+                        "has_avatar": any(
+                            group.get(f"photo_{size}") for size in (50, 100, 200)
+                        ),
+                        "activity": group.get("activity"),
+                        "has_widget": bool(group.get("menu")),
+                        "widget_count": len(group.get("menu", {}).get("items", [])),
+                        "site": group.get("site"),
+                        "type": group.get("type"),
+                        "has_cover": group.get("cover", {}).get("enabled", False),
+                        "members_count": group.get("members_count", 0),
+                    }
                 )
-                organization["screen_name"] = group.get("screen_name")
-                organization["status"] = group.get("status")
-                organization["verified"] = True if group.get("verified") else False
-                organization["date_added"] = datetime.now(amurtime).date()
-                organization["has_description"] = (
-                    True if group.get("description") else False
-                )
-                organization["has_avatar"] = (
-                    True
-                    if group.get("photo_50")
-                    or group.get("photo_100")
-                    or group.get("photo_200")
-                    else False
-                )
-                organization["activity"] = group.get("activity")
-                organization["activity"] = group.get("activity")
-                organization["has_widget"] = bool(group.get("menu"))
-                organization["widget_count"] = len(
-                    group.get("menu", {}).get("items", [])
-                )
-                organization["site"] = group.get("site")
-                organization["type"] = group.get("type")
-                organization["has_cover"] = (
-                    True if group.get("cover").get("enabled") else False
-                )
-                organization["members_count"] = group.get("members_count", 0)
-                organization["has_gos_badge"] = organization["has_gos_badge"]
-                organization["posts"] = organization["posts"]
-                organization["posts_1d"] = organization["posts_1d"]
-                organization["posts_7d"] = organization["posts_7d"]
-                organization["posts_30d"] = organization["posts_30d"]
+                logging.debug(f"Updated organization: {organization}")
 
                 updated_organizations.append(organization)
 
                 stat = await session.get(Statistic, date_id)
                 if stat:
+                    logging.debug(f"Existing stat found: {stat}")
                     stat.members_count = group.get("members_count", 0)
                     stat.date_added = datetime.now(amurtime).date()
-                    stat.fulfillment_percentage = get_percentage_of_fulfillment_of_basic_requirements(organization)
+                    stat.fulfillment_percentage = (
+                        get_percentage_of_fulfillment_of_basic_requirements(
+                            organization
+                        )
+                    )
                 else:
+                    logging.debug(f"No existing stat found for date_id: {date_id}")
                     new_stat = Statistic(
                         date_id=date_id,
                         organization_id=organization["id"],
                         date_added=datetime.now(amurtime).date(),
                         members_count=group.get("members_count", 0),
-                        fulfillment_percentage=get_percentage_of_fulfillment_of_basic_requirements(organization),
+                        fulfillment_percentage=get_percentage_of_fulfillment_of_basic_requirements(
+                            organization
+                        ),
                     )
-                    validated_stat = StatisticBase.model_validate(
-                        new_stat, from_attributes=True
-                    )
-                    all_stats.append(validated_stat)
-                    logging.info(f"Added new_stat: {validated_stat}")
+                    try:
+                        validated_stat = StatisticBase.model_validate(
+                            new_stat, from_attributes=True
+                        )
+                        all_stats.append(validated_stat)
+                        logging.info(f"Added new_stat: {validated_stat}")
+                    except ValidationError as e:
+                        logging.error(f"Validation error: {e}")
+                        continue
 
         for organization in updated_organizations:
             stmt = (
                 insert(Organizations)
                 .values(**organization)
-                .on_conflict_do_update(index_elements=["id"], set_=organization)
+                .on_conflict_do_update(index_elements=["channel_id"], set_=organization)
             )
+            logging.debug(f"Insert/update statement: {stmt}")
             await session.execute(stmt)
         await session.commit()
+        logging.debug("Organizations insert/update commit completed")
 
         organizations = {
             org.id: OrganizationsForStatistic.model_validate(
@@ -227,29 +242,74 @@ async def get_stat(session: AsyncSession = Depends(get_session)):
 
         for stat in all_stats:
             organization = organizations.get(stat.organization_id)
+            print(stat.organization_id)
+            print(f"Organization for stat: {organization}")
             if organization:
-                fulfillment_percentage = (
+                stat.fulfillment_percentage = (
                     get_percentage_of_fulfillment_of_basic_requirements(organization)
                 )
-                stat.fulfillment_percentage = fulfillment_percentage
-
-                add_stat = insert(Statistic).values(
-                    StatisticBase.model_validate(
-                        stat, from_attributes=True
-                    ).model_dump()
-                ).on_conflict_do_update(
-                    index_elements=["date_id"],
-                    set_={
-                        "members_count": stat.members_count,
-                        "fulfillment_percentage": stat.fulfillment_percentage,
-                        "date_added": stat.date_added,
-                    }
+                add_stat = (
+                    insert(Statistic)
+                    .values(
+                        StatisticBase.model_validate(
+                            stat, from_attributes=True
+                        ).model_dump()
+                    )
+                    .on_conflict_do_update(
+                        index_elements=["date_id"],
+                        set_={
+                            "members_count": stat.members_count,
+                            "fulfillment_percentage": stat.fulfillment_percentage,
+                            "date_added": stat.date_added,
+                        },
+                    )
                 )
+                logging.debug(f"Insert/update stat statement: {add_stat}")
                 await session.execute(add_stat)
+        await session.commit()
+        logging.debug("Statistics insert/update commit completed")
+
+        for organization in updated_organizations:
+            statistics_result = await session.execute(
+                select(Statistic).where(Statistic.organization_id == organization["id"])
+            )
+            statistics_list_raw = statistics_result.scalars().all()
+            statistics_list = [
+                SchemaStatistic.model_validate(stat, from_attributes=True)
+                for stat in statistics_list_raw
+            ]
+
+            new_stats = get_new_stats(statistics_list)
+
+            if new_stats:  # Проверка, чтобы избежать деления на ноль
+                average_fulfillment_percentage = get_average_fulfillment_percentage(
+                    new_stats
+                )
+
+                try:
+                    update_stmt = (
+                        update(Organizations)
+                        .where(Organizations.id == organization["id"])
+                        .values(
+                            average_fulfillment_percentage=average_fulfillment_percentage
+                        )
+                    )
+                    logging.debug(
+                        f"Update average fulfillment statement: {update_stmt}"
+                    )
+                    await session.execute(update_stmt)
+                    logging.info(
+                        f"Updated average_fulfillment_percentage for organization ID {organization['id']}"
+                    )
+                except Exception as e:
+                    logging.error(
+                        f"Error updating average fulfillment percentage for organization_id: {organization['id']} - {e}"
+                    )
+                    continue
 
         await session.commit()
-        return {"status": "completed"}
 
+        return {"status": "completed"}
 
     except Exception as e:
         logging.error(f"An error occurred: {e}")
@@ -282,10 +342,17 @@ async def get_gos_bage(session: AsyncSession = Depends(get_session)):
         batch = accounts[i : i + batch_size]
         all_ids_in_batch = [account.id for account in batch]
 
-        tasks = [fetch_gos_page(f"https://vk.com/{account.screen_name}", account.id) for account in batch]
+        tasks = [
+            fetch_gos_page(f"https://vk.com/{account.screen_name}", account.id)
+            for account in batch
+        ]
         batch_results = await asyncio.gather(*tasks, return_exceptions=True)
 
-        found_ids = [account_id for account_id in batch_results if account_id and not isinstance(account_id, Exception)]
+        found_ids = [
+            account_id
+            for account_id in batch_results
+            if account_id and not isinstance(account_id, Exception)
+        ]
         not_found_ids = list(set(all_ids_in_batch) - set(found_ids))
 
         if found_ids:

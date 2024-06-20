@@ -5,7 +5,11 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_session
 from app.organizations.dao import OrganizationsDAO
-from app.organizations.params import FilterChannelsParams, FilterFounderParams
+from app.organizations.params import (
+    FilterChannelsParams,
+    FilterFounderParams,
+    FilterSpheresParams,
+)
 
 router = APIRouter(prefix="/filter", tags=["Фильтрация данных"])
 
@@ -25,35 +29,15 @@ async def get_founders(
     )
 
 
-@router.get("/get_spheres_by_level")
-async def get_spheres_by_level(
-    filterfounderparams: FilterFounderParams = Depends(),
+@router.get("/get_spheres_by")
+async def get_spheres(
+    filterspheresparams: FilterSpheresParams = Depends(),
     session: AsyncSession = Depends(get_session),
 ):
-    return await OrganizationsDAO.get_sphere_by_level(
-        level=filterfounderparams.level, session=session
-    )
-
-
-@router.get("/get_spheres_by_founder")
-async def get_spheres_by_founder(
-    founder: str, session: AsyncSession = Depends(get_session)
-):
-    return await OrganizationsDAO.get_sphere_by_founder(
-        founder=founder, session=session
-    )
-
-
-@router.get("/get_sphere_by_founder_and_level")
-async def get_unique_spheres_by_founder_and_level(
-    level: Literal[
-        "Министерство", "МО", "Ведомство", "Законодательный орган", "Другое", "ВУЗ"
-    ],
-    founder: str,
-    session: AsyncSession = Depends(get_session),
-):
-    return await OrganizationsDAO.get_sphere_by_founder_and_level(
-        founder=founder, level=level, session=session
+    return await OrganizationsDAO.get_spheres_by(
+        founder=filterspheresparams.founder,
+        level=filterspheresparams.level,
+        session=session,
     )
 
 

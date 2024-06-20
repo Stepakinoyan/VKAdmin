@@ -5,10 +5,37 @@ class FilterFounderParams:
     def __init__(
         self,
         level: Literal[
-            "Министерство", "МО", "Ведомство", "Законодательный орган", "Другое", "ВУЗ"
+            "Регион",
+            "Министерство",
+            "МО",
+            "Ведомство",
+            "Законодательный орган",
+            "Другое",
+            "ВУЗ",
         ],
     ):
         self.level = level
+
+
+class FilterSpheresParams:
+    def __init__(
+        self,
+        level: Optional[
+            Literal[
+                "",
+                "Регион",
+                "Министерство",
+                "МО",
+                "Ведомство",
+                "Законодательный орган",
+                "Другое",
+                "ВУЗ",
+            ]
+        ] = "",
+        founder: Optional[str] = "",
+    ):
+        self.level = level
+        self.founder = founder
 
 
 class FilterChannelsParams:
@@ -16,6 +43,7 @@ class FilterChannelsParams:
         self,
         level: Literal[
             "",
+            "Регион",
             "Министерство",
             "МО",
             "Ведомство",

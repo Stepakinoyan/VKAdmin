@@ -28,21 +28,21 @@ class ExcelToDBDAO(BaseDAO):
 
     @classmethod
     async def excel_to_db(self, file: str, session: AsyncSession = get_session()):
-        delete_data = delete(self.model)
-        await session.execute(delete_data)
-        await session.commit()
 
         excel_df = pandas.read_excel(file).rename(columns=db_columns)
 
         excel_df_json = excel_df.to_json(orient="records")
 
         convert_to_json = json.loads(excel_df_json)
+        print(convert_to_json[4])
+        convert_to_json[4]["level"] = "Регион"
+        convert_to_json[4]["founder"] = "Правительство Амурской области"
 
         for column in convert_to_json:
             item = Item(**column)
             if item.channel_id != 0 and item.channel_id != None:
                 add_data = insert(self.model).values(item.model_dump())
                 await session.execute(add_data)
-                await session.commit()
             else:
                 pass
+        await session.commit()
