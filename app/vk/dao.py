@@ -116,25 +116,26 @@ class VkDAO(BaseDAO):
                 )
                 async with async_session() as session:
                     async with session.begin():
-                        db_item = await session.get(Organizations, group_id)
-                        # print(db_item)
-                        if db_item:
-                            db_item.posts = data["posts"]
-                            db_item.posts_1d = data["posts_1d"]
-                            db_item.posts_7d = data["posts_7d"]
-                            db_item.posts_30d = data["posts_30d"]
-                            db_item.post_date = datetime.utcfromtimestamp(
-                                data["first_item_date"]
-                            )
+                        db_item = {}
+                        # db_item = select(Organizations).where(Organizations.channel_id == group_id)
+                        # result = await session.execute(db_item)
+                        # db_item = result.scalars().first()
+                        # db_item = OrganizationsBase.model_validate(db_item, from_attributes=True).model_dump()
 
-                            print(f">>{data['group_id']}: {data['posts']}")
+                        db_item["posts"] = data["posts"]
+                        db_item["posts_1d"] = data["posts_1d"]
+                        db_item["posts_7d"] = data["posts_7d"]
+                        db_item["posts_30d"] = data["posts_30d"]
+                        db_item["post_date"] = datetime.utcfromtimestamp(
+                            data["first_item_date"]
+                        )
+                        print(f">>{data['group_id']}: {data['posts']}")
 
-                            await session.commit()
+                        update_item = update(Organizations).where(Organizations.channel_id == group_id).values(**db_item)
+                        await session.execute(update_item)
+                        await session.commit()
 
-                            return {data["group_id"]: "DB"}
-                        else:
-                            print(data)
-                            return {data["group_id"]: data}
+                        return {data["group_id"]: "DB"}
 
             else:
                 print(f"{group_id}: NO DATA", data)

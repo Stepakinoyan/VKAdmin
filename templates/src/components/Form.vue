@@ -3,7 +3,7 @@
         <form class="bg-white p-6 rounded-md w-full max-w-sm py-20">
             <div class="space-y-3">
                 <InputGroup>
-                    <InputText v-model="email" placeholder="Почта" class="border border-black focus:outline-none focus:outline-offset-0 focus:ring focus:ring-blue-500/50 dark:focus:ring-blue-400/50 focus:z-10 placeholder:text-surface-400 p-2.5 rounded-md"/>
+                    <InputText v-model="email" placeholder="Почта" class="border border-black placeholder:text-surface-400 p-2.5 rounded-md"/>
                 </InputGroup>
                 <InputGroup>
                     <Password v-model="password" placeholder="Пароль" :feedback="false" :pt="{
@@ -38,16 +38,8 @@
                                             // Invalid State
                                             { 'border-red-500 dark:border-red-400': parent.props.invalid },
                                             // States
-                                            {
-                                                'hover:border-blue': !context.disabled && !parent.props.invalid,
-                                                'focus:outline-none focus:outline-offset-0 focus:ring focus:ring-blue-500/50 dark:focus:ring-blue-400/50 focus:z-10': !context.disabled,
-                                                'opacity-60 select-none pointer-events-none cursor-default': context.disabled
-                                            },
                                             // Filled State *for FloatLabel
-                                            { filled: ((_b = (_a = parent.instance) == null ? void 0 : _a.$parentInstance) == null ? void 0 : _b.$name) == 'FloatLabel' && parent.props.modelValue !== null && ((_c = parent.props.modelValue) == null ? void 0 : _c.length) !== 0 },
-                                            // Misc
-                                            'appearance-none',
-                                            'transition-colors duration-200'
+        
                                             ]
                                         };
                                 }
@@ -56,7 +48,7 @@
                 
                 </InputGroup>
                 <div class="flex justify-center pt-3">
-                    <Button label="Войти" severity="info" raised class="w-full py-2 bg-blue-600 text-white hover:bg-blue-700" @click="authorization"/>
+                    <Button label="Войти" severity="info" class="w-full py-2 bg-blue-600 text-white hover:bg-blue-700"  @click="authorization"/>
                 </div>
             </div>
             <div class="mt-4 flex justify-center">

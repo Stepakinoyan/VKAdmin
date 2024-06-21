@@ -1,8 +1,6 @@
 import asyncio
-import json
 import logging
 from datetime import datetime
-import time
 
 import httpx
 from pydantic import ValidationError
@@ -196,11 +194,9 @@ async def get_stat(session: AsyncSession = Depends(get_session)):
                     logging.debug(f"Existing stat found: {stat}")
                     stat.members_count = group.get("members_count", 0)
                     stat.date_added = datetime.now(amurtime).date()
-                    stat.fulfillment_percentage = (
-                        get_percentage_of_fulfillment_of_basic_requirements(
-                            organization
-                        )
-                    )
+                    stat.fulfillment_percentage = get_percentage_of_fulfillment_of_basic_requirements(organization)
+                        
+            
                 else:
                     logging.debug(f"No existing stat found for date_id: {date_id}")
                     new_stat = Statistic(
@@ -245,9 +241,8 @@ async def get_stat(session: AsyncSession = Depends(get_session)):
             print(stat.organization_id)
             print(f"Organization for stat: {organization}")
             if organization:
-                stat.fulfillment_percentage = (
-                    get_percentage_of_fulfillment_of_basic_requirements(organization)
-                )
+                print(organization)
+                stat.fulfillment_percentage = get_percentage_of_fulfillment_of_basic_requirements(organization)
                 add_stat = (
                     insert(Statistic)
                     .values(
@@ -321,7 +316,7 @@ async def get_stat(session: AsyncSession = Depends(get_session)):
 
 @router.post("/wall_get_all")
 async def wall_get_all(session: AsyncSession = Depends(get_session)):
-    result = await session.execute(select(Organizations.id))
+    result = await session.execute(select(Organizations.channel_id))
     organizations = result.scalars().all()
 
     tasks = [VkDAO.wall_get_data(group_id=group_id) for group_id in organizations]
@@ -333,7 +328,6 @@ async def wall_get_all(session: AsyncSession = Depends(get_session)):
 @router.post("/get_gos_bage")
 async def get_gos_bage(session: AsyncSession = Depends(get_session)):
     batch_size = 50
-    pause_duration = 5
 
     result = await session.execute(select(Organizations.id, Organizations.screen_name))
     accounts = result.all()
@@ -341,7 +335,6 @@ async def get_gos_bage(session: AsyncSession = Depends(get_session)):
     for i in range(0, len(accounts), batch_size):
         batch = accounts[i : i + batch_size]
         all_ids_in_batch = [account.id for account in batch]
-
         tasks = [
             fetch_gos_page(f"https://vk.com/{account.screen_name}", account.id)
             for account in batch
@@ -371,6 +364,5 @@ async def get_gos_bage(session: AsyncSession = Depends(get_session)):
 
         await session.commit()
 
-        await asyncio.sleep(pause_duration)
 
     return {"updated_accounts": len(accounts)}

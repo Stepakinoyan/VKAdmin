@@ -271,43 +271,62 @@ def get_percentage_of_fulfillment_of_basic_requirements(
 ) -> Precent:
     percentage = 0
 
-    # Подключение к компоненту «Госпаблики» (10 %)
+    # Подключение к компоненту «Госпаблики» (20 %)
     if organization.get("has_gos_badge") is True:
         percentage += 20
+        print("has_gos_badge: +20%")
 
     # Оформление (20 %)
     if organization.get("has_avatar") is True:
         percentage += 5
+        print("has_avatar: +5%")
     if organization.get("has_description") is True:
         percentage += 5
+        print("has_description: +5%")
     if organization.get("has_cover") is True:
         percentage += 10
+        print("has_cover: +10%")
 
     # Виджеты (10 %)
     widget_count = organization.get("widget_count")
     if widget_count is not None:
         if widget_count >= 2:
             percentage += 10
+            print("widget_count >= 2: +10%")
         elif widget_count == 1:
             percentage += 5
+            print("widget_count == 1: +5%")
 
     # Активность (30 %)
     posts_30d = organization.get("posts_30d")
     if posts_30d is not None and posts_30d >= 3:
         percentage += 30
+        print("posts_30d >= 3: +30%")
 
     # Общий охват аудитории за неделю (10 %)
     members_count = organization.get("members_count")
+    print(f"members_count: {members_count}")
+
+    # Пример: вычисление охвата на основе других данных в организации
+    # Предположим, что у нас есть данные о количестве просмотров постов
+    # и мы можем вычислить охват как отношение просмотров к количеству подписчиков
     if members_count is not None and members_count > 0:
-        reach_percentage = 0  # Предположим, что охват в процентах от количества подписчиков вычисляется извне
+        # Пример вычисления reach_percentage
+        # total_views = organization.get("total_views")
+        # reach_percentage = (total_views / members_count) * 100 if total_views else 0
+        reach_percentage = 50  # Замените на реальный расчет, если он доступен
+
         if reach_percentage > 70:
             percentage += 10
+            print("reach_percentage > 70: +10%")
         elif 50 <= reach_percentage <= 70:
-            percentage += 7
+            percentage += 10
+            print("50 <= reach_percentage <= 70: +10%")
         elif 30 <= reach_percentage < 50:
             percentage += 5
+            print("30 <= reach_percentage < 50: +5%")
 
-    posts_7d = organization.get("posts_30d")
+    posts_7d = organization.get("posts_7d")
     posts = organization.get("posts")
     if (
         posts_7d is not None
@@ -320,7 +339,9 @@ def get_percentage_of_fulfillment_of_basic_requirements(
         avg_reach_percentage = (avg_reach_per_post / members_count) * 100
         if avg_reach_percentage > 70:
             percentage += 20
+            print("avg_reach_percentage > 70: +20%")
 
+    print(f"Total percentage for organization {organization['channel_id']}: {percentage}%")
     return percentage
 
 

@@ -8,9 +8,8 @@
       :rowsPerPageOptions="[20, 50]"
       removableSort
       scrollable
-      scrollHeight="calc(100vh - 160px)"
+      scrollHeight="calc(100vh - 144px)"
       :sortField="'average_fulfillment_percentage'"
-      :sortOrder="-1"
       class="ml-2.5 border rounded-lg"
       tableStyle="min-width: 50rem"
     >
@@ -103,6 +102,15 @@
     <Dialog v-model:visible="dialogVisible" :style="{ width: '25rem' }" modal>
               <div class="space-y-2">
                 <div class="text-black">
+                        <h2 class="font-bold">Акк. имя</h2>
+                        <p v-if="!selectedItem['name']" class="text-gray-500">Нет информации</p>
+                        <p class="text-sm text-gray-500">{{ selectedItem["name"] }}</p>
+                </div>
+                <div class="text-black">
+                        <h2 class="font-bold">Ссылка</h2>
+                        <a class="text-blue-300 hover:underline cursor-pointer" :href="selectedItem['url']" target="_blank">{{ selectedItem["url"] }}</a>
+                </div>
+                <div class="text-black">
                         <h2 class="font-bold">ОГРН</h2>
                         <p v-if="!selectedItem['the_main_state_registration_number']" class="text-gray-500">Нет информации</p>
                         <p class="text-gray-500">{{ selectedItem["the_main_state_registration_number"] }}</p>
@@ -117,11 +125,6 @@
                         <p class="text-gray-500">{{ selectedItem["channel_id"] }}</p>
                   </div>
                   <div class="text-black">
-                        <h2 class="font-bold">Акк. имя</h2>
-                        <p v-if="!selectedItem['name']" class="text-gray-500">Нет информации</p>
-                        <p class="text-sm text-gray-500">{{ selectedItem["name"] }}</p>
-                  </div>
-                  <div class="text-black">
                         <h2 class="font-bold">Город</h2>
                         <p v-if="!selectedItem['city']" class="text-gray-500">Нет информации</p>
                         <p class="text-gray-500">{{ selectedItem["city"] }}</p>
@@ -131,18 +134,18 @@
 
     <div class="flex items-center flex-col lg:flex-row mb-1 space-y-1 lg:space-y-0">
       <InputGroup class="ml-2">
-        <Dropdown v-model="selectedlevel" :options="levels" optionLabel="level" placeholder="Уровень" class="w-full md:w-56" @change="onLevelChange" :pt="DropdownStyle"/>
+        <Dropdown v-model="selectedlevel" :options="levels" optionLabel="level" placeholder="Уровень" class="w-full md:w-56 border border-gray-400" @change="onLevelChange" />
       </InputGroup>
 
       <InputGroup class="ml-2">
-        <Dropdown v-model="selectedfounder" :options="founders" optionLabel="founder" placeholder="Учредитель" class="w-full md:w-56" @change="onFounderChange" :pt="DropdownStyle" :disabled="!selectedlevel"/>
+        <Dropdown v-model="selectedfounder" :options="founders" optionLabel="founder" placeholder="Учредитель" class="w-full md:w-56 border border-gray-400" @change="onFounderChange" :disabled="!selectedlevel"/>
       </InputGroup>
 
       <InputGroup class="ml-2">
-        <Dropdown v-model="selectedsphere" :options="spheres" optionLabel="sphere" placeholder="Сфера" class="w-full md:w-56" @change="onSphereChange" :pt="DropdownStyle"/>
+        <Dropdown v-model="selectedsphere" :options="spheres" optionLabel="sphere" placeholder="Сфера" class="w-full md:w-56 border border-gray-400" @change="onSphereChange" />
       </InputGroup>
       <InputGroup class="ml-2">
-        <Dropdown v-model="selectedzone" :options="zones" optionLabel="zone" placeholder="% выполнения" class="w-full md:w-56" @change="onZoneChange" :pt="DropdownStyle"/>
+        <Dropdown v-model="selectedzone" :options="zones" optionLabel="zone" placeholder="% выполнения" class="w-full md:w-56 border border-gray-400" @change="onZoneChange"/>
       </InputGroup>
       
       <InputGroup class="ml-2">

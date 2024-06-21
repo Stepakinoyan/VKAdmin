@@ -101,7 +101,10 @@ class OrganizationsDAO(BaseDAO):
             if zone == "90-100%":
                 query = query.where(self.model.average_fulfillment_percentage >= 90)
             elif zone == "70-89%":
-                query = query.where(self.model.average_fulfillment_percentage >= 70)
+                query = query.where(
+                    (self.model.average_fulfillment_percentage >= 70)
+                    & (self.model.average_fulfillment_percentage < 90)
+                )
             elif zone == "0-69%":
                 query = query.where(self.model.average_fulfillment_percentage <= 69)
 
@@ -129,4 +132,4 @@ class OrganizationsDAO(BaseDAO):
             logging.error("Error executing filter_channels query", exc_info=True)
             raise e
 
-        return [stats.model_dump()]
+        return [stats]

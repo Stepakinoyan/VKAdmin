@@ -17,7 +17,7 @@ import Password from 'primevue/password';
 import Dialog from 'primevue/dialog';
 import Tag from 'primevue/tag';
 import Column from 'primevue/column';
-import 'primevue/resources/themes/lara-light-green/theme.css'; // Импорт светлой темы Lara
+import 'primevue/resources/themes/aura-light-blue/theme.css';
 import 'primevue/resources/primevue.min.css'; 
 import 'primeicons/primeicons.css';
 import axios from 'axios';
@@ -40,7 +40,7 @@ app.use(VueCookies)
 
 
 app.use(PrimeVue, {
-    unstyled: false
+    unstyled: false,
 });
 
 app.use(router)
