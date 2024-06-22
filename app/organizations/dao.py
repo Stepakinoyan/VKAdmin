@@ -1,7 +1,7 @@
 import logging
 
 from fastapi.encoders import jsonable_encoder
-from sqlalchemy import and_, func, or_, select
+from sqlalchemy import and_, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
@@ -11,12 +11,10 @@ from app.organizations.funcs import get_unique_spheres, get_new_stats
 from app.organizations.models import Organizations
 from app.organizations.schemas import (
     OrganizationResponse,
-    OrganizationsBase,
-    StatisticBase,
     Stats,
-    StatsData,
-    Founder,
 )
+from app.organizations.types import FounderType, StatsType
+from app.vk.schemas import StatisticDTO
 
 
 class OrganizationsDAO(BaseDAO):
@@ -25,22 +23,17 @@ class OrganizationsDAO(BaseDAO):
     @classmethod
     async def get_all_stats(
         self, session: AsyncSession = get_session()
-    ) -> list[StatsData]:
-        get_stats = select(self.model)
+    ) -> list[StatsType]:
+        get_stats = select(self.model.__table__.columns)
 
         results = await session.execute(get_stats)
 
-        res = results.scalars().all()
-        result = [
-            OrganizationsBase.model_validate(row, from_attributes=True) for row in res
-        ]
-
-        return result
+        return results.mappings().all()
 
     @classmethod
     async def get_founders_by_level(
         self, level: str, session: AsyncSession = get_session()
-    ) -> list[Founder]:
+    ) -> list[FounderType]:
         get_founders = (
             select(self.model.founder)
             .filter_by(level=level)
@@ -78,7 +71,7 @@ class OrganizationsDAO(BaseDAO):
         sphere: str,
         zone: str,
         session: AsyncSession,
-    ) -> list:
+    ) -> list[Stats]:
         try:
             # Основной запрос с подзапросом для фильтрации по последней статистике
             query = (
@@ -117,7 +110,7 @@ class OrganizationsDAO(BaseDAO):
             for item in res:
                 organization_data = jsonable_encoder(item)
                 organization_data["statistic"] = [
-                    StatisticBase(**stat)
+                    StatisticDTO(**stat)
                     for stat in organization_data.get("statistic", [])
                 ]
                 stats_items.append(OrganizationResponse(**organization_data))

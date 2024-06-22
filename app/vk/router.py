@@ -17,12 +17,10 @@ from app.database import get_session
 from app.organizations.funcs import get_new_stats
 from app.organizations.models import Organizations
 from app.organizations.schemas import (
-    OrganizationsBase,
-    OrganizationsForStatistic,
-    StatisticBase,
+    OrganizationsDTO,
 )
 from app.vk.dao import VkDAO
-from app.vk.schemas import SchemaStatistic
+from app.vk.schemas import StatisticDTO
 from app.vk.funcs import (
     call,
     fetch_gos_page,
@@ -110,7 +108,7 @@ async def get_stat(session: AsyncSession = Depends(get_session)):
             return {"status": "No organizations found"}
 
         organizations = {
-            org.channel_id: OrganizationsBase.model_validate(
+            org.channel_id: OrganizationsDTO.model_validate(
                 org, from_attributes=True
             ).model_dump()
             for org in organizations_list
@@ -194,9 +192,12 @@ async def get_stat(session: AsyncSession = Depends(get_session)):
                     logging.debug(f"Existing stat found: {stat}")
                     stat.members_count = group.get("members_count", 0)
                     stat.date_added = datetime.now(amurtime).date()
-                    stat.fulfillment_percentage = get_percentage_of_fulfillment_of_basic_requirements(organization)
-                        
-            
+                    stat.fulfillment_percentage = (
+                        get_percentage_of_fulfillment_of_basic_requirements(
+                            organization
+                        )
+                    )
+
                 else:
                     logging.debug(f"No existing stat found for date_id: {date_id}")
                     new_stat = Statistic(
@@ -209,7 +210,7 @@ async def get_stat(session: AsyncSession = Depends(get_session)):
                         ),
                     )
                     try:
-                        validated_stat = StatisticBase.model_validate(
+                        validated_stat = StatisticDTO.model_validate(
                             new_stat, from_attributes=True
                         )
                         all_stats.append(validated_stat)
@@ -230,7 +231,7 @@ async def get_stat(session: AsyncSession = Depends(get_session)):
         logging.debug("Organizations insert/update commit completed")
 
         organizations = {
-            org.id: OrganizationsForStatistic.model_validate(
+            org.id: OrganizationsDTO.model_validate(
                 org, from_attributes=True
             ).model_dump()
             for org in organizations_list
@@ -242,11 +243,13 @@ async def get_stat(session: AsyncSession = Depends(get_session)):
             print(f"Organization for stat: {organization}")
             if organization:
                 print(organization)
-                stat.fulfillment_percentage = get_percentage_of_fulfillment_of_basic_requirements(organization)
+                stat.fulfillment_percentage = (
+                    get_percentage_of_fulfillment_of_basic_requirements(organization)
+                )
                 add_stat = (
                     insert(Statistic)
                     .values(
-                        StatisticBase.model_validate(
+                        StatisticDTO.model_validate(
                             stat, from_attributes=True
                         ).model_dump()
                     )
@@ -270,7 +273,7 @@ async def get_stat(session: AsyncSession = Depends(get_session)):
             )
             statistics_list_raw = statistics_result.scalars().all()
             statistics_list = [
-                SchemaStatistic.model_validate(stat, from_attributes=True)
+                StatisticDTO.model_validate(stat, from_attributes=True)
                 for stat in statistics_list_raw
             ]
 
@@ -330,39 +333,30 @@ async def get_gos_bage(session: AsyncSession = Depends(get_session)):
     batch_size = 50
 
     result = await session.execute(select(Organizations.id, Organizations.screen_name))
-    accounts = result.all()
+    accounts = result.all()     
 
     for i in range(0, len(accounts), batch_size):
-        batch = accounts[i : i + batch_size]
+        batch = accounts[i:i+batch_size]
         all_ids_in_batch = [account.id for account in batch]
-        tasks = [
-            fetch_gos_page(f"https://vk.com/{account.screen_name}", account.id)
-            for account in batch
-        ]
-        batch_results = await asyncio.gather(*tasks, return_exceptions=True)
 
-        found_ids = [
-            account_id
-            for account_id in batch_results
-            if account_id and not isinstance(account_id, Exception)
-        ]
+        tasks = [fetch_gos_page(f"https://vk.com/{account.screen_name}", account.id) for account in batch]
+        batch_results = await asyncio.gather(*tasks)
+
+        found_ids = [account_id for account_id in batch_results if account_id]
         not_found_ids = list(set(all_ids_in_batch) - set(found_ids))
 
+        # Обновляем записи с найденным GovernmentCommunityBadge
         if found_ids:
             await session.execute(
-                update(Organizations)
-                .where(Organizations.id.in_(found_ids))
-                .values(has_gos_badge=True)
+                update(Organizations).where(Organizations.id.in_(found_ids)).values(has_gos_badge=True)
             )
 
+        # Обновляем записи без GovernmentCommunityBadge
         if not_found_ids:
             await session.execute(
-                update(Organizations)
-                .where(Organizations.id.in_(not_found_ids))
-                .values(has_gos_badge=False)
+                update(Organizations).where(Organizations.id.in_(not_found_ids)).values(has_gos_badge=False)
             )
 
         await session.commit()
-
 
     return {"updated_accounts": len(accounts)}

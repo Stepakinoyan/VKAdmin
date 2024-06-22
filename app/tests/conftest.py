@@ -11,7 +11,6 @@ from app.organizations.models import Organizations
 from httpx import AsyncClient
 
 
-
 @pytest.fixture(scope="session", autouse=True)
 async def prepare_database():
     assert settings.MODE == "TEST"
@@ -36,7 +35,7 @@ async def prepare_database():
             (Organizations, organizations),
         ]:
             for i in range(0, len(values), 1000):  # Разбиваем на батчи по 1000 записей
-                batch = values[i:i+1000]
+                batch = values[i : i + 1000]
                 query = pg_insert(Model).values(batch)
                 await session.execute(query)
         await session.commit()

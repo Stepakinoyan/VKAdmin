@@ -6,6 +6,7 @@ from taskiq_faststream import BrokerWrapper, StreamScheduler
 
 broker = NatsBroker(servers="nats://nats:4222")
 
+
 @broker.subscriber("get-stats")
 async def handler():
     async with httpx.AsyncClient() as client:
@@ -28,18 +29,15 @@ async def handler():
         except Exception as e:
             print(f"An error occurred: {e}")
 
+
 taskiq_broker = BrokerWrapper(broker)
 
 taskiq_broker.task(
     subject="get-stats",
-    schedule=[{
-        "cron": "0 0 * * *",
-        "cron_offset": "Asia/Yakutsk"
-    }],
+    schedule=[{"cron": "0 0 * * *", "cron_offset": "Asia/Yakutsk"}],
 )
 
 scheduler = StreamScheduler(
     broker=taskiq_broker,
     sources=[LabelScheduleSource(taskiq_broker)],
 )
-

@@ -2,8 +2,6 @@ import pytest
 from httpx import AsyncClient
 
 
-
-
 @pytest.mark.parametrize(
     "level,founder,sphere",
     [

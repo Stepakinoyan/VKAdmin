@@ -10,6 +10,7 @@
       scrollable
       scrollHeight="calc(100vh - 144px)"
       :sortField="'average_fulfillment_percentage'"
+      :sortOrder="-1"
       class="ml-2.5 border rounded-lg"
       tableStyle="min-width: 50rem"
     >

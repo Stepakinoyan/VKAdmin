@@ -1,16 +1,10 @@
-from app.organizations.schemas import Sphere, StatisticBase
+from app.organizations.types import SphereType
 from datetime import datetime
 
-from app.vk.schemas import SchemaStatistic
+from app.vk.schemas import StatisticDTO
 
 
-def get_unique_spheres(items: list[Sphere]) -> list[Sphere]:
-    """
-
-    Возвращает список уникальных объектов типа Sphere.
-
-    """
-
+def get_unique_spheres(items: list[SphereType]) -> list[SphereType]:
     spheres = []
     for item in list(set(filter(lambda item: item is not None, items))):
         spheres.append({"sphere": item})
@@ -19,11 +13,8 @@ def get_unique_spheres(items: list[Sphere]) -> list[Sphere]:
 
 
 def get_new_stats(
-    stats: list[SchemaStatistic] | list[StatisticBase],
-) -> list[SchemaStatistic] | list[StatisticBase]:
-    """
-    Возвращает список со статистикой на текущий месяц и год.
-    """
+    stats: list[StatisticDTO],
+) -> list[StatisticDTO]:
     new_stats = []
     now = datetime.now()
     for stat in stats:

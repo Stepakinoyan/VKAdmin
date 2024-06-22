@@ -12,7 +12,9 @@ from httpx import AsyncClient
         ("МО", "gregergr"),
     ],
 )
-async def test_get_sphere_by(level: Optional[str], founder: Optional[str], ac: AsyncClient):
+async def test_get_sphere_by(
+    level: Optional[str], founder: Optional[str], ac: AsyncClient
+):
     response = await ac.get(
         "/filter/get_spheres_by", params={"level": level, "founder": founder}
     )

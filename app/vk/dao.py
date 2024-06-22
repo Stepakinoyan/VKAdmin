@@ -131,7 +131,11 @@ class VkDAO(BaseDAO):
                         )
                         print(f">>{data['group_id']}: {data['posts']}")
 
-                        update_item = update(Organizations).where(Organizations.channel_id == group_id).values(**db_item)
+                        update_item = (
+                            update(Organizations)
+                            .where(Organizations.channel_id == group_id)
+                            .values(**db_item)
+                        )
                         await session.execute(update_item)
                         await session.commit()
 

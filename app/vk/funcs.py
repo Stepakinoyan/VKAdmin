@@ -13,7 +13,8 @@ from app.config import settings
 from app.database import engine
 from app.organizations.models import Organizations
 from fake_useragent import UserAgent
-from app.vk.schemas import OrganizationType, StatisticType
+from app.organizations.types import OrganizationType
+from app.vk.types import StatisticType
 from typing import TypeAlias
 
 redis_ = redis.from_url(
@@ -78,18 +79,15 @@ def load_vk_links(file_path: str) -> list:
     return chunks
 
 
-async def fetch_gos_page(url, organization_id):
+async def fetch_gos_page(url, organization_id) -> int | None:
     headers = {
         "Accept-Language": "ru-RU,ru;q=0.9",
-        "User-Agent": UserAgent().random,
+        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/115.0.0.0 Safari/537.36"
     }
     async with semaphore:
-        async with httpx.AsyncClient(follow_redirects=True, timeout=80.0) as client:
+        async with httpx.AsyncClient(follow_redirects=True, timeout=30.0) as client:
             response = await client.get(url, headers=headers)
-            if (
-                response.status_code == 200
-                and "GovernmentCommunityBadge" in response.text
-            ):
+            if response.status_code == 200 and 'GovernmentCommunityBadge' in response.text:
                 print(f"{organization_id}: {url}")
                 return organization_id
             elif response.status_code in [400, 401, 403, 500]:
@@ -253,16 +251,6 @@ async def wall_get_data(group_id: int):
         return group_id
 
 
-"""
-Светофор базируется на процентах исполнения основных требований: 
-            подключение — 10 %,
-            госметка — 10 %,
-            оформление 20 %,
-            виджеты — 10 %,
-            активность — 30 %,
-            общий охват аудитории — 10 %,средний охват публикации — 5 %.
-"""
-
 Precent: TypeAlias = int
 
 
@@ -341,7 +329,9 @@ def get_percentage_of_fulfillment_of_basic_requirements(
             percentage += 20
             print("avg_reach_percentage > 70: +20%")
 
-    print(f"Total percentage for organization {organization['channel_id']}: {percentage}%")
+    print(
+        f"Total percentage for organization {organization['channel_id']}: {percentage}%"
+    )
     return percentage
 
 
@@ -351,6 +341,8 @@ def get_average_fulfillment_percentage(statistics: list[StatisticType]) -> int:
 
     # Извлечение процентов выполнения
     fulfillment_percentages = [stat.fulfillment_percentage for stat in statistics]
-
+    average_fulfillment_percentage = round(sum(fulfillment_percentages) / len(fulfillment_percentages))
     # Возвращаем среднее арифметическое всех процентов выполнения
-    return round(sum(fulfillment_percentages) / len(fulfillment_percentages))
+    if average_fulfillment_percentage > 100:
+        return 100
+    return average_fulfillment_percentage

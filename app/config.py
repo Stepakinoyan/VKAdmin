@@ -6,7 +6,7 @@ class Settings(BaseSettings):
     MODE: Literal["DEV", "TEST", "PROD"]
 
     DB_HOST: str
-    DB_PORT: int    
+    DB_PORT: int
 
     TEST_DB_HOST: str
     TEST_DB_PORT: int
@@ -38,7 +38,6 @@ class Settings(BaseSettings):
     @property
     def get_test_database_url(self) -> str:
         return f"postgresql+asyncpg://{self.POSTGRES_USER}:{self.POSTGRES_PASSWORD}@{self.TEST_DB_HOST}:{self.TEST_DB_PORT}/{self.POSTGRES_DB}"
-    
 
 
 settings = Settings()

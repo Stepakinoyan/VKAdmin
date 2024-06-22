@@ -1,11 +1,10 @@
 from datetime import datetime
+from typing import TypedDict
 
-from pydantic import BaseModel, Field
 
-
-class StatisticDTO(BaseModel):
+class StatisticType(TypedDict):
     date_id: str
     organization_id: int
-    date_added: datetime = Field(default=datetime.utcnow)
+    date_added: datetime
     members_count: int
     fulfillment_percentage: int
