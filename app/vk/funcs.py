@@ -4,9 +4,7 @@ from datetime import datetime
 
 import httpx
 import redis.asyncio as redis
-from openpyxl import Workbook
 from rich.console import Console
-from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from app.config import settings
@@ -66,99 +64,21 @@ async def call(method: str, params: dict, access_token: str, retries: int = 3):
         return {"error": "Max retries exceeded"}
 
 
-def load_vk_links(file_path: str) -> list:
-    with open(file_path, "r") as f:
-        lines = f.readlines()
-
-    # Remove any trailing or leading whitespace from each line
-    lines = [line.strip() for line in lines]
-
-    # Split the list into chunks of 500 items each
-    chunks = [lines[i : i + 500] for i in range(0, len(lines), 500)]
-
-    return chunks
-
-
 async def fetch_gos_page(url, organization_id) -> int | None:
-    headers = {
-        "Accept-Language": "ru-RU,ru;q=0.9",
-        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/115.0.0.0 Safari/537.36"
-    }
+    headers = {"Accept-Language": "ru-RU,ru;q=0.9", "User-Agent": UserAgent().random}
     async with semaphore:
         async with httpx.AsyncClient(follow_redirects=True, timeout=30.0) as client:
             response = await client.get(url, headers=headers)
-            if response.status_code == 200 and 'GovernmentCommunityBadge' in response.text:
+            if (
+                response.status_code == 200
+                and "GovernmentCommunityBadge GovernmentCommunityBadge--tooltip"
+                in response.text
+            ):
                 print(f"{organization_id}: {url}")
                 return organization_id
             elif response.status_code in [400, 401, 403, 500]:
                 print(f"[{response.status_code}] {organization_id}: {url}")
         return None
-
-
-async def save_accounts_to_xlsx(file_path: str, session: AsyncSession):
-    # 1. Fetch all data from the accounts table
-    result = await session.execute(select(Organizations))
-    organizations = result.scalars().all()
-
-    # 2. Create a new XLSX workbook and sheet
-    wb = Workbook()
-    ws = wb.active
-    ws.title = "Accounts"
-
-    # Set headers for the sheet
-    headers = [
-        "id",
-        "screen_name",
-        "type",
-        "name",
-        "city",
-        "activity",
-        "has_avatar",
-        "has_cover",
-        "has_description",
-        "has_gos_badge",
-        "has_widget",
-        "widget_count",
-        "members_count",
-        "site",
-        "date_added",
-        "posts",
-        "posts_1d",
-        "posts_7d",
-        "posts_30d",
-        "post_date",
-    ]
-    ws.append(headers)
-
-    # Append account data to the sheet
-    for organization in organizations:
-        ws.append(
-            [
-                organization.id,
-                organization.screen_name,
-                organization.type,
-                organization.name,
-                organization.city,
-                organization.activity,
-                organization.has_avatar,
-                organization.has_cover,
-                organization.has_description,
-                organization.has_gos_badge,
-                organization.has_widget,
-                organization.widget_count,
-                organization.members_count,
-                organization.site,
-                organization.date_added,
-                organization.posts,
-                organization.posts_1d,
-                organization.posts_7d,
-                organization.posts_30d,
-                organization.post_date,
-            ]
-        )
-
-    # Save the workbook to the specified file path
-    wb.save(file_path)
 
 
 semaphore = asyncio.Semaphore(3)
@@ -341,7 +261,9 @@ def get_average_fulfillment_percentage(statistics: list[StatisticType]) -> int:
 
     # Извлечение процентов выполнения
     fulfillment_percentages = [stat.fulfillment_percentage for stat in statistics]
-    average_fulfillment_percentage = round(sum(fulfillment_percentages) / len(fulfillment_percentages))
+    average_fulfillment_percentage = round(
+        sum(fulfillment_percentages) / len(fulfillment_percentages)
+    )
     # Возвращаем среднее арифметическое всех процентов выполнения
     if average_fulfillment_percentage > 100:
         return 100

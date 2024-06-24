@@ -319,7 +319,7 @@ async def get_stat(session: AsyncSession = Depends(get_session)):
 
 @router.post("/wall_get_all")
 async def wall_get_all(session: AsyncSession = Depends(get_session)):
-    result = await session.execute(select(Organizations.channel_id))
+    result = await session.execute(select(Organizations.screen_name))
     organizations = result.scalars().all()
 
     tasks = [VkDAO.wall_get_data(group_id=group_id) for group_id in organizations]
@@ -333,13 +333,17 @@ async def get_gos_bage(session: AsyncSession = Depends(get_session)):
     batch_size = 50
 
     result = await session.execute(select(Organizations.id, Organizations.screen_name))
-    accounts = result.all()     
+    accounts = result.all()
 
     for i in range(0, len(accounts), batch_size):
-        batch = accounts[i:i+batch_size]
+        batch = accounts[i : i + batch_size]
+        print(batch)
         all_ids_in_batch = [account.id for account in batch]
 
-        tasks = [fetch_gos_page(f"https://vk.com/{account.screen_name}", account.id) for account in batch]
+        tasks = [
+            fetch_gos_page(f"https://vk.com/{account.screen_name}", account.id)
+            for account in batch
+        ]
         batch_results = await asyncio.gather(*tasks)
 
         found_ids = [account_id for account_id in batch_results if account_id]
@@ -348,13 +352,17 @@ async def get_gos_bage(session: AsyncSession = Depends(get_session)):
         # Обновляем записи с найденным GovernmentCommunityBadge
         if found_ids:
             await session.execute(
-                update(Organizations).where(Organizations.id.in_(found_ids)).values(has_gos_badge=True)
+                update(Organizations)
+                .where(Organizations.id.in_(found_ids))
+                .values(has_gos_badge=True)
             )
 
         # Обновляем записи без GovernmentCommunityBadge
         if not_found_ids:
             await session.execute(
-                update(Organizations).where(Organizations.id.in_(not_found_ids)).values(has_gos_badge=False)
+                update(Organizations)
+                .where(Organizations.id.in_(not_found_ids))
+                .values(has_gos_badge=False)
             )
 
         await session.commit()
