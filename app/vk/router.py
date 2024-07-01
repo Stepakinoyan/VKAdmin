@@ -1,4 +1,5 @@
 import asyncio
+import json
 import logging
 from datetime import datetime
 
@@ -24,7 +25,8 @@ from app.vk.schemas import StatisticDTO
 from app.vk.funcs import (
     call,
     fetch_gos_page,
-    get_average_fulfillment_percentage,
+    get_average_month_fulfillment_percentage,
+    get_week_fulfillment_percentage,
     get_percentage_of_fulfillment_of_basic_requirements,
 )
 from app.vk.models import Statistic
@@ -75,6 +77,8 @@ async def callback(code: str, state: str = None):
 
         groups = await call("groups.get", {"filter": "admin"}, auth)
 
+        
+
         group_ids = ",".join(str(item) for item in groups["response"]["items"])
 
         url = f"https://oauth.vk.com/authorize?client_id={settings.CLIENT_ID}&display=page&redirect_uri={settings.REDIRECT_URI}&group_ids={group_ids}&scope=messages,stories,manage,app_widget&response_type=code&v=5.131&state=init_groups"
@@ -101,10 +105,7 @@ async def get_stat(session: AsyncSession = Depends(get_session)):
         organizations_result = await session.execute(select(Organizations))
         organizations_list = organizations_result.scalars().all()
 
-        logging.debug(f"Fetched organizations: {len(organizations_list)}")  # Отладка
-
         if not organizations_list:
-            logging.warning("No organizations found")  # Отладка
             return {"status": "No organizations found"}
 
         organizations = {
@@ -119,14 +120,10 @@ async def get_stat(session: AsyncSession = Depends(get_session)):
             for i in range(0, len(organizations_list), 500)
         ]
 
-        logging.debug(f"Chunks created: {len(chunks)}")  # Отладка
-
         all_stats = []
         updated_organizations = []
 
         for chunk in chunks:
-            logging.debug("Processing chunk")  # Отладка
-
             group_ids = ",".join(str(org.channel_id) for org in chunk)
             auth = settings.VK_SERVICE_TOKEN
             fields = "members_count,city,status,description,cover,activity,menu"
@@ -134,7 +131,6 @@ async def get_stat(session: AsyncSession = Depends(get_session)):
             data = await call(
                 "groups.getById", {"group_ids": group_ids, "fields": fields}, auth
             )
-            logging.info(f"API response: {data}")
 
             if not isinstance(data, dict):
                 raise TypeError(
@@ -145,21 +141,13 @@ async def get_stat(session: AsyncSession = Depends(get_session)):
                 raise ValueError(f"API error: {data['error']}")
 
             response = data.get("response", [])
-            logging.debug(f"API response content: {response}")
-
             for group in response["groups"]:
-                logging.debug(f"Processing group: {group['id']}")  # Отладка
-
                 date_str = datetime.now(amurtime).strftime("%Y%m%d")
                 date_id = f"{date_str}{group['id']}"
-                logging.info(f"Generated date_id: {date_id}")
 
                 organization = organizations.get(group["id"])
 
                 if not organization:
-                    logging.warning(
-                        f"No organization found for group id: {group['id']}"
-                    )
                     continue
 
                 organization.update(
@@ -183,13 +171,11 @@ async def get_stat(session: AsyncSession = Depends(get_session)):
                         "members_count": group.get("members_count", 0),
                     }
                 )
-                logging.debug(f"Updated organization: {organization}")
 
                 updated_organizations.append(organization)
 
                 stat = await session.get(Statistic, date_id)
                 if stat:
-                    logging.debug(f"Existing stat found: {stat}")
                     stat.members_count = group.get("members_count", 0)
                     stat.date_added = datetime.now(amurtime).date()
                     stat.fulfillment_percentage = (
@@ -197,9 +183,7 @@ async def get_stat(session: AsyncSession = Depends(get_session)):
                             organization
                         )
                     )
-
                 else:
-                    logging.debug(f"No existing stat found for date_id: {date_id}")
                     new_stat = Statistic(
                         date_id=date_id,
                         organization_id=organization["id"],
@@ -214,7 +198,6 @@ async def get_stat(session: AsyncSession = Depends(get_session)):
                             new_stat, from_attributes=True
                         )
                         all_stats.append(validated_stat)
-                        logging.info(f"Added new_stat: {validated_stat}")
                     except ValidationError as e:
                         logging.error(f"Validation error: {e}")
                         continue
@@ -225,10 +208,8 @@ async def get_stat(session: AsyncSession = Depends(get_session)):
                 .values(**organization)
                 .on_conflict_do_update(index_elements=["channel_id"], set_=organization)
             )
-            logging.debug(f"Insert/update statement: {stmt}")
             await session.execute(stmt)
         await session.commit()
-        logging.debug("Organizations insert/update commit completed")
 
         organizations = {
             org.id: OrganizationsDTO.model_validate(
@@ -239,10 +220,7 @@ async def get_stat(session: AsyncSession = Depends(get_session)):
 
         for stat in all_stats:
             organization = organizations.get(stat.organization_id)
-            print(stat.organization_id)
-            print(f"Organization for stat: {organization}")
             if organization:
-                print(organization)
                 stat.fulfillment_percentage = (
                     get_percentage_of_fulfillment_of_basic_requirements(organization)
                 )
@@ -262,10 +240,8 @@ async def get_stat(session: AsyncSession = Depends(get_session)):
                         },
                     )
                 )
-                logging.debug(f"Insert/update stat statement: {add_stat}")
                 await session.execute(add_stat)
         await session.commit()
-        logging.debug("Statistics insert/update commit completed")
 
         for organization in updated_organizations:
             statistics_result = await session.execute(
@@ -279,8 +255,11 @@ async def get_stat(session: AsyncSession = Depends(get_session)):
 
             new_stats = get_new_stats(statistics_list)
 
-            if new_stats:  # Проверка, чтобы избежать деления на ноль
-                average_fulfillment_percentage = get_average_fulfillment_percentage(
+            if new_stats:
+                average_month_fulfillment_percentage = get_average_month_fulfillment_percentage(
+                    new_stats
+                )
+                average_week_fulfillment_percentage = get_week_fulfillment_percentage(
                     new_stats
                 )
 
@@ -289,16 +268,11 @@ async def get_stat(session: AsyncSession = Depends(get_session)):
                         update(Organizations)
                         .where(Organizations.id == organization["id"])
                         .values(
-                            average_fulfillment_percentage=average_fulfillment_percentage
+                            average_week_fulfillment_percentage=average_week_fulfillment_percentage,
+                            average_fulfillment_percentage=average_month_fulfillment_percentage
                         )
                     )
-                    logging.debug(
-                        f"Update average fulfillment statement: {update_stmt}"
-                    )
                     await session.execute(update_stmt)
-                    logging.info(
-                        f"Updated average_fulfillment_percentage for organization ID {organization['id']}"
-                    )
                 except Exception as e:
                     logging.error(
                         f"Error updating average fulfillment percentage for organization_id: {organization['id']} - {e}"
@@ -317,9 +291,11 @@ async def get_stat(session: AsyncSession = Depends(get_session)):
         await session.close()
 
 
+
+
 @router.post("/wall_get_all")
 async def wall_get_all(session: AsyncSession = Depends(get_session)):
-    result = await session.execute(select(Organizations.screen_name))
+    result = await session.execute(select(Organizations.channel_id))
     organizations = result.scalars().all()
 
     tasks = [VkDAO.wall_get_data(group_id=group_id) for group_id in organizations]

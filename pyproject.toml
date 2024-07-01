@@ -27,6 +27,7 @@ httpx = {extras = ["http2"], version = "^0.27.0"}
 fake-useragent = "^1.5.1"
 taskiq = "^0.11.4"
 taskiq-faststream = {extras = ["nats"], version = "^0.1.8"}
+fastapi-cache2 = "^0.2.1"
 
 
 [build-system]

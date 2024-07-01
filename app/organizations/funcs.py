@@ -12,9 +12,7 @@ def get_unique_spheres(items: list[SphereType]) -> list[SphereType]:
     return spheres
 
 
-def get_new_stats(
-    stats: list[StatisticDTO],
-) -> list[StatisticDTO]:
+def get_new_stats(stats: list[StatisticDTO]) -> list[StatisticDTO]:
     new_stats = []
     now = datetime.now()
     for stat in stats:

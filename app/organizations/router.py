@@ -9,6 +9,7 @@ from app.organizations.params import (
     FilterFounderParams,
     FilterSpheresParams,
 )
+from fastapi_cache.decorator import cache
 
 router = APIRouter(prefix="/filter", tags=["Фильтрация данных"])
 
@@ -19,6 +20,7 @@ async def get_all_stats(session: AsyncSession = Depends(get_session)):
 
 
 @router.get("/get_founders")
+@cache(expire=60)
 async def get_founders(
     filterfounderparams: FilterFounderParams = Depends(),
     session: AsyncSession = Depends(get_session),
@@ -29,6 +31,7 @@ async def get_founders(
 
 
 @router.get("/get_spheres_by")
+@cache(expire=60)
 async def get_spheres(
     filterspheresparams: FilterSpheresParams = Depends(),
     session: AsyncSession = Depends(get_session),

@@ -49,4 +49,5 @@ class Organizations(Base):
         "Statistic", back_populates="organizations"
     )
 
+    average_week_fulfillment_percentage: Mapped[Optional[int]] = mapped_column(default=0)
     average_fulfillment_percentage: Mapped[Optional[int]] = mapped_column(default=0)

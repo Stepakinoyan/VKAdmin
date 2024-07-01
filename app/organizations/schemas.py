@@ -73,7 +73,9 @@ class OrganizationResponse(BaseModel):
 
     statistic: Optional[list[StatisticDTO]]
 
-    average_fulfillment_percentage: Optional[int | float]
+
+    average_week_fulfillment_percentage: Optional[int]
+    average_fulfillment_percentage: Optional[int]
 
 
 class Stats(BaseModel):

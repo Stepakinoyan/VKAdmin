@@ -1,5 +1,7 @@
 from typing import Literal, Optional
 
+from fastapi import Query
+
 
 class FilterFounderParams:
     def __init__(

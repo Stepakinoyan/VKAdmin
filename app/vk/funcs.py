@@ -1,6 +1,6 @@
 import asyncio
 import time
-from datetime import datetime
+from datetime import datetime, timedelta
 
 import httpx
 import redis.asyncio as redis
@@ -12,6 +12,7 @@ from app.database import engine
 from app.organizations.models import Organizations
 from fake_useragent import UserAgent
 from app.organizations.types import OrganizationType
+from app.vk.schemas import StatisticDTO
 from app.vk.types import StatisticType
 from typing import TypeAlias
 
@@ -171,12 +172,12 @@ async def wall_get_data(group_id: int):
         return group_id
 
 
-Precent: TypeAlias = int
+Percent: TypeAlias = int
 
 
 def get_percentage_of_fulfillment_of_basic_requirements(
     organization: OrganizationType,
-) -> Precent:
+) -> Percent:
     percentage = 0
 
     # Подключение к компоненту «Госпаблики» (20 %)
@@ -255,7 +256,9 @@ def get_percentage_of_fulfillment_of_basic_requirements(
     return percentage
 
 
-def get_average_fulfillment_percentage(statistics: list[StatisticType]) -> int:
+def get_average_month_fulfillment_percentage(
+    statistics: list[StatisticType],
+) -> Percent:
     if not statistics:
         return 0
 
@@ -268,3 +271,27 @@ def get_average_fulfillment_percentage(statistics: list[StatisticType]) -> int:
     if average_fulfillment_percentage > 100:
         return 100
     return average_fulfillment_percentage
+
+
+def get_week_fulfillment_percentage(statistics: list[StatisticDTO]) -> Percent:
+    today = datetime.today()
+    start_of_week = today - timedelta(days=today.weekday())
+    end_of_week = start_of_week + timedelta(days=6)
+
+    fulfillment_percentages = []
+
+    for item in statistics:
+        if start_of_week.date() <= item.date_added.date() <= end_of_week.date():
+            fulfillment_percentages.append(item.fulfillment_percentage)
+
+    if fulfillment_percentages:
+        average_week_fulfillment_percentage = round(
+            sum(fulfillment_percentages) / len(fulfillment_percentages)
+        )
+
+        if average_week_fulfillment_percentage > 100:
+            return 100
+
+        return average_week_fulfillment_percentage
+
+    return 0

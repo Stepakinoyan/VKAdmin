@@ -116,10 +116,6 @@ class VkDAO(BaseDAO):
                 async with async_session() as session:
                     async with session.begin():
                         db_item = {}
-                        # db_item = select(Organizations).where(Organizations.channel_id == group_id)
-                        # result = await session.execute(db_item)
-                        # db_item = result.scalars().first()
-                        # db_item = OrganizationsBase.model_validate(db_item, from_attributes=True).model_dump()
 
                         db_item["posts"] = data["posts"]
                         db_item["posts_1d"] = data["posts_1d"]

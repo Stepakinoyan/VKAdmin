@@ -8,8 +8,7 @@ class Settings(BaseSettings):
     DB_HOST: str
     DB_PORT: int
 
-    TEST_DB_HOST: str
-    TEST_DB_PORT: int
+    TEST_POSTGRES_DB: str
 
     POSTGRES_DB: str
     POSTGRES_USER: str
@@ -37,7 +36,7 @@ class Settings(BaseSettings):
 
     @property
     def get_test_database_url(self) -> str:
-        return f"postgresql+asyncpg://{self.POSTGRES_USER}:{self.POSTGRES_PASSWORD}@{self.TEST_DB_HOST}:{self.TEST_DB_PORT}/{self.POSTGRES_DB}"
+        return f"postgresql+asyncpg://{self.POSTGRES_USER}:{self.POSTGRES_PASSWORD}@{self.DB_HOST}:{self.DB_PORT}/{self.TEST_POSTGRES_DB}"
 
 
 settings = Settings()

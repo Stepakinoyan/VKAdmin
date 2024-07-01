@@ -9,6 +9,8 @@ from app.excel_to_db.router import router as router_excel
 from app.organizations.router import router as router_filter
 from app.vk.router import router as vk_router
 from app.prepare_db.router import router as prepare_db_router
+from fastapi_cache import FastAPICache
+from fastapi_cache.backends.redis import RedisBackend
 
 app = FastAPI()
 
@@ -30,6 +32,9 @@ async def startup(_: FastAPI = app) -> None:
         cursor, keys = await redis_.scan(cursor, match=pattern)
         for key in keys:
             print(key)
+
+    FastAPICache.init(RedisBackend(redis_), prefix="fastapi-cache")
+
 
 
 origins = ["http://localhost:5468", "http://localhost:5173"]
