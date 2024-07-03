@@ -17,7 +17,7 @@ from app.vk.types import StatisticType
 from typing import TypeAlias
 
 redis_ = redis.from_url(
-    f"redis://{settings.REDIS_HOST}:{settings.REDIS_PORT}",
+    settings.redis_url,
     encoding="utf-8",
     decode_responses=True,
     socket_timeout=5,

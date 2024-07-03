@@ -1,0 +1,86 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:latest
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        env:
+          POSTGRES_DB: test_vkadmin
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          DB_HOST: localhost
+          DB_PORT: 5432
+          TEST_POSTGRES_DB: test_vkadmin
+
+      redis:
+        image: redis:latest
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        env:
+          REDIS_HOST: localhost
+          REDIS_PORT: 6379
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.x'  # Устанавливаем последнюю версию Python 3
+
+    - name: Install Poetry
+      run: |
+        curl -sSL https://install.python-poetry.org | python3 -
+        echo "::add-path::$HOME/.local/bin"
+
+    - name: Install dependencies
+      run: poetry install
+
+    - name: Set up environment variables
+      run: |
+        echo MODE=TEST >> $GITHUB_ENV
+        echo DB_HOST=localhost >> $GITHUB_ENV
+        echo DB_PORT=5432 >> $GITHUB_ENV
+        echo POSTGRES_DB=test_vkadmin >> $GITHUB_ENV
+        echo POSTGRES_USER=postgres >> $GITHUB_ENV
+        echo POSTGRES_PASSWORD=postgres >> $GITHUB_ENV
+        echo TEST_POSTGRES_DB=test_vkadmin >> $GITHUB_ENV
+        echo REDIS_HOST=localhost >> $GITHUB_ENV
+        echo REDIS_PORT=6379 >> $GITHUB_ENV
+
+    - name: Run tests
+      env:
+        MODE: TEST
+        DB_HOST: localhost
+        DB_PORT: 5432
+        POSTGRES_DB: test_vkadmin
+        POSTGRES_USER: postgres
+        POSTGRES_PASSWORD: postgres
+        TEST_POSTGRES_DB: test_vkadmin
+        REDIS_HOST: localhost
+        REDIS_PORT: 6379
+      run: poetry run pytest

@@ -35,7 +35,7 @@ import pytz
 router = APIRouter(prefix="/vk", tags=["VK"])
 console = Console(color_system="truecolor", width=140)
 redis_ = redis.from_url(
-    f"redis://{settings.REDIS_HOST}:{settings.REDIS_PORT}",
+    settings.redis_url,
     encoding="utf-8",
     decode_responses=True,
     socket_timeout=5,
