@@ -34,7 +34,7 @@ taskiq_broker = BrokerWrapper(broker)
 
 taskiq_broker.task(
     subject="get-stats",
-    schedule=[{"cron": "0 0 * * *", "cron_offset": "Asia/Yakutsk"}],
+    schedule=[{"cron": "0 0 * * 1-5", "cron_offset": "Asia/Yakutsk"}],
 )
 
 scheduler = StreamScheduler(

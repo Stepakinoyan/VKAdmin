@@ -24,7 +24,7 @@ redis_ = redis.from_url(
 )
 
 
-async def startup(_: FastAPI = app) -> None:
+async def startup(_: FastAPI = app):
     console.rule("[bold white on blue] STARTUP ")
     pattern = "*"
     cursor = "0"

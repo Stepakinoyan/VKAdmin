@@ -31,7 +31,6 @@ async def get_founders(
 
 
 @router.get("/get_spheres_by")
-@cache(expire=60)
 async def get_spheres(
     filterspheresparams: FilterSpheresParams = Depends(),
     session: AsyncSession = Depends(get_session),
@@ -44,6 +43,7 @@ async def get_spheres(
 
 
 @router.get("/get_stats")
+@cache(expire=60)
 async def get_stats(
     filterchannelsparams: FilterChannelsParams = Depends(),
     session: AsyncSession = Depends(get_session),

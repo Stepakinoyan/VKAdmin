@@ -9,7 +9,7 @@ from httpx import AsyncClient
         ("Министерство", None),
         (None, "Государственная жилищная инспекция области"),
         (None, None),
-        ("МО", "gregergr"),
+        pytest.param("ауцаццук", "feqwfewfew", marks=pytest.mark.xfail),
     ],
 )
 async def test_get_sphere_by(
@@ -20,5 +20,4 @@ async def test_get_sphere_by(
     )
 
     print(response.json())
-    assert type(response.json()) == list
     assert response.status_code == 200

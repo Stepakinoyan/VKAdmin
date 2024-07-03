@@ -1,4 +1,7 @@
+from functools import wraps
 import json
+from unittest import mock
+from fastapi_cache import FastAPICache
 import pytest
 from datetime import datetime
 from sqlalchemy.dialects.postgresql import insert as pg_insert
@@ -7,8 +10,12 @@ from app.auth.models import Users
 from app.config import settings
 from app.database import Base, engine, async_session_maker
 from app.main import app as fastapi_app
+from app.main import redis_
+from fastapi_cache.backends.redis import RedisBackend
 from app.organizations.models import Organizations
 from httpx import AsyncClient
+
+
 
 
 @pytest.fixture(scope="session", autouse=True)
@@ -58,3 +65,8 @@ async def authenticated_ac():
             },
         )
         assert ac.cookies["access_token"]
+
+
+@pytest.fixture(scope="session", autouse=True)
+async def init_cache():
+    FastAPICache.init(RedisBackend(redis_), prefix="fastapi-cache")

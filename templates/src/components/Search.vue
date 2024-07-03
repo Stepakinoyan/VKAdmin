@@ -1,4 +1,4 @@
-<template>
+<template style="font-size: 14px;">
   <main class="flex flex-col">
     <div class="flex items-center flex-col lg:flex-row">
       <InputGroup class="flex flex-col md:flex-row w-full lg:w-1/2 space-x-0 lg:space-x-1 ml-0 md:ml-2">

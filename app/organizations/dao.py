@@ -6,7 +6,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from app.dao.dao import BaseDAO
-from app.database import get_session
 from app.organizations.funcs import get_unique_spheres, get_new_stats
 from app.organizations.models import Organizations
 from app.organizations.schemas import (
@@ -22,7 +21,7 @@ class OrganizationsDAO(BaseDAO):
 
     @classmethod
     async def get_all_stats(
-        self, session: AsyncSession = get_session()
+        self, session: AsyncSession
     ) -> list[StatsType]:
         get_stats = select(self.model.__table__.columns)
 
@@ -32,7 +31,7 @@ class OrganizationsDAO(BaseDAO):
 
     @classmethod
     async def get_founders_by_level(
-        self, level: str, session: AsyncSession = get_session()
+        self, level: str, session: AsyncSession
     ) -> list[FounderType]:
         get_founders = (
             select(self.model.founder)
@@ -46,21 +45,23 @@ class OrganizationsDAO(BaseDAO):
 
     @classmethod
     async def get_spheres_by(
-        self, level: str, founder: str, session: AsyncSession = get_session()
+        self, level: str, founder: str, session: AsyncSession
     ):
-        get_spheres = (
-            select(self.model.sphere_1, self.model.sphere_2, self.model.sphere_3)
-            .where(
+        get_spheres = select(self.model.sphere_1, self.model.sphere_2, self.model.sphere_3)
+
+        if level or founder:
+            get_spheres = get_spheres.where(
                 and_(
-                    self.model.level.ilike(f"%{level}%"),
-                    self.model.founder.ilike(f"%{founder}%"),
+                    self.model.level.ilike(f"%{level}%") if level else True,
+                    self.model.founder.ilike(f"%{founder}%") if founder else True,
                 )
             )
-            .distinct(self.model.sphere_1, self.model.sphere_2, self.model.sphere_3)
-        )
+
+        get_spheres = get_spheres.distinct(self.model.sphere_1, self.model.sphere_2, self.model.sphere_3)
 
         results = await session.execute(get_spheres)
         results = results.scalars().all()
+
         return get_unique_spheres(results)
 
     @classmethod

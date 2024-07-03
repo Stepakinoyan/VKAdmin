@@ -34,7 +34,7 @@ class FilterSpheresParams:
                 "ВУЗ",
             ]
         ] = "",
-        founder: Optional[str] = "",
+        founder: Optional[str] = None,
     ):
         self.level = level
         self.founder = founder
