@@ -304,6 +304,17 @@ async def wall_get_all(session: AsyncSession = Depends(get_session)):
     return {"status": f"completed: {len(batch_results)}", "data": batch_results}
 
 
+@router.post("/get_views")
+async def get_views(session: AsyncSession = Depends(get_session)):
+    result = await session.execute(select(Organizations.channel_id))
+    organizations = result.scalars().all()
+
+    tasks = [VkDAO.views_get_data(group_id=group_id) for group_id in organizations]
+    batch_results = await asyncio.gather(*tasks)
+
+    return {"status": f"completed: {len(batch_results)}", "data": batch_results}
+
+
 @router.post("/get_gos_bage")
 async def get_gos_bage(session: AsyncSession = Depends(get_session)):
     batch_size = 50

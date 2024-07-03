@@ -35,6 +35,7 @@ class OrganizationsDTO(BaseModel):
     posts_1d: Optional[int]
     posts_7d: Optional[int]
     posts_30d: Optional[int]
+    views_7d: Optional[int]
     post_date: Optional[datetime]
 
     average_fulfillment_percentage: Optional[int | float]
@@ -69,6 +70,7 @@ class OrganizationResponse(BaseModel):
     posts_1d: Optional[int]
     posts_7d: Optional[int]
     posts_30d: Optional[int]
+    views_7d: Optional[int]
     post_date: Optional[datetime]
 
     statistic: Optional[list[StatisticDTO]]

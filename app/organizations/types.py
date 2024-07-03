@@ -32,6 +32,7 @@ class OrganizationType(TypedDict):
     posts_1d: int
     posts_7d: int
     posts_30d: int
+    views_7d: int
     post_date: datetime
 
 

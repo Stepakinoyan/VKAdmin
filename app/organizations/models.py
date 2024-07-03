@@ -43,6 +43,7 @@ class Organizations(Base):
     posts_1d: Mapped[Optional[int]] = mapped_column()
     posts_7d: Mapped[Optional[int]] = mapped_column()
     posts_30d: Mapped[Optional[int]] = mapped_column()
+    views_7d: Mapped[Optional[int]] = mapped_column(default=0)
     post_date: Mapped[Optional[datetime]] = mapped_column()
 
     statistic: Mapped[Optional[list["Statistic"]]] = relationship(

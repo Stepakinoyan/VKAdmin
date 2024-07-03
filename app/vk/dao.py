@@ -8,7 +8,7 @@ from sqlalchemy.orm import sessionmaker
 from app.config import settings
 from app.dao.dao import BaseDAO
 from app.database import engine, get_session
-from app.vk.funcs import call
+from app.vk.funcs import call, filter_posts_by_current_week
 from app.organizations.models import Organizations
 
 semaphore = asyncio.Semaphore(3)
@@ -142,3 +142,19 @@ class VkDAO(BaseDAO):
                 return {group_id: "NO DATA"}
 
             return group_id
+    
+    @classmethod
+    async def views_get_data(self, group_id: int):
+        async with semaphore:
+            views = await filter_posts_by_current_week(group_id)
+            print(f"Total views for {group_id}: {views}")
+            async_session = sessionmaker(
+                    engine, class_=AsyncSession, expire_on_commit=False
+                )
+            async with async_session() as session:
+                async with session.begin():
+                    add_views = update(self.model).where(self.model.channel_id == group_id).values(views_7d=views)
+
+                    await session.execute(add_views)
+
+                    await session.commit()
