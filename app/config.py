@@ -17,12 +17,10 @@ class Settings(BaseSettings):
     SECRET_KEY: str
     ALGORITHM: str
 
-    VK_CLIENT_ID: int
-    VK_CLIENT_SECRET: str
-    VK_SERVICE_TOKEN: str
-    VK_AUTH: str
     CLIENT_ID: int
     CLIENT_SECRET: str
+    VK_SERVICE_TOKEN: str
+    VK_AUTH: str
     REDIRECT_URI: str
 
     REDIS_HOST: str

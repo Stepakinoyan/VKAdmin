@@ -26,9 +26,6 @@ jobs:
           POSTGRES_DB: test_vkadmin
           POSTGRES_USER: postgres
           POSTGRES_PASSWORD: postgres
-          DB_HOST: localhost
-          DB_PORT: 5432
-          TEST_POSTGRES_DB: test_vkadmin
 
       redis:
         image: redis:latest
@@ -39,9 +36,6 @@ jobs:
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
-        env:
-          REDIS_HOST: localhost
-          REDIS_PORT: 6379
 
     steps:
     - name: Checkout code
@@ -50,12 +44,12 @@ jobs:
     - name: Set up Python
       uses: actions/setup-python@v4
       with:
-        python-version: '3.x'  # Устанавливаем последнюю версию Python 3
+        python-version: '3.x'
 
     - name: Install Poetry
       run: |
         curl -sSL https://install.python-poetry.org | python3 -
-        echo "::add-path::$HOME/.local/bin"
+        echo "$HOME/.local/bin" >> $GITHUB_PATH
 
     - name: Install dependencies
       run: poetry install
@@ -71,16 +65,13 @@ jobs:
         echo TEST_POSTGRES_DB=test_vkadmin >> $GITHUB_ENV
         echo REDIS_HOST=localhost >> $GITHUB_ENV
         echo REDIS_PORT=6379 >> $GITHUB_ENV
+        echo SECRET_KEY=${{ env.SECRET_KEY }} >> $GITHUB_ENV
+        echo ALGORITHM=${{ env.ALGORITHM }} >> $GITHUB_ENV
+        echo VK_SERVICE_TOKEN=${{ env.VK_SERVICE_TOKEN }} >> $GITHUB_ENV
+        echo VK_AUTH=${{ env.VK_AUTH }} >> $GITHUB_ENV
+        echo CLIENT_ID=${{ env.CLIENT_ID }} >> $GITHUB_ENV
+        echo CLIENT_SECRET=${{ env.CLIENT_SECRET }} >> $GITHUB_ENV
+        echo REDIRECT_URI=${{ env.REDIRECT_URI }} >> $GITHUB_ENV
 
     - name: Run tests
-      env:
-        MODE: TEST
-        DB_HOST: localhost
-        DB_PORT: 5432
-        POSTGRES_DB: test_vkadmin
-        POSTGRES_USER: postgres
-        POSTGRES_PASSWORD: postgres
-        TEST_POSTGRES_DB: test_vkadmin
-        REDIS_HOST: localhost
-        REDIS_PORT: 6379
       run: poetry run pytest
