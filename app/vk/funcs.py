@@ -273,7 +273,7 @@ def get_average_month_fulfillment_percentage(
     return average_fulfillment_percentage
 
 
-def get_week_fulfillment_percentage(statistics: list[StatisticDTO]) -> Percent:
+def get_week_fulfillment_percentage(statistics: list[StatisticDTO]) -> int:
     today = datetime.today()
     start_of_week = today - timedelta(days=today.weekday())
     end_of_week = start_of_week + timedelta(days=6)
@@ -288,10 +288,8 @@ def get_week_fulfillment_percentage(statistics: list[StatisticDTO]) -> Percent:
         average_week_fulfillment_percentage = round(
             sum(fulfillment_percentages) / len(fulfillment_percentages)
         )
-
-        if average_week_fulfillment_percentage > 100:
-            return 100
-
+        return min(average_week_fulfillment_percentage, 100)
+     
     return 0
 
 async def filter_posts_by_current_week(group_id: int):

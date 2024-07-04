@@ -158,3 +158,5 @@ class VkDAO(BaseDAO):
                     await session.execute(add_views)
 
                     await session.commit()
+
+            return {group_id: "DB"}
