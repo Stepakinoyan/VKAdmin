@@ -227,11 +227,11 @@ def get_percentage_of_fulfillment_of_basic_requirements(
                 percentage += 10
                 print("reach_percentage > 70: +10%")
             elif 50 <= reach_percentage <= 70:
-                percentage += 10
-                print("50 <= reach_percentage <= 70: +10%")
-            elif 30 <= reach_percentage < 50:
                 percentage += 5
-                print("30 <= reach_percentage < 50: +5%")
+                print("50 <= reach_percentage <= 70: +5%")
+            elif 30 <= reach_percentage < 50:
+                percentage += 2
+                print("30 <= reach_percentage < 50: +2%")
 
     posts_7d = organization.get("posts_7d")
     posts = organization.get("posts")
@@ -246,12 +246,13 @@ def get_percentage_of_fulfillment_of_basic_requirements(
         avg_reach_per_post = posts / posts_30d
         avg_reach_percentage = (avg_reach_per_post / members_count) * 100
         if avg_reach_percentage > 70:
-            percentage += 20
-            print("avg_reach_percentage > 70: +20%")
+            percentage += 10
+            print("avg_reach_percentage > 70: +10%")
 
     print(
         f"Total percentage for organization {organization['channel_id']}: {percentage}%"
     )
+
     return percentage
 
 
@@ -290,8 +291,6 @@ def get_week_fulfillment_percentage(statistics: list[StatisticDTO]) -> Percent:
 
         if average_week_fulfillment_percentage > 100:
             return 100
-
-        return average_week_fulfillment_percentage
 
     return 0
 
