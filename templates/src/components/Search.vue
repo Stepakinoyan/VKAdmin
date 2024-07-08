@@ -83,9 +83,9 @@
                 {{ slotProps.data.average_fulfillment_percentage }}%
               </Tag>
               <Tag v-else-if="slotProps.data.average_fulfillment_percentage >= 70" severity="warning">
-                {{ slotProps.data.average_week_fulfillment_percentage }}%
+                {{ slotProps.data.average_fulfillment_percentage }}%
               </Tag>
-              <Tag v-else severity="danger">{{ slotProps.data.average_week_fulfillment_percentage }}%</Tag>
+              <Tag v-else severity="danger">{{ slotProps.data.average_fulfillment_percentage }}%</Tag>
             </template>
           </Column>
 
