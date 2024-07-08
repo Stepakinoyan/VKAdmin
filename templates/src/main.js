@@ -17,6 +17,7 @@ import Password from 'primevue/password';
 import Dialog from 'primevue/dialog';
 import Tag from 'primevue/tag';
 import Column from 'primevue/column';
+import Tooltip from 'primevue/tooltip';
 import 'primevue/resources/themes/aura-light-blue/theme.css';
 import 'primevue/resources/primevue.min.css'; 
 import 'primeicons/primeicons.css';
@@ -35,6 +36,7 @@ app.component("Password", Password)
 app.component("Tag", Tag)
 app.component("Dialog", Dialog)
 
+app.directive('tooltip', Tooltip);
 app.use(VueCookies)
 
 
