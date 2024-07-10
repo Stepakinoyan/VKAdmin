@@ -324,7 +324,7 @@ async def get_gos_bage(session: AsyncSession = Depends(get_session)):
 
     for i in range(0, len(accounts), batch_size):
         batch = accounts[i : i + batch_size]
-        print(batch)
+        print(f"Processing batch: {batch}")
         all_ids_in_batch = [account.id for account in batch]
 
         tasks = [
@@ -333,8 +333,13 @@ async def get_gos_bage(session: AsyncSession = Depends(get_session)):
         ]
         batch_results = await asyncio.gather(*tasks)
 
-        found_ids = [account_id for account_id in batch_results if account_id]
+        print(f"Batch results: {batch_results}")
+
+        found_ids = [account_id for account_id in batch_results if account_id is not None]
         not_found_ids = list(set(all_ids_in_batch) - set(found_ids))
+
+        print(f"Found IDs: {found_ids}")
+        print(f"Not found IDs: {not_found_ids}")
 
         # Обновляем записи с найденным GovernmentCommunityBadge
         if found_ids:

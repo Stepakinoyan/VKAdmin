@@ -12,7 +12,6 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 from app.config import settings
 from app.database import engine
 from app.organizations.models import Organizations
-from fake_useragent import UserAgent
 from app.organizations.types import OrganizationType
 from app.vk.schemas import StatisticDTO
 from app.vk.types import StatisticType
@@ -67,24 +66,30 @@ async def call(method: str, params: dict, access_token: str, retries: int = 3):
         return {"error": "Max retries exceeded"}
 
 
+semaphore = asyncio.Semaphore(3)
+
+
 async def fetch_gos_page(url, organization_id) -> int | None:
-    headers = {"Accept-Language": "ru-RU,ru;q=0.9", "User-Agent": UserAgent().random}
+    headers = {
+        "Accept-Language": "ru-RU,ru;q=0.9",
+        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/115.0.0.0 Safari/537.36",
+    }
     async with semaphore:
         async with httpx.AsyncClient(follow_redirects=True, timeout=30.0) as client:
             response = await client.get(url, headers=headers)
+
             if (
                 response.status_code == 200
                 and "GovernmentCommunityBadge GovernmentCommunityBadge--tooltip"
                 in response.text
             ):
-                print(f"{organization_id}: {url}")
+                print(f"Found badge for {organization_id}: {url}")
                 return organization_id
-            elif response.status_code in [400, 401, 403, 500]:
-                print(f"[{response.status_code}] {organization_id}: {url}")
+            else:
+                print(
+                    f"Badge not found or error for {organization_id}: {url} with status {response.status_code}"
+                )
         return None
-
-
-semaphore = asyncio.Semaphore(3)
 
 
 async def wall_get_data(group_id: int):
@@ -103,8 +108,6 @@ async def wall_get_data(group_id: int):
             settings.VK_SERVICE_TOKEN,
         )
 
-
- 
         if "response" in data and data.get("response", {}).get("count") > 0:
             print(f">> {data['response']['count']}")
 
@@ -289,8 +292,9 @@ def get_week_fulfillment_percentage(statistics: list[StatisticDTO]) -> int:
             sum(fulfillment_percentages) / len(fulfillment_percentages)
         )
         return min(average_week_fulfillment_percentage, 100)
-     
+
     return 0
+
 
 async def filter_posts_by_current_week(group_id: int):
     # Получаем данные
@@ -311,23 +315,23 @@ async def filter_posts_by_current_week(group_id: int):
         return 0
 
     # Устанавливаем временную зону на Asia/Yakutsk
-    yakutsk_tz = pytz.timezone('Asia/Yakutsk')
-    
+    yakutsk_tz = pytz.timezone("Asia/Yakutsk")
+
     # Текущая дата и время в часовом поясе Asia/Yakutsk
     now_yakutsk = datetime.now(yakutsk_tz)
-    
+
     # Начало недели (понедельник, 00:00 в часовом поясе Asia/Yakutsk)
     start_of_week = now_yakutsk - timedelta(
         days=now_yakutsk.weekday(),
         hours=now_yakutsk.hour,
         minutes=now_yakutsk.minute,
         seconds=now_yakutsk.second,
-        microseconds=now_yakutsk.microsecond
+        microseconds=now_yakutsk.microsecond,
     )
-    
+
     # Конец недели (воскресенье, 23:59:59 в часовом поясе Asia/Yakutsk)
     end_of_week = start_of_week + timedelta(days=6, hours=23, minutes=59, seconds=59)
-    
+
     # Переводим начало и конец недели в UTC для сравнения с Unix time
     start_of_week_utc = start_of_week.astimezone(pytz.utc)
     end_of_week_utc = end_of_week.astimezone(pytz.utc)
@@ -336,7 +340,7 @@ async def filter_posts_by_current_week(group_id: int):
     filtered_views = [
         post.get("views", {}).get("count", 0)
         for post in data["response"]["items"]
-        if start_of_week_utc.timestamp() <= post['date'] <= end_of_week_utc.timestamp()
+        if start_of_week_utc.timestamp() <= post["date"] <= end_of_week_utc.timestamp()
     ]
-    
+
     return sum(filtered_views)
