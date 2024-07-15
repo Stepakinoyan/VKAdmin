@@ -1,8 +1,6 @@
 from datetime import datetime
 from typing import Optional, TypedDict
 
-from app.vk.types import StatisticType
-
 
 class OrganizationType(TypedDict):
     level: Optional[str]
@@ -32,8 +30,6 @@ class OrganizationType(TypedDict):
     posts_1d: int
     posts_7d: int
     posts_30d: int
-    views_7d: int
-    post_date: datetime
 
 
 class SphereType(TypedDict):
@@ -42,21 +38,3 @@ class SphereType(TypedDict):
 
 class FounderType(TypedDict):
     founder: str
-
-
-class StatsType(TypedDict):
-    level: Optional[str]
-    founder: Optional[str]
-    name: Optional[str]
-    reason: Optional[str]
-    the_main_state_registration_number: Optional[int]
-    status: Optional[str]
-    channel_id: Optional[int]
-    url: Optional[str]
-    address: Optional[str]
-    connected: Optional[bool]
-    state_mark: Optional[bool]
-
-    statistic: Optional[StatisticType]
-
-    average_fulfillment_percentage: int | float

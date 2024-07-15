@@ -1,6 +1,7 @@
-from datetime import datetime
+from datetime import date, datetime
+from typing import Optional
 
-from sqlalchemy import ForeignKey
+from sqlalchemy import JSON, ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.database import Base
@@ -12,9 +13,10 @@ class Statistic(Base):
 
     date_id: Mapped[str] = mapped_column(primary_key=True)
     organization_id: Mapped[int] = mapped_column(ForeignKey("organizations.id"))
-    date_added: Mapped[datetime] = mapped_column(default=datetime.utcnow)
-    members_count: Mapped[int] = mapped_column()
+    date_added: Mapped[date] = mapped_column(default=datetime.utcnow().date)
     fulfillment_percentage: Mapped[int] = mapped_column()
+
+    activity: Mapped[Optional[dict]] = mapped_column(JSON)
 
     organizations: Mapped["Organizations"] = relationship(
         "Organizations", back_populates="statistic"

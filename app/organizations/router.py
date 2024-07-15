@@ -1,5 +1,7 @@
 import logging
+
 from fastapi import APIRouter, Depends
+from fastapi_cache.decorator import cache
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_session
@@ -9,12 +11,13 @@ from app.organizations.params import (
     FilterFounderParams,
     FilterSpheresParams,
 )
-from fastapi_cache.decorator import cache
+from app.organizations.schemas import OrganizationsDTO
 
 router = APIRouter(prefix="/filter", tags=["Фильтрация данных"])
 
 
-@router.get("/get_all_stats")
+@router.get("/get_all_stats", response_model=list[OrganizationsDTO])
+@cache(expire=60)
 async def get_all_stats(session: AsyncSession = Depends(get_session)):
     return await OrganizationsDAO.get_all_stats(session)
 
@@ -52,8 +55,11 @@ async def get_stats(
         return await OrganizationsDAO.filter_channels(
             level=filterchannelsparams.level,
             founder=filterchannelsparams.founder,
+            name=filterchannelsparams.name,
             sphere=filterchannelsparams.sphere,
             zone=filterchannelsparams.zone,
+            date_from=filterchannelsparams.date_from,
+            date_to=filterchannelsparams.date_to,
             session=session,
         )
     except Exception as e:

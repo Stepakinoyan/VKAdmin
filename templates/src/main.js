@@ -9,7 +9,7 @@ import PrimeVue from 'primevue/config';
 import Button from 'primevue/button';
 import InputGroup from 'primevue/inputgroup';
 import DataTable from 'primevue/datatable';
-
+import Calendar from 'primevue/calendar';
 import Dropdown from 'primevue/dropdown';
 
 import InputText from 'primevue/inputtext';
@@ -33,8 +33,11 @@ app.component('InputGroup', InputGroup)
 app.component('Button', Button)
 app.component("InputText", InputText)
 app.component("Password", Password)
+app.component("Calendar", Calendar)
 app.component("Tag", Tag)
 app.component("Dialog", Dialog)
+
+
 
 app.directive('tooltip', Tooltip);
 app.use(VueCookies)

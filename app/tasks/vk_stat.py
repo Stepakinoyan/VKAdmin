@@ -1,8 +1,7 @@
-from faststream.nats import NatsBroker
 import httpx
+from faststream.nats import NatsBroker
 from taskiq.schedule_sources import LabelScheduleSource
 from taskiq_faststream import BrokerWrapper, StreamScheduler
-
 
 broker = NatsBroker(servers="nats://nats:4222")
 
@@ -20,6 +19,13 @@ async def handler():
                 "http://api:8000/vk/wall_get_all", timeout=6000
             )
             print(f"/vk/wall_get_all: {wall_get_all.status_code}")
+
+            get_weekly_audience_reach = await client.post(
+                "http://api:8000/vk/get_weekly_audience_reach", timeout=6000
+            )
+            print(
+                f"/vk/get_weekly_audience_reach: {get_weekly_audience_reach.status_code}"
+            )
 
             wall_get_all = await client.post(
                 "http://api:8000/vk/get_views", timeout=6000

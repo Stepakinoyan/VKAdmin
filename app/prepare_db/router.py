@@ -1,10 +1,11 @@
 import json
+
 from fastapi import APIRouter, Depends
 from sqlalchemy import insert
 from sqlalchemy.ext.asyncio import AsyncSession
+
 from app.auth.models import Users
 from app.database import get_session
-
 
 router = APIRouter(prefix="/prepare", tags=["Добавление данных в БД"])
 

@@ -1,7 +1,7 @@
 import asyncio
-import json
 import time
 from datetime import datetime, timedelta
+from typing import TypeAlias
 
 import httpx
 import pytz
@@ -13,9 +13,7 @@ from app.config import settings
 from app.database import engine
 from app.organizations.models import Organizations
 from app.organizations.types import OrganizationType
-from app.vk.schemas import StatisticDTO
-from app.vk.types import StatisticType
-from typing import TypeAlias
+from app.statistic.schemas import Activity, StatisticDTO
 
 redis_ = redis.from_url(
     settings.redis_url,
@@ -25,6 +23,7 @@ redis_ = redis.from_url(
     socket_keepalive=True,
 )
 console = Console(color_system="truecolor", width=140)
+amurtime = pytz.timezone("Asia/Yakutsk")
 
 
 async def call(method: str, params: dict, access_token: str, retries: int = 3):
@@ -156,9 +155,6 @@ async def wall_get_data(group_id: int):
                         db_item.posts_1d = data["posts_1d"]
                         db_item.posts_7d = data["posts_7d"]
                         db_item.posts_30d = data["posts_30d"]
-                        db_item.post_date = datetime.utcfromtimestamp(
-                            data["first_item_date"]
-                        )
 
                         print(f">>{data['group_id']}: {data['posts']}")
 
@@ -180,77 +176,56 @@ async def wall_get_data(group_id: int):
 Percent: TypeAlias = int
 
 
-def get_percentage_of_fulfillment_of_basic_requirements(
+async def get_percentage_of_fulfillment_of_basic_requirements(
     organization: OrganizationType,
 ) -> Percent:
     percentage = 0
 
-    # Подключение к компоненту «Госпаблики» (20 %)
-    if organization.get("has_gos_badge") is True:
-        percentage += 20
-        print("has_gos_badge: +20%")
+    # Госметка (10 %)
+    if organization.get("has_gos_badge"):
+        percentage += 10
+        print("has_gos_badge: +10%")
 
     # Оформление (20 %)
-    if organization.get("has_avatar") is True:
+    if organization.get("has_avatar"):
         percentage += 5
         print("has_avatar: +5%")
-    if organization.get("has_description") is True:
+    if organization.get("has_description"):
         percentage += 5
         print("has_description: +5%")
-    if organization.get("has_cover") is True:
+    if organization.get("has_cover"):
         percentage += 10
         print("has_cover: +10%")
 
     # Виджеты (10 %)
-    widget_count = organization.get("widget_count")
-    if widget_count is not None:
-        if widget_count >= 2:
-            percentage += 10
-            print("widget_count >= 2: +10%")
-        elif widget_count == 1:
-            percentage += 5
-            print("widget_count == 1: +5%")
+    widget_count = organization.get("widget_count", 0)
+    if widget_count >= 2:
+        percentage += 10
+        print("widget_count >= 2: +10%")
+    elif widget_count == 1:
+        percentage += 5
+        print("widget_count == 1: +5%")
 
-    # Активность (30 %)
-    posts_30d = organization.get("posts_30d")
-    if posts_30d is not None and posts_30d >= 3:
-        percentage += 30
-        print("posts_30d >= 3: +30%")
+    # Активность (40 %)
+    posts_7d = organization.get("posts_7d", 0)
+    if posts_7d >= 3:
+        percentage += 40
+        print("posts_7d >= 3: +40%")
 
     # Общий охват аудитории за неделю (10 %)
-    members_count = organization.get("members_count")
-    print(f"members_count: {members_count}")
-
-    if members_count is not None and members_count > 0:
-        total_views = organization.get("views_7d")
-        if total_views is not None and total_views > 0:
-            reach_percentage = (total_views / members_count) * 100
-
-            if reach_percentage > 70:
-                percentage += 10
-                print("reach_percentage > 70: +10%")
-            elif 50 <= reach_percentage <= 70:
-                percentage += 5
-                print("50 <= reach_percentage <= 70: +5%")
-            elif 30 <= reach_percentage < 50:
-                percentage += 2
-                print("30 <= reach_percentage < 50: +2%")
-
-    posts_7d = organization.get("posts_7d")
-    posts = organization.get("posts")
-    if (
-        posts_7d is not None
-        and posts is not None
-        and posts_30d is not None
-        and posts_30d > 0
-        and members_count is not None
-        and members_count > 0
-    ):
-        avg_reach_per_post = posts / posts_30d
-        avg_reach_percentage = (avg_reach_per_post / members_count) * 100
-        if avg_reach_percentage > 70:
+    members_count = organization.get("members_count", 0)
+    weekly_audience_reach = organization.get("weekly_audience_reach", 0)
+    if members_count > 0:
+        reach_percentage = (weekly_audience_reach / members_count) * 100
+        if reach_percentage > 70:
             percentage += 10
-            print("avg_reach_percentage > 70: +10%")
+            print("reach_percentage > 70: +10%")
+        elif 50 <= reach_percentage <= 70:
+            percentage += 7
+            print("50 <= reach_percentage <= 70: +7%")
+        elif 30 <= reach_percentage < 50:
+            percentage += 5
+            print("30 <= reach_percentage < 50: +5%")
 
     print(
         f"Total percentage for organization {organization['channel_id']}: {percentage}%"
@@ -260,7 +235,7 @@ def get_percentage_of_fulfillment_of_basic_requirements(
 
 
 def get_average_month_fulfillment_percentage(
-    statistics: list[StatisticType],
+    statistics: list[StatisticDTO],
 ) -> Percent:
     if not statistics:
         return 0
@@ -276,15 +251,19 @@ def get_average_month_fulfillment_percentage(
     return average_fulfillment_percentage
 
 
-def get_week_fulfillment_percentage(statistics: list[StatisticDTO]) -> int:
-    today = datetime.today()
+def get_week_fulfillment_percentage(
+    statistics: list[StatisticDTO], timezone: str = "Asia/Yakutsk"
+) -> int:
+    amurtime = pytz.timezone(timezone)
+    today = datetime.now(amurtime)
     start_of_week = today - timedelta(days=today.weekday())
     end_of_week = start_of_week + timedelta(days=6)
 
     fulfillment_percentages = []
 
     for item in statistics:
-        if start_of_week.date() <= item.date_added.date() <= end_of_week.date():
+        item_date = item.date_added.astimezone(amurtime)
+        if start_of_week.date() <= item_date.date() <= end_of_week.date():
             fulfillment_percentages.append(item.fulfillment_percentage)
 
     if fulfillment_percentages:
@@ -296,51 +275,26 @@ def get_week_fulfillment_percentage(statistics: list[StatisticDTO]) -> int:
     return 0
 
 
-async def filter_posts_by_current_week(group_id: int):
-    # Получаем данные
-    data = await call(
-        "wall.get",
-        {
-            "owner_id": -group_id,
-            "count": 100,
-            "extended": 1,
-            "filter": "owner",
-            "fields": "counters,wall",
-        },
-        settings.VK_SERVICE_TOKEN,
-    )
+async def get_activity(group_id: int) -> Activity | None:
+    try:
+        data = await call(
+            "stats.get",
+            {
+                "access_token": settings.VK_ADMIN_TOKEN,
+                "group_id": group_id,
+                "interval": "week",
+                "intervals_count": 1,
+                "extended": 1,
+            },
+            settings.VK_ADMIN_TOKEN,
+        )
 
-    # Проверка наличия данных
-    if not data or not data.get("response") or not data["response"].get("items"):
-        return 0
+        print(f"{group_id}: {data['response'][0].get('activity')}")
+        return (
+            Activity(**data["response"][0].get("activity")).model_dump()
+            if data["response"][0].get("activity")
+            else None
+        )
 
-    # Устанавливаем временную зону на Asia/Yakutsk
-    yakutsk_tz = pytz.timezone("Asia/Yakutsk")
-
-    # Текущая дата и время в часовом поясе Asia/Yakutsk
-    now_yakutsk = datetime.now(yakutsk_tz)
-
-    # Начало недели (понедельник, 00:00 в часовом поясе Asia/Yakutsk)
-    start_of_week = now_yakutsk - timedelta(
-        days=now_yakutsk.weekday(),
-        hours=now_yakutsk.hour,
-        minutes=now_yakutsk.minute,
-        seconds=now_yakutsk.second,
-        microseconds=now_yakutsk.microsecond,
-    )
-
-    # Конец недели (воскресенье, 23:59:59 в часовом поясе Asia/Yakutsk)
-    end_of_week = start_of_week + timedelta(days=6, hours=23, minutes=59, seconds=59)
-
-    # Переводим начало и конец недели в UTC для сравнения с Unix time
-    start_of_week_utc = start_of_week.astimezone(pytz.utc)
-    end_of_week_utc = end_of_week.astimezone(pytz.utc)
-
-    # Фильтруем посты по дате и проверяем наличие ключа views
-    filtered_views = [
-        post.get("views", {}).get("count", 0)
-        for post in data["response"]["items"]
-        if start_of_week_utc.timestamp() <= post["date"] <= end_of_week_utc.timestamp()
-    ]
-
-    return sum(filtered_views)
+    except KeyError:
+        return None

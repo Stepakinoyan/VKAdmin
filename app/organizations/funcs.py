@@ -1,7 +1,10 @@
-from app.organizations.types import SphereType
 from datetime import datetime
 
-from app.vk.schemas import StatisticDTO
+import pytz
+
+from app.organizations.schemas import OrganizationsDTO
+from app.organizations.types import SphereType
+from app.statistic.schemas import StatisticDTO
 
 
 def get_unique_spheres(items: list[SphereType]) -> list[SphereType]:
@@ -13,9 +16,16 @@ def get_unique_spheres(items: list[SphereType]) -> list[SphereType]:
 
 
 def get_new_stats(stats: list[StatisticDTO]) -> list[StatisticDTO]:
+    amurtime = pytz.timezone("Asia/Yakutsk")
     new_stats = []
-    now = datetime.now()
+    now = datetime.now(amurtime)
     for stat in stats:
         if stat.date_added.month == now.month and stat.date_added.year == now.year:
             new_stats.append(stat)
     return new_stats
+
+
+def get_stats_by_dates(
+    stats: list[StatisticDTO], date_from: datetime.date, date_to: datetime.date
+) -> list[StatisticDTO]:
+    return list(filter(lambda item: date_from <= item.date_added <= date_to, stats))

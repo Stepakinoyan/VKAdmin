@@ -1,6 +1,7 @@
 from sqlalchemy import select
-from app.database import get_session
 from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.database import get_session
 
 
 class BaseDAO:

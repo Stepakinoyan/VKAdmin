@@ -1,4 +1,5 @@
 import logging
+from datetime import date, datetime, timedelta
 
 from fastapi.encoders import jsonable_encoder
 from sqlalchemy import and_, or_, select
@@ -6,28 +7,25 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from app.dao.dao import BaseDAO
-from app.organizations.funcs import get_unique_spheres, get_new_stats
+from app.organizations.funcs import get_stats_by_dates, get_unique_spheres
 from app.organizations.models import Organizations
 from app.organizations.schemas import (
-    OrganizationResponse,
-    Stats,
+    OrganizationsDTO,
 )
-from app.organizations.types import FounderType, StatsType
-from app.vk.schemas import StatisticDTO
+from app.organizations.types import FounderType, SphereType
+from app.statistic.schemas import StatisticDTO
 
 
 class OrganizationsDAO(BaseDAO):
     model = Organizations
 
     @classmethod
-    async def get_all_stats(
-        self, session: AsyncSession
-    ) -> list[StatsType]:
-        get_stats = select(self.model.__table__.columns)
+    async def get_all_stats(self, session: AsyncSession):
+        get_stats = select(self.model).options(selectinload(self.model.statistic))
 
         results = await session.execute(get_stats)
 
-        return results.mappings().all()
+        return results.scalars().all()
 
     @classmethod
     async def get_founders_by_level(
@@ -46,8 +44,10 @@ class OrganizationsDAO(BaseDAO):
     @classmethod
     async def get_spheres_by(
         self, level: str, founder: str, session: AsyncSession
-    ):
-        get_spheres = select(self.model.sphere_1, self.model.sphere_2, self.model.sphere_3)
+    ) -> list[SphereType]:
+        get_spheres = select(
+            self.model.sphere_1, self.model.sphere_2, self.model.sphere_3
+        )
 
         if level or founder:
             get_spheres = get_spheres.where(
@@ -57,7 +57,9 @@ class OrganizationsDAO(BaseDAO):
                 )
             )
 
-        get_spheres = get_spheres.distinct(self.model.sphere_1, self.model.sphere_2, self.model.sphere_3)
+        get_spheres = get_spheres.distinct(
+            self.model.sphere_1, self.model.sphere_2, self.model.sphere_3
+        )
 
         results = await session.execute(get_spheres)
         results = results.scalars().all()
@@ -69,12 +71,16 @@ class OrganizationsDAO(BaseDAO):
         self,
         level: str,
         founder: str,
+        name: str,
         sphere: str,
         zone: str,
+        date_from: date,
+        date_to: date,
         session: AsyncSession,
-    ) -> list[Stats]:
+    ) -> list[OrganizationsDTO]:
         try:
-            # Основной запрос с подзапросом для фильтрации по последней статистике
+            date_from_dt = datetime.combine(date_from, datetime.min.time())
+            date_to_dt = datetime.combine(date_to, datetime.min.time())
             query = (
                 select(self.model)
                 .options(selectinload(self.model.statistic))
@@ -82,6 +88,7 @@ class OrganizationsDAO(BaseDAO):
                     and_(
                         self.model.level.ilike(f"%{level}%"),
                         self.model.founder.ilike(f"%{founder}%"),
+                        self.model.name.ilike(f"%{name}%"),
                         or_(
                             self.model.sphere_1.ilike(f"%{sphere}%"),
                             self.model.sphere_2.ilike(f"%{sphere}%"),
@@ -91,39 +98,35 @@ class OrganizationsDAO(BaseDAO):
                 )
             )
 
-            # Условие на основе зоны выполнения
             if zone == "90-100%":
                 query = query.where(self.model.average_fulfillment_percentage >= 90)
             elif zone == "70-89%":
                 query = query.where(
-                    (self.model.average_fulfillment_percentage >= 70)
-                    & (self.model.average_fulfillment_percentage < 90)
+                    (Organizations.average_fulfillment_percentage >= 70)
+                    & (Organizations.average_fulfillment_percentage < 90)
                 )
             elif zone == "0-69%":
                 query = query.where(self.model.average_fulfillment_percentage <= 69)
 
-            # Выполнение запроса
             results = await session.execute(query)
-            res = results.scalars().all()
+            organizations = results.scalars().all()
 
-            # Преобразование результатов в Pydantic объекты
             stats_items = []
-            for item in res:
-                organization_data = jsonable_encoder(item)
-                organization_data["statistic"] = [
-                    StatisticDTO(**stat)
-                    for stat in organization_data.get("statistic", [])
-                ]
-                stats_items.append(OrganizationResponse(**organization_data))
 
-            stats = Stats(items=stats_items)
-
-            for item in stats.items:
-                if item.statistic:
-                    item.statistic = get_new_stats(item.statistic)
+            for organization in organizations:
+                organization_data = jsonable_encoder(organization)
+                organization_data["statistic"] = get_stats_by_dates(
+                    stats=[
+                        StatisticDTO.model_validate(stat, from_attributes=True)
+                        for stat in organization.statistic
+                    ],
+                    date_from=date_from_dt,
+                    date_to=date_to_dt,
+                )
+                stats_items.append(OrganizationsDTO(**organization_data))
 
         except Exception as e:
             logging.error("Error executing filter_channels query", exc_info=True)
             raise e
 
-        return [stats]
+        return stats_items

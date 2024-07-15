@@ -1,13 +1,15 @@
 import json
 
 import pandas
+from fastapi import HTTPException, status
+from openpyxl import Workbook
 from sqlalchemy import insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.dao.dao import BaseDAO
-from app.database import get_session
 from app.excel_to_db.schemas import Item
 from app.organizations.models import Organizations
+from app.organizations.schemas import OrganizationsDTO
 
 db_columns = {
     "Уровень": "level",
@@ -23,11 +25,11 @@ db_columns = {
 }
 
 
-class ExcelToDBDAO(BaseDAO):
+class ExcelDAO(BaseDAO):
     model = Organizations
 
     @classmethod
-    async def excel_to_db(self, file: str, session: AsyncSession = get_session()):
+    async def excel_to_db(self, file: str, session: AsyncSession):
         excel_df = pandas.read_excel(file).rename(columns=db_columns)
 
         excel_df_json = excel_df.to_json(orient="records")
@@ -44,3 +46,116 @@ class ExcelToDBDAO(BaseDAO):
             else:
                 pass
         await session.commit()
+
+    @classmethod
+    async def save_accounts_to_xlsx(self, stats: list):
+        stats = sorted(stats, key=lambda id: id["id"])
+        # 2. Create a new XLSX workbook and sheet
+        wb = Workbook()
+        ws = wb.active
+        ws.title = "Organizations"
+
+        # Set headers for the sheet
+        headers = [
+            "id",
+            "screen_name",
+            "comments",
+            "likes",
+            "subscribed",
+            "type",
+            "name",
+            "city",
+            "activity",
+            "channel_id",
+            "has_avatar",
+            "has_cover",
+            "has_description",
+            "has_gos_badge",
+            "has_widget",
+            "widget_count",
+            "members_count",
+            "site",
+            "date_added",
+            "posts",
+            "posts_1d",
+            "posts_7d",
+            "posts_30d",
+            "average_week_fulfillment_percentage",
+            "average_fulfillment_percentage",
+            "weekly_audience_reach",
+        ]
+        ws.append(headers)
+
+        # Append account data to the sheet
+        for stat in stats:
+            stat = OrganizationsDTO(**stat)
+            activity = (
+                stat.statistic[-1].activity
+                if stat.statistic[-1].activity is not None
+                else {}
+            )
+            if activity:
+                ws.append(
+                    [
+                        stat.id,
+                        stat.screen_name,
+                        activity.comments,
+                        activity.likes,
+                        activity.subscribed,
+                        stat.type,
+                        stat.name,
+                        stat.city,
+                        stat.activity,
+                        str(stat.channel_id),
+                        "ДА" if stat.has_avatar else "НЕТ",
+                        "ДА" if stat.has_cover else "НЕТ",
+                        "ДА" if stat.has_description else "НЕТ",
+                        "ДА" if stat.has_gos_badge else "НЕТ",
+                        "ДА" if stat.has_widget else "НЕТ",
+                        stat.widget_count,
+                        str(stat.members_count),
+                        stat.site,
+                        str(stat.date_added),
+                        stat.posts,
+                        stat.posts_1d,
+                        stat.posts_7d,
+                        stat.posts_30d,
+                        stat.average_week_fulfillment_percentage,
+                        stat.average_fulfillment_percentage,
+                        stat.weekly_audience_reach,
+                    ]
+                )
+            else:
+                ws.append(
+                    [
+                        stat.id,
+                        stat.screen_name,
+                        0,
+                        0,
+                        0,
+                        stat.type,
+                        stat.name,
+                        stat.city,
+                        stat.activity,
+                        str(stat.channel_id),
+                        "ДА" if stat.has_avatar else "НЕТ",
+                        "ДА" if stat.has_cover else "НЕТ",
+                        "ДА" if stat.has_description else "НЕТ",
+                        "ДА" if stat.has_gos_badge else "НЕТ",
+                        "ДА" if stat.has_widget else "НЕТ",
+                        stat.widget_count,
+                        str(stat.members_count),
+                        stat.site,
+                        str(stat.date_added),
+                        stat.posts,
+                        stat.posts_1d,
+                        stat.posts_7d,
+                        stat.posts_30d,
+                        stat.average_week_fulfillment_percentage,
+                        stat.average_fulfillment_percentage,
+                        stat.weekly_audience_reach,
+                    ]
+                )
+
+        # Save the workbook to the specified file path
+        wb.save(filename="organizations.xlsx")

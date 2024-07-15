@@ -5,13 +5,15 @@ from datetime import datetime
 from sqlalchemy import update
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import sessionmaker
+
 from app.config import settings
 from app.dao.dao import BaseDAO
-from app.database import engine, get_session
-from app.vk.funcs import call, filter_posts_by_current_week
+from app.database import async_session_maker, engine, get_session
 from app.organizations.models import Organizations
+from app.vk.funcs import call
 
 semaphore = asyncio.Semaphore(3)
+semaphore_ = asyncio.Semaphore(1)
 
 
 class VkDAO(BaseDAO):
@@ -121,9 +123,6 @@ class VkDAO(BaseDAO):
                         db_item["posts_1d"] = data["posts_1d"]
                         db_item["posts_7d"] = data["posts_7d"]
                         db_item["posts_30d"] = data["posts_30d"]
-                        db_item["post_date"] = datetime.utcfromtimestamp(
-                            data["first_item_date"]
-                        )
                         print(f">>{data['group_id']}: {data['posts']}")
 
                         update_item = (
@@ -142,21 +141,34 @@ class VkDAO(BaseDAO):
                 return {group_id: "NO DATA"}
 
             return group_id
-    
+
     @classmethod
-    async def views_get_data(self, group_id: int):
-        async with semaphore:
-            views = await filter_posts_by_current_week(group_id)
-            print(f"Total views for {group_id}: {views}")
-            async_session = sessionmaker(
-                    engine, class_=AsyncSession, expire_on_commit=False
+    async def update_weekly_reach(cls, group_id: int):
+        async with semaphore_:
+            try:
+                data = await call(
+                    "stats.get",
+                    {
+                        "access_token": settings.VK_ADMIN_TOKEN,
+                        "group_id": group_id,
+                        "interval": "week",
+                        "intervals_count": 1,
+                        "extended": 1,
+                    },
+                    settings.VK_ADMIN_TOKEN,
                 )
-            async with async_session() as session:
-                async with session.begin():
-                    add_views = update(self.model).where(self.model.channel_id == group_id).values(views_7d=views)
 
-                    await session.execute(add_views)
+                weekly_audience_reach = data["response"][0].get("reach").get("reach")
+                print(f"{group_id}: {weekly_audience_reach}")
+                async with async_session_maker() as session:
+                    update_weekly_audience_reach = (
+                        update(cls.model)
+                        .where(cls.model.channel_id == group_id)
+                        .values(weekly_audience_reach=weekly_audience_reach)
+                    )
 
+                    await session.execute(update_weekly_audience_reach)
                     await session.commit()
 
-            return {group_id: "DB"}
+            except KeyError:
+                print(f"Failed to update weekly reach for group_id {group_id}")

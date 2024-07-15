@@ -1,8 +1,11 @@
 from datetime import datetime, timedelta
+
 from fastapi import Depends, Request
-from jose import JWTError, jwt, ExpiredSignatureError
+from jose import ExpiredSignatureError, JWTError, jwt
 from passlib.context import CryptContext
 from pydantic import EmailStr
+from sqlalchemy.ext.asyncio import AsyncSession
+
 from app.auth.dao import UserDAO
 from app.config import settings
 from app.exceptions import (
@@ -12,8 +15,6 @@ from app.exceptions import (
     TokenExpiredException,
     UserIsNotPresentException,
 )
-from sqlalchemy.ext.asyncio import AsyncSession
-
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 

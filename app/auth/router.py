@@ -1,9 +1,11 @@
 import json
+
 from fastapi import APIRouter, Depends
+from sqlalchemy.ext.asyncio import AsyncSession
+
 from app.auth.schema import UserAuth
 from app.auth.users import authenticate_user, create_access_token
 from app.database import get_session
-from sqlalchemy.ext.asyncio import AsyncSession
 
 router = APIRouter(prefix="/auth", tags=["Авторизация"])
 
