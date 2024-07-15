@@ -27,42 +27,42 @@ amurtime = pytz.timezone("Asia/Yakutsk")
 
 
 async def call(method: str, params: dict, access_token: str, retries: int = 3):
-    base_url = "https://api.vk.com/method/"
+        base_url = "https://api.vk.com/method/"
 
-    headers = {
-        "Authorization": f"Bearer {access_token}",
-        "Accept-Language": "ru-RU,ru;q=0.9",
-    }
+        headers = {
+            "Authorization": f"Bearer {access_token}",
+            "Accept-Language": "ru-RU,ru;q=0.9",
+        }
 
-    params["v"] = "5.217"
+        params["v"] = "5.217"
 
-    async with httpx.AsyncClient(timeout=30.0, http2=True) as client:
-        for _ in range(retries):  # Пытаемся выполнить запрос retries раз
-            if retries < 3:
-                console.rule(f"retries {retries}")
-            response = await client.post(
-                f"{base_url}{method}", params=params, headers=headers
-            )
+        async with httpx.AsyncClient(timeout=30.0, http2=True) as client:
+            for _ in range(retries):  # Пытаемся выполнить запрос retries раз
+                if retries < 3:
+                    console.rule(f"retries {retries}")
+                response = await client.post(
+                    f"{base_url}{method}", params=params, headers=headers
+                )
 
-            # print(response.status_code)
+                # print(response.status_code)
 
-            if response.status_code in [400, 403, 404, 500, 502]:
-                console.rule(f"[red] ERROR {response.status_code}")
-                return {"error": response.status_code}
+                if response.status_code in [400, 403, 404, 500, 502]:
+                    console.rule(f"[red] ERROR {response.status_code}")
+                    return {"error": response.status_code}
 
-            response_data = response.json()
-            # Проверяем, содержит ли ответ ошибку "Too many requests per second"
-            if (
-                "error" in response_data
-                and response_data["error"].get("error_code") == 6
-            ):
-                console.rule(f"[red] {response.url} Too many requests per second")
-                # Если да, делаем паузу и пробуем ещё раз
-                await asyncio.sleep(20)
-            else:
-                # Если нет ошибки, или это была последняя попытка, возвращаем результат
-                return response_data
-        return {"error": "Max retries exceeded"}
+                response_data = response.json()
+                # Проверяем, содержит ли ответ ошибку "Too many requests per second"
+                if (
+                    "error" in response_data
+                    and response_data["error"].get("error_code") == 6
+                ):
+                    console.rule(f"[red] {response.url} Too many requests per second")
+                    # Если да, делаем паузу и пробуем ещё раз
+                    await asyncio.sleep(20)
+                else:
+                    # Если нет ошибки, или это была последняя попытка, возвращаем результат
+                    return response_data
+            return {"error": "Max retries exceeded"}
 
 
 semaphore = asyncio.Semaphore(3)
