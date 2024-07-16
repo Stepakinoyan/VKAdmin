@@ -145,6 +145,7 @@ class VkDAO(BaseDAO):
     @classmethod
     async def get_group_data(self, group_id: int):
         async with semaphore_:
+            print(group_id)
             data = await fetch_group_data(group_id=group_id)
             async with async_session_maker() as session:
                 update_vk_attributes = (

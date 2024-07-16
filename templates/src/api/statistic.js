@@ -21,12 +21,3 @@ export const getFounders = (level) => {
 export const getSpheresBy = (params) => {
         return axios.get('/filter/get_spheres_by', { params });
 };
-
-export const GetDates = () => {
-    return axios.get('/stat/get_dates')
-        .then(response => response.data)
-        .catch(error => {
-            console.error('Error fetching dates:', error);
-            throw error;
-        });
-};

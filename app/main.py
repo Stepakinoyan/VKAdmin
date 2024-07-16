@@ -10,7 +10,6 @@ from app.config import settings
 from app.excel_to_db.router import router as router_excel
 from app.organizations.router import router as router_filter
 from app.prepare_db.router import router as prepare_db_router
-from app.statistic.router import router as statistic_router
 from app.vk.router import router as vk_router
 
 app = FastAPI()
@@ -53,5 +52,4 @@ app.include_router(router_filter)
 app.include_router(router_excel)
 app.include_router(prepare_db_router)
 app.include_router(vk_router)
-app.include_router(statistic_router)
 app.add_event_handler("startup", startup)

@@ -69,7 +69,7 @@ class FilterChannelsParams:
         sphere: Optional[str] = "",
         name: Optional[str] = "",
         date_from: Optional[date] = Query(default=get_last_monday()),
-        date_to: Optional[date] = Query(default=now.date()),
+        date_to: Optional[date] = Query(default_factory=lambda: datetime.now().date()),
     ):
         self.level = level
         self.zone = zone
