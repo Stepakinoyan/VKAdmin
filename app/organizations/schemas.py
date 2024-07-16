@@ -36,7 +36,7 @@ class OrganizationsDTO(BaseModel):
     posts_7d: Optional[int] = Field(default=0)
     posts_30d: Optional[int] = Field(default=0)
 
-    statistic: Optional[list[StatisticDTO]]
+    statistic: Optional[list[StatisticDTO]] = Field(default=[])
 
     average_week_fulfillment_percentage: int = Field(default=0)
     average_fulfillment_percentage: int = Field(default=0)

@@ -1,5 +1,4 @@
 import asyncio
-import logging
 from datetime import datetime
 
 import httpx
@@ -7,10 +6,9 @@ import pytz
 import redis.asyncio as redis
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from fastapi.responses import RedirectResponse
-from pydantic import ValidationError
 from rich.console import Console
 from sqlalchemy import select, update
-from sqlalchemy.dialects.postgresql import insert
+from sqlalchemy.orm import selectinload
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import settings
@@ -23,7 +21,6 @@ from app.organizations.schemas import (
 )
 from app.statistic.models import Statistic
 from app.vk.dao import VkDAO
-from asyncio import Semaphore
 from app.vk.funcs import (
     call,
     fetch_gos_page,
@@ -96,207 +93,118 @@ async def callback(code: str, state: str = None):
     return data
 
 
-semaphore = asyncio.Semaphore(5)  # Ограничение на 5 одновременных запросов
-
-async def fetch_group_data(chunk):
-    async with semaphore:
-        group_ids = ",".join(str(org.channel_id) for org in chunk)
-        auth = settings.VK_SERVICE_TOKEN
-        fields = "members_count,city,status,description,cover,activity,menu"
-
-        data = await call(
-            "groups.getById", {"group_ids": group_ids, "fields": fields}, auth
-        )
-
-        if not isinstance(data, dict):
-            raise TypeError(
-                f"Expected data to be a dictionary, got {type(data)} instead"
-            )
-
-        if "error" in data:
-            raise ValueError(f"API error: {data['error']}")
-
-        return data.get("response", [])
-
 @router.post("/get_stat")
 async def get_stat(session: AsyncSession = Depends(get_session)):
-    try:
-        amurtime = pytz.timezone("Asia/Yakutsk")
+    # Получаем все ID из таблицы accounts
+    amurtime = pytz.timezone("Asia/Yakutsk")
+    result = await session.execute(select(Organizations.channel_id))
+    account_ids = result.scalars().all()
 
-        # Получение списка организаций
-        organizations_list = await OrganizationsDAO.get_all_stats(session=session)
+    # Разбиваем список по 500 значений
+    chunks = [account_ids[i : i + 500] for i in range(0, len(account_ids), 500)]
 
-        organizations = {
-            org.channel_id: OrganizationsDTO.model_validate(
-                org, from_attributes=True
-            ).model_dump()
-            for org in organizations_list
-        }
+    for chunk in chunks:
+        # Преобразуем chunk к формату, подходящему для запроса
+        group_ids = ",".join(str(item) for item in chunk)
 
-        chunks = [
-            organizations_list[i : i + 100] for i in range(0, len(organizations_list), 100)
-        ]
+        auth = settings.VK_SERVICE_TOKEN
 
-        all_stats = []
-        updated_organizations = []
+        # Выполняем запрос, как в функции fgroup_info
+        data = await call(
+            "groups.getById", {"group_ids": group_ids, "fields": "members_count"}, auth
+        )
 
-        tasks = []
-        for i, chunk in enumerate(chunks):
-            if i % 5 == 0 and i > 0:
-                await asyncio.sleep(1)  # Пауза в 1 секунду каждые 5 запросов
-            tasks.append(fetch_group_data(chunk))
+        for group in data["response"]["groups"]:
+            # Генерируем date_id
+            date_str = datetime.now(amurtime).strftime("%Y%m%d")
+            date_id = f"{date_str}{group['id']}"
 
-        results = await asyncio.gather(*tasks, return_exceptions=True)
+            # Добавляем или обновляем значения в таблице статистики
+            stat = await session.get(Statistic, date_id)
+            organization_stmt = (
+                select(Organizations)
+                .where(Organizations.channel_id == group["id"])
+                .options(selectinload(Organizations.statistic))
+            )
+            organization_result = await session.execute(organization_stmt)
+            organization = organization_result.scalars().first()
 
-        for result in results:
-            if isinstance(result, Exception):
-                logging.error(f"Error fetching group data: {result}")
+            if not organization:
                 continue
 
-            for group in result["groups"]:
-                date_str = datetime.now(amurtime).strftime("%Y%m%d")
-                date_id = f"{date_str}{group['id']}"
-
-                organization = organizations.get(group["id"])
-
-                if not organization:
-                    continue
-
-                organization.update(
-                    {
-                        "city": group.get("city", {}).get("title")
-                        if isinstance(group.get("city"), dict)
-                        else None,
-                        "screen_name": group.get("screen_name"),
-                        "status": group.get("status"),
-                        "date_added": datetime.now(amurtime).date(),
-                        "has_description": bool(group.get("description")),
-                        "has_avatar": any(
-                            group.get(f"photo_{size}") for size in (50, 100, 200)
-                        ),
-                        "activity": group.get("activity"),
-                        "has_widget": bool(group.get("menu")),
-                        "widget_count": len(group.get("menu", {}).get("items", [])),
-                        "site": group.get("site"),
-                        "type": group.get("type"),
-                        "has_cover": group.get("cover", {}).get("enabled", False),
-                        "members_count": group.get("members_count", 0),
-                    }
-                )
-
-                updated_organizations.append(organization)
-
-                stat = await session.get(Statistic, date_id)
-                if stat:
-                    stat.date_added = datetime.now(amurtime).date()
-                    stat.fulfillment_percentage = (
-                        await get_percentage_of_fulfillment_of_basic_requirements(
-                            organization
-                        )
-                    )
-                    stat.activity = await get_activity(organization.get("channel_id"))
-                else:
-                    new_stat = Statistic(
-                        date_id=date_id,
-                        organization_id=organization["id"],
-                        date_added=datetime.now(amurtime).date(),
-                        fulfillment_percentage=await get_percentage_of_fulfillment_of_basic_requirements(
-                            organization
-                        ),
-                        activity=await get_activity(organization.get("channel_id")),
-                    )
-                    try:
-                        validated_stat = StatisticDTO.model_validate(
-                            new_stat, from_attributes=True
-                        )
-                        all_stats.append(validated_stat)
-                    except ValidationError as e:
-                        logging.error(f"Validation error: {e}")
-                        continue
-
-        for organization in updated_organizations:
-            organization.pop("statistic", None)
-            stmt = (
-                insert(Organizations)
-                .values(**organization)
-                .on_conflict_do_update(index_elements=["channel_id"], set_=organization)
+            organization_dto = OrganizationsDTO.model_validate(
+                organization, from_attributes=True
             )
-            await session.execute(stmt)
-        await session.commit()
 
-        organizations = {
-            org.id: OrganizationsDTO.model_validate(org, from_attributes=True).model_dump()
-            for org in organizations_list
-        }
-
-        for stat in all_stats:
-            organization = organizations.get(stat.organization_id)
-            if organization:
+            if stat:
+                stat.members_count = group.get("members_count", 0)
+                stat.date_added = datetime.now(amurtime)
                 stat.fulfillment_percentage = (
-                    await get_percentage_of_fulfillment_of_basic_requirements(organization)
-                )
-                add_stat = (
-                    insert(Statistic)
-                    .values(
-                        StatisticDTO.model_validate(stat, from_attributes=True).model_dump()
-                    )
-                    .on_conflict_do_update(
-                        index_elements=["date_id"],
-                        set_={
-                            "fulfillment_percentage": stat.fulfillment_percentage,
-                            "date_added": stat.date_added,
-                        },
+                    await get_percentage_of_fulfillment_of_basic_requirements(
+                        organization_dto.model_dump()
                     )
                 )
-                await session.execute(add_stat)
+            else:
+                new_stat = Statistic(
+                    date_id=date_id,
+                    organization_id=organization.id,
+                    date_added=datetime.now(amurtime),
+                    fulfillment_percentage=await get_percentage_of_fulfillment_of_basic_requirements(
+                        organization_dto.model_dump()
+                    ),
+                    activity=await get_activity(group["id"]),
+                )
+                session.add(new_stat)
+
         await session.commit()
 
-        for organization in updated_organizations:
-            statistics_result = await session.execute(
-                select(Statistic).where(Statistic.organization_id == organization["id"])
+        for group_id in chunk:
+            organization_stmt = (
+                select(Organizations)
+                .where(Organizations.channel_id == group_id)
+                .options(selectinload(Organizations.statistic))
             )
-            statistics_list_raw = statistics_result.scalars().all()
-            statistics_list = [
-                StatisticDTO.model_validate(stat, from_attributes=True)
-                for stat in statistics_list_raw
-            ]
+            organization_result = await session.execute(organization_stmt)
+            organization = organization_result.scalars().first()
 
-            new_stats = get_new_stats(statistics_list)
+            if not organization:
+                continue
 
-            if new_stats:
-                average_month_fulfillment_percentage = (
-                    get_average_month_fulfillment_percentage(new_stats)
+            organization_dto = OrganizationsDTO.model_validate(
+                organization, from_attributes=True
+            )
+            week_percentage_of_fulfillment = get_week_fulfillment_percentage(
+                statistics=organization_dto.statistic
+            )
+            month_percentage_of_fulfillment = get_average_month_fulfillment_percentage(
+                statistics=organization_dto.statistic
+            )
+
+            update_stmt = (
+                update(Organizations)
+                .where(Organizations.channel_id == group_id)
+                .values(
+                    average_week_fulfillment_percentage=week_percentage_of_fulfillment,
+                    average_fulfillment_percentage=month_percentage_of_fulfillment,
                 )
-                average_week_fulfillment_percentage = get_week_fulfillment_percentage(
-                    new_stats
-                )
-
-                try:
-                    update_stmt = (
-                        update(Organizations)
-                        .where(Organizations.id == organization["id"])
-                        .values(
-                            average_week_fulfillment_percentage=average_week_fulfillment_percentage,
-                            average_fulfillment_percentage=average_month_fulfillment_percentage,
-                        )
-                    )
-                    await session.execute(update_stmt)
-                except Exception as e:
-                    logging.error(
-                        f"Error updating average fulfillment percentage for organization_id: {organization['id']} - {e}"
-                    )
-                    continue
+            )
+            await session.execute(update_stmt)
 
         await session.commit()
 
-        return {"status": "completed"}
+    return {"status": "completed"}
 
-    except Exception as e:
-        logging.error(f"An error occurred: {e}")
-        await session.rollback()
-        return {"status": "failed", "error": str(e)}
-    finally:
-        await session.close()
+
+@router.post("/get_group_data")
+async def get_group_data(session: AsyncSession = Depends(get_session)):
+    result = await session.execute(select(Organizations.channel_id))
+    organizations = result.scalars().all()
+
+    tasks = [VkDAO.get_group_data(group_id=group_id) for group_id in organizations]
+    batch_results = await asyncio.gather(*tasks)
+
+    return {"status": f"completed: {len(batch_results)}", "data": batch_results}
+
 
 @router.post("/wall_get_all")
 async def wall_get_all(session: AsyncSession = Depends(get_session)):

@@ -2,7 +2,6 @@ from datetime import datetime
 
 import pytz
 
-from app.organizations.schemas import OrganizationsDTO
 from app.organizations.types import SphereType
 from app.statistic.schemas import StatisticDTO
 

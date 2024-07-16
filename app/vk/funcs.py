@@ -1,4 +1,5 @@
 import asyncio
+import json
 import time
 from datetime import datetime, timedelta
 from typing import TypeAlias
@@ -14,6 +15,7 @@ from app.database import engine
 from app.organizations.models import Organizations
 from app.organizations.types import OrganizationType
 from app.statistic.schemas import Activity, StatisticDTO
+from app.vk.schemas import Group
 
 redis_ = redis.from_url(
     settings.redis_url,
@@ -27,42 +29,42 @@ amurtime = pytz.timezone("Asia/Yakutsk")
 
 
 async def call(method: str, params: dict, access_token: str, retries: int = 3):
-        base_url = "https://api.vk.com/method/"
+    base_url = "https://api.vk.com/method/"
 
-        headers = {
-            "Authorization": f"Bearer {access_token}",
-            "Accept-Language": "ru-RU,ru;q=0.9",
-        }
+    headers = {
+        "Authorization": f"Bearer {access_token}",
+        "Accept-Language": "ru-RU,ru;q=0.9",
+    }
 
-        params["v"] = "5.217"
+    params["v"] = "5.217"
 
-        async with httpx.AsyncClient(timeout=30.0, http2=True) as client:
-            for _ in range(retries):  # Пытаемся выполнить запрос retries раз
-                if retries < 3:
-                    console.rule(f"retries {retries}")
-                response = await client.post(
-                    f"{base_url}{method}", params=params, headers=headers
-                )
+    async with httpx.AsyncClient(timeout=30.0, http2=True) as client:
+        for _ in range(retries):  # Пытаемся выполнить запрос retries раз
+            if retries < 3:
+                console.rule(f"retries {retries}")
+            response = await client.post(
+                f"{base_url}{method}", params=params, headers=headers
+            )
 
-                # print(response.status_code)
+            # print(response.status_code)
 
-                if response.status_code in [400, 403, 404, 500, 502]:
-                    console.rule(f"[red] ERROR {response.status_code}")
-                    return {"error": response.status_code}
+            if response.status_code in [400, 403, 404, 500, 502]:
+                console.rule(f"[red] ERROR {response.status_code}")
+                return {"error": response.status_code}
 
-                response_data = response.json()
-                # Проверяем, содержит ли ответ ошибку "Too many requests per second"
-                if (
-                    "error" in response_data
-                    and response_data["error"].get("error_code") == 6
-                ):
-                    console.rule(f"[red] {response.url} Too many requests per second")
-                    # Если да, делаем паузу и пробуем ещё раз
-                    await asyncio.sleep(20)
-                else:
-                    # Если нет ошибки, или это была последняя попытка, возвращаем результат
-                    return response_data
-            return {"error": "Max retries exceeded"}
+            response_data = response.json()
+            # Проверяем, содержит ли ответ ошибку "Too many requests per second"
+            if (
+                "error" in response_data
+                and response_data["error"].get("error_code") == 6
+            ):
+                console.rule(f"[red] {response.url} Too many requests per second")
+                # Если да, делаем паузу и пробуем ещё раз
+                await asyncio.sleep(20)
+            else:
+                # Если нет ошибки, или это была последняя попытка, возвращаем результат
+                return response_data
+        return {"error": "Max retries exceeded"}
 
 
 semaphore = asyncio.Semaphore(3)
@@ -254,6 +256,8 @@ def get_average_month_fulfillment_percentage(
 def get_week_fulfillment_percentage(
     statistics: list[StatisticDTO], timezone: str = "Asia/Yakutsk"
 ) -> int:
+    if not statistics:
+        return 0
     amurtime = pytz.timezone(timezone)
     today = datetime.now(amurtime)
     start_of_week = today - timedelta(days=today.weekday())
@@ -273,6 +277,23 @@ def get_week_fulfillment_percentage(
         return min(average_week_fulfillment_percentage, 100)
 
     return 0
+
+
+async def fetch_group_data(group_id: int) -> Group:
+    auth = settings.VK_SERVICE_TOKEN
+    fields = "members_count,city,status,description,cover,activity,menu"
+    amurtime = pytz.timezone("Asia/Yakutsk")
+
+    data = await call("groups.getById", {"group_id": group_id, "fields": fields}, auth)
+
+    if not isinstance(data, dict):
+        raise TypeError(f"Expected data to be a dictionary, got {type(data)} instead")
+
+    if "error" in data:
+        raise ValueError(f"API error: {data['error']}")
+
+    group_data = data.get("response", []).get("groups")[0]
+    return Group(**group_data, date_added=datetime.now(amurtime).date())
 
 
 async def get_activity(group_id: int) -> Activity | None:

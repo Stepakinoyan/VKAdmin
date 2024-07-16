@@ -10,7 +10,7 @@ from app.config import settings
 from app.dao.dao import BaseDAO
 from app.database import async_session_maker, engine, get_session
 from app.organizations.models import Organizations
-from app.vk.funcs import call
+from app.vk.funcs import call, fetch_group_data
 
 semaphore = asyncio.Semaphore(3)
 semaphore_ = asyncio.Semaphore(1)
@@ -143,7 +143,38 @@ class VkDAO(BaseDAO):
             return group_id
 
     @classmethod
-    async def update_weekly_reach(cls, group_id: int):
+    async def get_group_data(self, group_id: int):
+        async with semaphore_:
+            data = await fetch_group_data(group_id=group_id)
+            async with async_session_maker() as session:
+                update_vk_attributes = (
+                    update(self.model)
+                    .where(self.model.channel_id == group_id)
+                    .values(
+                        city=data.city.title if data.city else None,
+                        screen_name=data.screen_name,
+                        status=data.status,
+                        date_added=data.date_added,
+                        has_description=bool(data.description),
+                        has_avatar=any([data.photo_50, data.photo_100, data.photo_200]),
+                        activity=data.activity,
+                        has_widget=bool(data.menu),
+                        widget_count=len(data.menu.items)
+                        if data.menu and data.menu.items
+                        else 0,
+                        type=data.type,
+                        has_cover=bool(data.cover.enabled) if data.cover else False,
+                        members_count=data.members_count,
+                    )
+                )
+
+                await session.execute(update_vk_attributes)
+                await session.commit()
+
+        return group_id
+
+    @classmethod
+    async def update_weekly_reach(self, group_id: int):
         async with semaphore_:
             try:
                 data = await call(
@@ -162,8 +193,8 @@ class VkDAO(BaseDAO):
                 print(f"{group_id}: {weekly_audience_reach}")
                 async with async_session_maker() as session:
                     update_weekly_audience_reach = (
-                        update(cls.model)
-                        .where(cls.model.channel_id == group_id)
+                        update(self.model)
+                        .where(self.model.channel_id == group_id)
                         .values(weekly_audience_reach=weekly_audience_reach)
                     )
 

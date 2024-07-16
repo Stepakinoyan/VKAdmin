@@ -20,6 +20,11 @@ async def handler():
             )
             print(f"/vk/wall_get_all: {wall_get_all.status_code}")
 
+            wall_get_all = await client.post(
+                "http://api:8000/vk/get_group_data", timeout=6000
+            )
+            print(f"/vk/wall_get_all: {wall_get_all.status_code}")
+
             get_weekly_audience_reach = await client.post(
                 "http://api:8000/vk/get_weekly_audience_reach", timeout=6000
             )

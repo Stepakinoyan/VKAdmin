@@ -10,8 +10,6 @@ from app.database import get_session
 router = APIRouter(prefix="/auth", tags=["Авторизация"])
 
 
-
-
 @router.post("/login")
 async def login(user_data: UserAuth, session: AsyncSession = Depends(get_session)):
     user = await authenticate_user(
@@ -19,5 +17,4 @@ async def login(user_data: UserAuth, session: AsyncSession = Depends(get_session
     )
     access_token = create_access_token({"sub": str(user.id)})
 
-    
     return {"access_token": access_token}
