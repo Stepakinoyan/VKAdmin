@@ -11,8 +11,31 @@ from app.excel_to_db.router import router as router_excel
 from app.organizations.router import router as router_filter
 from app.prepare_db.router import router as prepare_db_router
 from app.vk.router import router as vk_router
+from contextlib import asynccontextmanager
 
-app = FastAPI()
+
+# 
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    console.rule("[bold white on blue] STARTUP ")
+    pattern = "*"
+    cursor = "0"
+    while cursor != "0":
+        cursor, keys = await redis_.scan(cursor, match=pattern)
+        for key in keys:
+            print(key)
+
+    FastAPICache.init(RedisBackend(redis_), prefix="fastapi-cache")
+
+
+    yield
+
+
+
+
+app = FastAPI(lifespan=lifespan)
 
 console = Console(color_system="truecolor", width=140)
 redis_ = redis.from_url(
@@ -24,16 +47,6 @@ redis_ = redis.from_url(
 )
 
 
-async def startup(_: FastAPI = app):
-    console.rule("[bold white on blue] STARTUP ")
-    pattern = "*"
-    cursor = "0"
-    while cursor != 0:
-        cursor, keys = await redis_.scan(cursor, match=pattern)
-        for key in keys:
-            print(key)
-
-    FastAPICache.init(RedisBackend(redis_), prefix="fastapi-cache")
 
 
 origins = ["http://localhost:5468", "http://localhost:5173"]
@@ -52,4 +65,3 @@ app.include_router(router_filter)
 app.include_router(router_excel)
 app.include_router(prepare_db_router)
 app.include_router(vk_router)
-app.add_event_handler("startup", startup)

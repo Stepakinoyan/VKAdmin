@@ -36,8 +36,7 @@
           class="w-full md:w-1/3 border border-gray-400 mt-2 md:mt-0" 
           @change="StatChange"
         />
-        <Calendar v-model="date_from" dateFormat="dd-mm-yy" placeholder="Дата с" showIcon iconDisplay="input" @date-select="StatChange" class="w-full md:w-2/3 border border-gray-400 mt-2 md:mt-0 py-2 md:py-0 rounded-lg"/>
-        <Calendar v-model="date_to" :disabled="!date_from" dateFormat="dd-mm-yy" :minDate="date_from" placeholder="Дата до" showIcon iconDisplay="input" @date-select="StatChange" class="w-full md:w-2/3 border border-gray-400 mt-2 md:mt-0 py-2 md:py-0 rounded-lg"/>
+        <Calendar v-model="dates" dateFormat="dd-mm-yy" selectionMode="range" :manualInput="false" placeholder="Диапазон" showIcon iconDisplay="input" class="w-full md:w-2/3 border border-gray-400 mt-2 md:mt-0 py-2 md:py-0 rounded-lg" @date-select="StatChange"/>
 
         <InputText 
           type="text" 
@@ -50,7 +49,7 @@
 
       <InputGroup class="w-full lg:w-1/4 flex justify-end space-x-8 pr-2.5">
           <Button icon="pi pi-filter-slash" class="w-10 h-10 bg-slate-100" @click="resetFilters()"></Button>
-          <Button icon="pi pi-external-link" class="w-10 h-10 bg-slate-100" v-tooltip.bottom="'Экспорт в Excel'" @click="exportToExcel()"></Button>
+          <Button icon="pi pi-file-excel" class="w-10 h-10 bg-slate-100" v-tooltip.bottom="'Экспорт в Excel'" @click="exportToExcel()"></Button>
           <Button icon="pi pi-sign-out" class="w-10 h-10 bg-slate-100" @click="SignOut()"></Button>
       </InputGroup>
     </div>
@@ -62,10 +61,10 @@
           :rowsPerPageOptions="[20, 50]"
           removableSort
           scrollable
-          scrollHeight="calc(100vh - 120px)"
+          scrollHeight="calc(100vh - 127px)"
           :sortField="'average_fulfillment_percentage'"
           :sortOrder="-1"
-          class="mx-0 md:mx-6 mt-1 border border-gray-400"
+          class="ml-0 md:ml-2 mt-3 border border-gray-400"
           tableStyle="min-width: 50rem"
           :pt="DataTableStyle"
         >
@@ -103,6 +102,7 @@
           sortable
           header="% за неделю"
           class="text-black text-xs text-center"
+          v-if="!dates"
         >
           <template #body="slotProps">
             <Tag v-if="slotProps.data.average_week_fulfillment_percentage >= 90" severity="success">
@@ -120,6 +120,7 @@
           sortable
           header="% за месяц"
           class="text-black text-xs text-center"
+          v-if="!dates"
         >
           <template #body="slotProps">
             <Tag v-if="slotProps.data.average_fulfillment_percentage >= 90" severity="success">
@@ -176,7 +177,7 @@
           </template>
         </Column>
 
-        <!-- Аватар -->
+
         <Column field="has_avatar" sortable header="Аватар" class="text-black text-xs text-center cursor-pointer">
           <template #body="slotProps">
             <i
@@ -194,7 +195,6 @@
           </template>
         </Column>
 
-        <!-- Обложка -->
         <Column field="has_cover" sortable header="Обложка" class="text-black text-xs text-center cursor-pointer">
           <template #body="slotProps">
             <i
@@ -212,7 +212,6 @@
           </template>
         </Column>
 
-        <!-- Описание -->
         <Column field="has_description" sortable header="Описание" class="text-black text-xs text-center cursor-pointer">
           <template #body="slotProps">
             <i
@@ -230,7 +229,6 @@
           </template>
         </Column>
 
-        <!-- Виджет -->
         <Column field="has_widget" sortable header="Виджет" class="text-black text-xs text-center cursor-pointer">
           <template #body="slotProps">
             <i
@@ -248,7 +246,6 @@
           </template>
         </Column>
 
-        <!-- Виджеты -->
         <Column field="widget_count" sortable header="Виджеты" class="text-black text-xs text-center cursor-pointer">
             <template #body="slotProps">
               <span
@@ -331,7 +328,6 @@ import VueCookies from 'vue-cookies';
 import axios from 'axios';
 import {
   exportToExcel,
-  getStats,
   getFounders,
   getSpheresBy,
 } from '@/api/statistic.js';
@@ -393,8 +389,7 @@ export default {
       selectedfounder: null,
       selectedsphere: null,
       selectedzone: null,
-      date_from: null,
-      date_to: null,
+      dates: null,
       searching_name: '',
       founders: [],
       spheres: [],
@@ -499,7 +494,6 @@ export default {
       this.loadFilteredData();
     },
     StatChange() {
-      console.log('StatChange triggered');
       this.loadFilteredData();
     },
     getFounders() {
@@ -538,8 +532,8 @@ export default {
       const sphereParam = this.selectedsphere ? `sphere=${this.selectedsphere.sphere}` : '';
       const zoneParam = this.selectedzone ? `zone=${this.selectedzone.zone}` : '';
       const nameParam = this.searching_name ? `name=${this.searching_name}` : '';
-      const dateFromParam = this.date_from ? `date_from=${this.formatDate(this.date_from)}` : '';
-      const dateToParam = this.date_to ? `date_to=${this.formatDate(this.date_to)}` : '';
+      const dateFromParam = this.dates && this.dates[0] ? `date_from=${this.formatDate(this.dates[0])}` : '';
+      const dateToParam = this.dates && this.dates[1] ? `date_to=${this.formatDate(this.dates[1])}` : '';
 
       const queryParams = [levelParam, founderParam, sphereParam, zoneParam, nameParam, dateFromParam, dateToParam]
         .filter(param => param !== '')

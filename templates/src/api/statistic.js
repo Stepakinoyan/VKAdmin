@@ -9,10 +9,6 @@ export const exportToExcel = (stats) => {
       responseType: 'blob'
     });
   };
-  
-export const getStats = (queryParams) => {
-        return axios.get(`/filter/get_stats?${queryParams}`);
-};
 
 export const getFounders = (level) => {
         return axios.get(`/filter/get_founders?level=${level}`);

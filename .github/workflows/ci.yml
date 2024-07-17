@@ -69,6 +69,7 @@ jobs:
         echo ALGORITHM=${{ secrets.ALGORITHM }} >> $GITHUB_ENV
         echo VK_CLIENT_ID=${{ secrets.VK_CLIENT_ID }} >> $GITHUB_ENV
         echo VK_CLIENT_SECRET=${{ secrets.VK_CLIENT_SECRET }} >> $GITHUB_ENV
+        echo VK_ADMIN_TOKEN=${{ secrets.VK_ADMIN_TOKEN }} >> $GITHUB_ENV
         echo VK_SERVICE_TOKEN=${{ secrets.VK_SERVICE_TOKEN }} >> $GITHUB_ENV
         echo VK_AUTH=${{ secrets.VK_AUTH }} >> $GITHUB_ENV
         echo CLIENT_ID=${{ secrets.CLIENT_ID }} >> $GITHUB_ENV
