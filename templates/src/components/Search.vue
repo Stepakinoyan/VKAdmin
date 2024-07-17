@@ -10,6 +10,7 @@
           class="w-full md:w-1/3 border border-gray-400 mt-2 md:mt-0" 
           @change="onLevelChange" 
           panelClass="min-w-min w-10rem"
+          emptyMessage="Нет доступных опций"
         />
         <Dropdown 
           v-model="selectedfounder" 
@@ -19,6 +20,7 @@
           class="w-full md:w-1/3 border border-gray-400 mt-2 md:mt-0" 
           @change="onFounderChange" 
           :disabled="!selectedlevel"
+          emptyMessage="Нет доступных опций"
         />
         <Dropdown 
           v-model="selectedsphere" 
@@ -27,6 +29,7 @@
           placeholder="Сфера" 
           class="w-full md:w-1/3 border border-gray-400 mt-2 md:mt-0" 
           @change="StatChange" 
+          emptyMessage="Нет доступных опций"
         />
         <Dropdown 
           v-model="selectedzone" 
@@ -35,6 +38,7 @@
           placeholder="% выполнения" 
           class="w-full md:w-1/3 border border-gray-400 mt-2 md:mt-0" 
           @change="StatChange"
+          emptyMessage="Нет доступных опций"
         />
         <Calendar v-model="dates" dateFormat="dd-mm-yy" selectionMode="range" :manualInput="false" placeholder="Диапазон" showIcon iconDisplay="input" class="w-full md:w-2/3 border border-gray-400 mt-2 md:mt-0 py-2 md:py-0 rounded-lg" @date-select="StatChange"/>
 
@@ -64,7 +68,7 @@
           scrollHeight="calc(100vh - 127px)"
           :sortField="'average_fulfillment_percentage'"
           :sortOrder="-1"
-          class="ml-0 md:ml-2 mt-3 border border-gray-400"
+          class="mx-0 md:mx-2 mt-3 border border-gray-400"
           tableStyle="min-width: 50rem"
           :pt="DataTableStyle"
         >
