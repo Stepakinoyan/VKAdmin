@@ -36,6 +36,23 @@ async def upload(
     os.remove(file.filename)
 
 
+@router.post("/add_connection")
+async def add_connection(
+    file: UploadFile = File(...), session: AsyncSession = Depends(get_session)
+) -> None:
+    try:
+        contents = file.file.read()
+        with open(f"{file.filename}", "wb") as f:
+            f.write(contents)
+    except Exception:
+        return {"message": "There was an error uploading the file"}
+    finally:
+        file.file.close()
+
+    await ExcelDAO.add_connection(file.filename, session=session)
+    os.remove(file.filename)
+
+
 @router.post("/xlsx/")
 async def download_accounts_xlsx(stats: list[dict], background_tasks: BackgroundTasks):
     try:

@@ -1,13 +1,12 @@
 import json
 
 import pandas
-from fastapi import HTTPException, status
 from openpyxl import Workbook
-from sqlalchemy import insert
+from sqlalchemy import insert, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.dao.dao import BaseDAO
-from app.excel_to_db.schemas import Item
+from app.excel_to_db.schemas import Item, Connection
 from app.organizations.models import Organizations
 from app.organizations.schemas import OrganizationsDTO
 
@@ -23,6 +22,8 @@ db_columns = {
     "ID госпаблика": "channel_id",
     "Ссылка на госпаблик ВК": "url",
 }
+
+connection = {"ID госпаблика": "channel_id", "Подключение": "connected"}
 
 
 class ExcelDAO(BaseDAO):
@@ -42,6 +43,27 @@ class ExcelDAO(BaseDAO):
             item = Item(**column)
             if item.channel_id != 0 and item.channel_id != None:
                 add_data = insert(self.model).values(item.model_dump())
+                await session.execute(add_data)
+            else:
+                pass
+        await session.commit()
+
+    @classmethod
+    async def add_connection(self, file: str, session: AsyncSession):
+        excel_df = pandas.read_excel(file).rename(columns=connection)
+
+        excel_df_json = excel_df.to_json(orient="records")
+
+        convert_to_json = json.loads(excel_df_json)
+
+        for column in convert_to_json:
+            connection_schema = Connection(**column)
+            if connection_schema.channel_id:
+                add_data = (
+                    update(self.model)
+                    .where(self.model.channel_id == connection_schema.channel_id)
+                    .values(connected=connection_schema.connected)
+                )
                 await session.execute(add_data)
             else:
                 pass

@@ -21,6 +21,7 @@ class OrganizationType(TypedDict):
     has_description: bool
     has_gos_badge: bool
     has_widget: bool
+    connected: bool
     widget_count: int
     members_count: int
     url: str

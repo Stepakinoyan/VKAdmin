@@ -26,6 +26,7 @@ class OrganizationsDTO(BaseModel):
     has_description: Optional[bool] = Field(default=False)
     has_gos_badge: Optional[bool] = Field(default=False)
     has_widget: Optional[bool] = Field(default=False)
+    connected: Optional[bool] = Field(default=False)
     widget_count: Optional[int] = Field(default=0)
     members_count: Optional[int] = 0
     url: Optional[str]

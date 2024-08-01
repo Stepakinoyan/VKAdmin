@@ -101,7 +101,7 @@ async def get_stat(session: AsyncSession = Depends(get_session)):
     account_ids = result.scalars().all()
 
     # Разбиваем список по 500 значений
-    chunks = [account_ids[i : i + 500] for i in range(0, len(account_ids), 500)]
+    chunks = [account_ids[i: i + 500] for i in range(0, len(account_ids), 500)]
 
     for chunk in chunks:
         # Преобразуем chunk к формату, подходящему для запроса
@@ -114,7 +114,12 @@ async def get_stat(session: AsyncSession = Depends(get_session)):
             "groups.getById", {"group_ids": group_ids, "fields": "members_count"}, auth
         )
 
-        for group in data["response"]["groups"]:
+        # Check if there is an error in the response
+        if "error" in data:
+            console.rule(f"[red] Error retrieving group data: {data['error']}")
+            continue  # Skip this chunk or handle it as needed
+
+        for group in data.get("response", {}).get("groups", []):
             # Генерируем date_id
             date_str = datetime.now(amurtime).strftime("%Y%m%d")
             date_id = f"{date_str}{group['id']}"
@@ -238,7 +243,6 @@ async def get_gos_bage(session: AsyncSession = Depends(get_session)):
 
     for i in range(0, len(accounts), batch_size):
         batch = accounts[i : i + batch_size]
-        print(f"Processing batch: {batch}")
         all_ids_in_batch = [account.id for account in batch]
 
         tasks = [
@@ -247,7 +251,6 @@ async def get_gos_bage(session: AsyncSession = Depends(get_session)):
         ]
         batch_results = await asyncio.gather(*tasks)
 
-        print(f"Batch results: {batch_results}")
 
         found_ids = [
             account_id for account_id in batch_results if account_id is not None

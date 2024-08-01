@@ -14,8 +14,6 @@ from app.vk.router import router as vk_router
 from contextlib import asynccontextmanager
 
 
-# 
-
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):

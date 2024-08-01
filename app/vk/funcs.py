@@ -37,34 +37,36 @@ async def call(method: str, params: dict, access_token: str, retries: int = 3):
     }
 
     params["v"] = "5.217"
+    try:
+        async with httpx.AsyncClient(timeout=30.0, http2=True) as client:
+            for _ in range(retries):  # Пытаемся выполнить запрос retries раз
+                if retries < 3:
+                    console.rule(f"retries {retries}")
+                response = await client.post(
+                    f"{base_url}{method}", params=params, headers=headers
+                )
 
-    async with httpx.AsyncClient(timeout=30.0, http2=True) as client:
-        for _ in range(retries):  # Пытаемся выполнить запрос retries раз
-            if retries < 3:
-                console.rule(f"retries {retries}")
-            response = await client.post(
-                f"{base_url}{method}", params=params, headers=headers
-            )
+                # print(response.status_code)
 
-            # print(response.status_code)
+                if response.status_code in [400, 403, 404, 500, 502]:
+                    console.rule(f"[red] ERROR {response.status_code}")
+                    return {"error": response.status_code}
 
-            if response.status_code in [400, 403, 404, 500, 502]:
-                console.rule(f"[red] ERROR {response.status_code}")
-                return {"error": response.status_code}
-
-            response_data = response.json()
-            # Проверяем, содержит ли ответ ошибку "Too many requests per second"
-            if (
-                "error" in response_data
-                and response_data["error"].get("error_code") == 6
-            ):
-                console.rule(f"[red] {response.url} Too many requests per second")
-                # Если да, делаем паузу и пробуем ещё раз
-                await asyncio.sleep(20)
-            else:
-                # Если нет ошибки, или это была последняя попытка, возвращаем результат
-                return response_data
-        return {"error": "Max retries exceeded"}
+                response_data = response.json()
+                # Проверяем, содержит ли ответ ошибку "Too many requests per second"
+                if (
+                    "error" in response_data
+                    and response_data["error"].get("error_code") == 6
+                ):
+                    console.rule(f"[red] {response.url} Too many requests per second")
+                    # Если да, делаем паузу и пробуем ещё раз
+                    await asyncio.sleep(20)
+                else:
+                    # Если нет ошибки, или это была последняя попытка, возвращаем результат
+                    return response_data
+            return {"error": "Max retries exceeded"}
+    except httpx.ConnectTimeout:
+        return {"error": "Connection failed"}
 
 
 semaphore = asyncio.Semaphore(3)
@@ -76,20 +78,25 @@ async def fetch_gos_page(url, organization_id) -> int | None:
         "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/115.0.0.0 Safari/537.36",
     }
     async with semaphore:
-        async with httpx.AsyncClient(follow_redirects=True, timeout=30.0) as client:
-            response = await client.get(url, headers=headers)
+        try:
+            async with httpx.AsyncClient(follow_redirects=True, timeout=30.0) as client:
+                response = await client.get(url, headers=headers)
 
-            if (
-                response.status_code == 200
-                and "GovernmentCommunityBadge GovernmentCommunityBadge--tooltip"
-                in response.text
-            ):
-                print(f"Found badge for {organization_id}: {url}")
-                return organization_id
-            else:
+                if (
+                    response.status_code == 200
+                    and "GovernmentCommunityBadge GovernmentCommunityBadge--tooltip"
+                    in response.text
+                ):
+                    print(f"Found badge for {organization_id}: {url}")
+                    return organization_id
+                else:
+                    print(
+                        f"Badge not found or error for {organization_id}: {url} with status {response.status_code}"
+                    )
+        except httpx.ConnectTimeout:
                 print(
                     f"Badge not found or error for {organization_id}: {url} with status {response.status_code}"
-                )
+                )   
         return None
 
 
@@ -185,6 +192,11 @@ async def get_percentage_of_fulfillment_of_basic_requirements(
 
     # Госметка (10 %)
     if organization.get("has_gos_badge"):
+        percentage += 10
+        print("has_gos_badge: +10%")
+    
+    # Подключение (10 %)
+    if organization.get("connected"):
         percentage += 10
         print("has_gos_badge: +10%")
 

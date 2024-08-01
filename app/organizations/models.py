@@ -36,6 +36,7 @@ class Organizations(Base):
     has_widget: Mapped[Optional[bool]] = mapped_column()
     widget_count: Mapped[Optional[int]] = mapped_column()
     members_count: Mapped[int] = mapped_column(default=0)
+    connected: Mapped[Optional[bool]] = mapped_column(default=False)
     url: Mapped[Optional[str]] = mapped_column()
     site: Mapped[Optional[str]] = mapped_column()
     date_added: Mapped[Optional[datetime]] = mapped_column(default=datetime.utcnow)
