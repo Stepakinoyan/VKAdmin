@@ -1,4 +1,18 @@
+networks:
+  dev:
+
 services:
+  nginx:
+    image: nginx:stable-alpine
+    ports:
+      - "80:80"
+    volumes:
+      - './nginx.conf:/etc/nginx/nginx.conf'
+    depends_on:
+      - api
+    networks:
+      - dev
+
   db:
     image: postgres:15
     container_name: vkadmin_db
@@ -12,17 +26,23 @@ services:
       POSTGRES_PASSWORD: postgres
     volumes:
       - postgresdata:/var/lib/postgresql/data
-
+    networks:
+      - dev
+      
   redis:
     image: redis:latest
     container_name: vkadmin_redis
     ports:
       - 6379:6379
+    networks:
+      - dev
 
   nats:
     image: 'nats:latest'
     ports:
       - "4222:4222"
+    networks:
+      - dev
 
   scheduler:
     build:
@@ -32,6 +52,8 @@ services:
       - .env-non-dev
     depends_on:
       - nats
+    networks:
+      - dev
 
   api:
     build:
@@ -46,6 +68,8 @@ services:
     command: sh -c "alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port 8000"
     ports:
       - 7777:8000
+    networks:
+      - dev
 
   frontend:
     build:
@@ -55,6 +79,10 @@ services:
       - 5468:80
     depends_on:
       - api
+    networks:
+      - dev
+
+
 
 volumes:
   postgresdata:

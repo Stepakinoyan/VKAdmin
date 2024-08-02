@@ -33,7 +33,10 @@ async def lifespan(app: FastAPI):
 
 
 
-app = FastAPI(lifespan=lifespan)
+app = FastAPI(
+    lifespan=lifespan,
+    root_path="/api/"
+)
 
 console = Console(color_system="truecolor", width=140)
 redis_ = redis.from_url(
