@@ -160,6 +160,3 @@ cython_debug/
 #.idea/
 
 .env-non-dev
-
-app/tests/organizations.json
-app/tests/users.json

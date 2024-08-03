@@ -4,6 +4,7 @@ from datetime import datetime
 
 from sqlalchemy import update
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import sessionmaker
 
 from app.config import settings
@@ -147,29 +148,33 @@ class VkDAO(BaseDAO):
         async with semaphore_:
             print(group_id)
             data = await fetch_group_data(group_id=group_id)
-            async with async_session_maker() as session:
-                update_vk_attributes = (
-                    update(self.model)
-                    .where(self.model.channel_id == group_id)
-                    .values(
-                        city=data.city.title if data.city else None,
-                        screen_name=data.screen_name,
-                        status=data.status,
-                        date_added=data.date_added,
-                        has_description=bool(data.description),
-                        has_avatar=any([data.photo_50, data.photo_100, data.photo_200]),
-                        activity=data.activity,
-                        has_widget=bool(data.menu),
-                        widget_count=len(data.menu.items)
-                        if data.menu and data.menu.items
-                        else 0,
-                        type=data.type,
-                        has_cover=bool(data.cover.enabled) if data.cover else False,
-                        members_count=data.members_count,
+            try:
+                async with async_session_maker() as session:
+                    update_vk_attributes = (
+                        update(self.model)
+                        .where(self.model.channel_id == group_id)
+                        .values(
+                            city=data.city.title if data.city else None,
+                            screen_name=data.screen_name,
+                            status=data.status,
+                            date_added=data.date_added,
+                            has_description=bool(data.description),
+                            has_avatar=any([data.photo_50, data.photo_100, data.photo_200]),
+                            activity=data.activity,
+                            has_widget=bool(data.menu),
+                            widget_count=len(data.menu.items)
+                            if data.menu and data.menu.items
+                            else 0,
+                            type=data.type,
+                            has_cover=bool(data.cover.enabled) if data.cover else False,
+                            members_count=data.members_count,
+                        )
                     )
-                )
 
-                await session.execute(update_vk_attributes)
+                    await session.execute(update_vk_attributes)
+                    await session.commit()
+            except SQLAlchemyError:
+                await session.rollback()
                 await session.commit()
 
         return group_id
@@ -204,3 +209,6 @@ class VkDAO(BaseDAO):
 
             except KeyError:
                 print(f"Failed to update weekly reach for group_id {group_id}")
+            except SQLAlchemyError:
+                await session.rollback()
+                await session.commit()                

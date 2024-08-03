@@ -25,7 +25,7 @@ import axios from 'axios';
 
 export const app = createApp(App)
 axios.defaults.withCredentials = true;
-axios.defaults.baseURL = 'http://localhost/api/';
+axios.defaults.baseURL = 'http://localhost:8000/';
 app.component('DataTable', DataTable)
 app.component('Column', Column)
 app.component('Dropdown', Dropdown)

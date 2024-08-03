@@ -10,6 +10,7 @@ from rich.console import Console
 from sqlalchemy import select, update
 from sqlalchemy.orm import selectinload
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.exc import SQLAlchemyError
 
 from app.config import settings
 from app.database import get_session
@@ -118,85 +119,88 @@ async def get_stat(session: AsyncSession = Depends(get_session)):
         if "error" in data:
             console.rule(f"[red] Error retrieving group data: {data['error']}")
             continue  # Skip this chunk or handle it as needed
+        try:
+            for group in data.get("response", {}).get("groups", []):
+                # Генерируем date_id
+                date_str = datetime.now(amurtime).strftime("%Y%m%d")
+                date_id = f"{date_str}{group['id']}"
 
-        for group in data.get("response", {}).get("groups", []):
-            # Генерируем date_id
-            date_str = datetime.now(amurtime).strftime("%Y%m%d")
-            date_id = f"{date_str}{group['id']}"
+                # Добавляем или обновляем значения в таблице статистики
+                stat = await session.get(Statistic, date_id)
+                organization_stmt = (
+                    select(Organizations)
+                    .where(Organizations.channel_id == group["id"])
+                    .options(selectinload(Organizations.statistic))
+                )
+                organization_result = await session.execute(organization_stmt)
+                organization = organization_result.scalars().first()
 
-            # Добавляем или обновляем значения в таблице статистики
-            stat = await session.get(Statistic, date_id)
-            organization_stmt = (
-                select(Organizations)
-                .where(Organizations.channel_id == group["id"])
-                .options(selectinload(Organizations.statistic))
-            )
-            organization_result = await session.execute(organization_stmt)
-            organization = organization_result.scalars().first()
+                if not organization:
+                    continue
 
-            if not organization:
-                continue
+                organization_dto = OrganizationsDTO.model_validate(
+                    organization, from_attributes=True
+                )
 
-            organization_dto = OrganizationsDTO.model_validate(
-                organization, from_attributes=True
-            )
+                if stat:
+                    stat.members_count = group.get("members_count", 0)
+                    stat.date_added = datetime.now(amurtime)
+                    stat.fulfillment_percentage = (
+                        await get_percentage_of_fulfillment_of_basic_requirements(
+                            organization_dto.model_dump()
+                        )
+                    )
+                else:
+                    new_stat = Statistic(
+                        date_id=date_id,
+                        organization_id=organization.id,
+                        date_added=datetime.now(amurtime),
+                        fulfillment_percentage=await get_percentage_of_fulfillment_of_basic_requirements(
+                            organization_dto.model_dump()
+                        ),
+                        activity=await get_activity(group["id"]),
+                    )
+                    session.add(new_stat)
 
-            if stat:
-                stat.members_count = group.get("members_count", 0)
-                stat.date_added = datetime.now(amurtime)
-                stat.fulfillment_percentage = (
-                    await get_percentage_of_fulfillment_of_basic_requirements(
-                        organization_dto.model_dump()
+            await session.commit()
+
+            for group_id in chunk:
+                organization_stmt = (
+                    select(Organizations)
+                    .where(Organizations.channel_id == group_id)
+                    .options(selectinload(Organizations.statistic))
+                )
+                organization_result = await session.execute(organization_stmt)
+                organization = organization_result.scalars().first()
+
+                if not organization:
+                    continue
+
+                organization_dto = OrganizationsDTO.model_validate(
+                    organization, from_attributes=True
+                )
+                week_percentage_of_fulfillment = get_week_fulfillment_percentage(
+                    statistics=organization_dto.statistic
+                )
+                month_percentage_of_fulfillment = get_average_month_fulfillment_percentage(
+                    statistics=organization_dto.statistic
+                )
+
+                update_stmt = (
+                    update(Organizations)
+                    .where(Organizations.channel_id == group_id)
+                    .values(
+                        average_week_fulfillment_percentage=week_percentage_of_fulfillment,
+                        average_fulfillment_percentage=month_percentage_of_fulfillment,
                     )
                 )
-            else:
-                new_stat = Statistic(
-                    date_id=date_id,
-                    organization_id=organization.id,
-                    date_added=datetime.now(amurtime),
-                    fulfillment_percentage=await get_percentage_of_fulfillment_of_basic_requirements(
-                        organization_dto.model_dump()
-                    ),
-                    activity=await get_activity(group["id"]),
-                )
-                session.add(new_stat)
+                await session.execute(update_stmt)
 
-        await session.commit()
-
-        for group_id in chunk:
-            organization_stmt = (
-                select(Organizations)
-                .where(Organizations.channel_id == group_id)
-                .options(selectinload(Organizations.statistic))
-            )
-            organization_result = await session.execute(organization_stmt)
-            organization = organization_result.scalars().first()
-
-            if not organization:
-                continue
-
-            organization_dto = OrganizationsDTO.model_validate(
-                organization, from_attributes=True
-            )
-            week_percentage_of_fulfillment = get_week_fulfillment_percentage(
-                statistics=organization_dto.statistic
-            )
-            month_percentage_of_fulfillment = get_average_month_fulfillment_percentage(
-                statistics=organization_dto.statistic
-            )
-
-            update_stmt = (
-                update(Organizations)
-                .where(Organizations.channel_id == group_id)
-                .values(
-                    average_week_fulfillment_percentage=week_percentage_of_fulfillment,
-                    average_fulfillment_percentage=month_percentage_of_fulfillment,
-                )
-            )
-            await session.execute(update_stmt)
-
-        await session.commit()
-
+            await session.commit()
+        except SQLAlchemyError:
+            await session.rollback()
+            await session.commit()
+            
     return {"status": "completed"}
 
 

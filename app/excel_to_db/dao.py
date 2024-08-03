@@ -4,6 +4,7 @@ import pandas
 from openpyxl import Workbook
 from sqlalchemy import insert, update
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.exc import SQLAlchemyError
 
 from app.dao.dao import BaseDAO
 from app.excel_to_db.schemas import Item, Connection
@@ -31,43 +32,51 @@ class ExcelDAO(BaseDAO):
 
     @classmethod
     async def excel_to_db(self, file: str, session: AsyncSession):
-        excel_df = pandas.read_excel(file).rename(columns=db_columns)
+        try:
+            excel_df = pandas.read_excel(file).rename(columns=db_columns)
 
-        excel_df_json = excel_df.to_json(orient="records")
+            excel_df_json = excel_df.to_json(orient="records")
 
-        convert_to_json = json.loads(excel_df_json)
-        convert_to_json[4]["level"] = "Регион"
-        convert_to_json[4]["founder"] = "Правительство Амурской области"
+            convert_to_json = json.loads(excel_df_json)
+            convert_to_json[4]["level"] = "Регион"
+            convert_to_json[4]["founder"] = "Правительство Амурской области"
 
-        for column in convert_to_json:
-            item = Item(**column)
-            if item.channel_id != 0 and item.channel_id != None:
-                add_data = insert(self.model).values(item.model_dump())
-                await session.execute(add_data)
-            else:
-                pass
-        await session.commit()
+            for column in convert_to_json:
+                item = Item(**column)
+                if item.channel_id != 0 and item.channel_id != None:
+                    add_data = insert(self.model).values(item.model_dump())
+                    await session.execute(add_data)
+                else:
+                    pass
+            await session.commit()
+        except SQLAlchemyError:
+            await session.rollback()
+            await session.commit()
 
     @classmethod
     async def add_connection(self, file: str, session: AsyncSession):
-        excel_df = pandas.read_excel(file).rename(columns=connection)
+        try:
+            excel_df = pandas.read_excel(file).rename(columns=connection)
 
-        excel_df_json = excel_df.to_json(orient="records")
+            excel_df_json = excel_df.to_json(orient="records")
 
-        convert_to_json = json.loads(excel_df_json)
+            convert_to_json = json.loads(excel_df_json)
 
-        for column in convert_to_json:
-            connection_schema = Connection(**column)
-            if connection_schema.channel_id:
-                add_data = (
-                    update(self.model)
-                    .where(self.model.channel_id == connection_schema.channel_id)
-                    .values(connected=connection_schema.connected)
-                )
-                await session.execute(add_data)
-            else:
-                pass
-        await session.commit()
+            for column in convert_to_json:
+                connection_schema = Connection(**column)
+                if connection_schema.channel_id:
+                    add_data = (
+                        update(self.model)
+                        .where(self.model.channel_id == connection_schema.channel_id)
+                        .values(connected=connection_schema.connected)
+                    )
+                    await session.execute(add_data)
+                else:
+                    pass
+            await session.commit()
+        except SQLAlchemyError:
+            await session.rollback()
+            await session.commit()    
 
     @classmethod
     async def save_accounts_to_xlsx(self, stats: list):

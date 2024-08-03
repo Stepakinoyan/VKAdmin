@@ -158,7 +158,6 @@ async def wall_get_data(group_id: int):
             async with async_session() as session:
                 async with session.begin():
                     db_item = await session.get(Organizations, group_id)
-                    # print(db_item)
                     if db_item:
                         db_item.posts = data["posts"]
                         db_item.posts_1d = data["posts_1d"]
@@ -198,7 +197,7 @@ async def get_percentage_of_fulfillment_of_basic_requirements(
     # Подключение (10 %)
     if organization.get("connected"):
         percentage += 10
-        print("has_gos_badge: +10%")
+        print("connection: +10%")
 
     # Оформление (20 %)
     if organization.get("has_avatar"):

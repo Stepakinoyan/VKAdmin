@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, date
 
 import pytz
 
@@ -25,6 +25,6 @@ def get_new_stats(stats: list[StatisticDTO]) -> list[StatisticDTO]:
 
 
 def get_stats_by_dates(
-    stats: list[StatisticDTO], date_from: datetime.date, date_to: datetime.date
+    stats: list[StatisticDTO], date_from: date, date_to: date
 ) -> list[StatisticDTO]:
     return list(filter(lambda item: date_from <= item.date_added <= date_to, stats))

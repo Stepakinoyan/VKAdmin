@@ -86,20 +86,27 @@
           </template>
         </Column>
 
-        <Column
-          v-for="(col, index) in statisticColumns"
-          :key="index"
-          :field="col.field"
-          sortable
-          :header="col.header"
-          class="text-black text-xs text-center"
-        >
+        <template>
+          <Column
+            v-for="(col, index) in statisticColumns"
+            :key="index"
+            :field="col.field"
+            sortable
+            :header="col.header"
+            class="text-black text-xs text-center"
+          >
           <template #body="slotProps">
             <div class="flex justify-center items-center">
+              <i v-if="index == 0 || slotProps.data[col.field] == statisticColumns[index-1].fulfillment_percentage"></i>
+
+              <i class="pi pi-arrow-up text-green-400 pb-1.4" v-else-if="slotProps.data[col.field] > statisticColumns[index-1].fulfillment_percentage" ></i>
+              <i class="pi pi-arrow-down text-red-600 pb-1.4" v-else></i>
               {{ slotProps.data[col.field] }}%
+
             </div>
           </template>
-        </Column>
+          </Column>
+        </template>
 
         <Column
           field="average_week_fulfillment_percentage"
@@ -249,6 +256,22 @@
             ></i>
           </template>
         </Column>
+        <Column field="connected" sortable header="Подключение" class="text-black text-xs text-center cursor-pointer">
+          <template #body="slotProps">
+            <i
+              v-if="slotProps.data.connected"
+              class="pi pi-check-circle"
+              style="color: green;"
+              v-tooltip="'+10%'"
+            ></i>
+            <i
+              v-else
+              class="pi pi-times-circle"
+              style="color: red;"
+              v-tooltip="'0%'"
+            ></i>
+          </template>
+        </Column>
 
         <Column field="widget_count" sortable header="Виджеты" class="text-black text-xs text-center cursor-pointer">
             <template #body="slotProps">
@@ -341,6 +364,7 @@ export default {
     return {
       loading: false,
       dialogVisible: false,
+      previousValues: {},
       DataTableStyle: {
         root: ({ props }) => ({
           class: [
@@ -471,7 +495,8 @@ export default {
       const statisticColumns = [];
       const memberColumns = [];
       if (items.length > 0 && items[0].statistic) {
-        const sortedStatistics = items[0].statistic.sort((a, b) => new Date(a.date_added) - new Date(b.date_added));
+        // Изменение сортировки на порядок убывания
+        const sortedStatistics = items[0].statistic.sort((a, b) => new Date(b.date_added) - new Date(a.date_added));
         sortedStatistics.forEach((stat, index) => {
           const date = new Date(stat.date_added);
           const formattedDate = date.toLocaleDateString("ru-RU", {
@@ -479,11 +504,13 @@ export default {
             month: '2-digit',
             day: '2-digit'
           });
-          statisticColumns.push({ field: `statistic_percentage_${index + 1}`, header: formattedDate });
+          statisticColumns.push({ field: `statistic_percentage_${index + 1}`, fulfillment_percentage: sortedStatistics[index].fulfillment_percentage,  header: formattedDate });
         });
       }
       this.statisticColumns = statisticColumns;
       this.memberColumns = memberColumns;
+      
+      statisticColumns.reverse()
     },
     onLevelChange() {
       this.selectedfounder = null;
@@ -543,7 +570,6 @@ export default {
         .filter(param => param !== '')
         .join('&');
         
-      console.log('Query Params:', queryParams);
 
       axios.get(`/filter/get_stats?${queryParams}`)
         .then(response => {
@@ -569,8 +595,7 @@ export default {
       this.selectedfounder = null;
       this.selectedsphere = null;
       this.selectedzone = null;
-      this.date_from = null;
-      this.date_to = null;
+      this.dates = null;
       this.searching_name = '';
       this.founders = [];
       this.spheres = [];
