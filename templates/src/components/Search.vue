@@ -40,7 +40,7 @@
           @change="StatChange"
           emptyMessage="Нет доступных опций"
         />
-        <Calendar v-model="dates" dateFormat="dd-mm-yy" selectionMode="range" :manualInput="false" placeholder="Диапазон" showIcon iconDisplay="input" class="w-full md:w-2/3 border border-gray-400 mt-2 md:mt-0 py-2 md:py-0 rounded-lg" @date-select="StatChange"/>
+        <Calendar v-model="dates" dateFormat="dd-mm-yy" selectionMode="range" :manualInput="false" placeholder="Диапазон" showIcon iconDisplay="input" class="w-full md:w-2/3 border border-gray-400 mt-2 md:mt-0 py-2 md:py-0 rounded-lg" @date-select="StatChange" :pt="{input: {class: ['pl-[12px]', 'placeholder:text-gray-500']}}"/>
 
         <InputText 
           type="text" 
@@ -97,11 +97,12 @@
           >
           <template #body="slotProps">
             <div class="flex justify-center items-center">
-              <i v-if="index == 0 || slotProps.data[col.field] == statisticColumns[index-1].fulfillment_percentage"></i>
+              <i v-if="index == 0 || statisticColumns[index].fulfillment_percentage == statisticColumns[index-1].fulfillment_percentage"></i>
 
-              <i class="pi pi-arrow-up text-green-400 pb-1.4" v-else-if="slotProps.data[col.field] > statisticColumns[index-1].fulfillment_percentage" ></i>
+              <i class="pi pi-arrow-up text-green-400 pb-1.4" v-else-if="statisticColumns[index].fulfillment_percentage > statisticColumns[index-1].fulfillment_percentage" ></i>
               <i class="pi pi-arrow-down text-red-600 pb-1.4" v-else></i>
-              {{ slotProps.data[col.field] }}%
+              {{ statisticColumns[index].fulfillment_percentage }}%
+
 
             </div>
           </template>
@@ -630,6 +631,10 @@ html{
 
 .p-datatable-wrapper{
   scrollbar-width: thin;
+}
+
+.p-datatable .p-datatable-tbody > tr:hover {
+    background-color: #f4f4f4;
 }
 
 .p-tooltip-text {

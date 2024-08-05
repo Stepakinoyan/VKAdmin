@@ -34,7 +34,7 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(
-    lifespan=lifespan,
+    lifespan=lifespan
 )
 
 console = Console(color_system="truecolor", width=140)

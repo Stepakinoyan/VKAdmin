@@ -14,8 +14,6 @@ from sqlalchemy.exc import SQLAlchemyError
 
 from app.config import settings
 from app.database import get_session
-from app.organizations.dao import OrganizationsDAO
-from app.organizations.funcs import get_new_stats
 from app.organizations.models import Organizations
 from app.organizations.schemas import (
     OrganizationsDTO,
@@ -30,7 +28,6 @@ from app.vk.funcs import (
     get_percentage_of_fulfillment_of_basic_requirements,
     get_week_fulfillment_percentage,
 )
-from app.vk.schemas import StatisticDTO
 
 router = APIRouter(prefix="/vk", tags=["VK"])
 console = Console(color_system="truecolor", width=140)
@@ -243,21 +240,21 @@ async def get_gos_bage(session: AsyncSession = Depends(get_session)):
     batch_size = 50
 
     result = await session.execute(select(Organizations.id, Organizations.screen_name))
-    accounts = result.all()
+    organizations = result.all()
 
-    for i in range(0, len(accounts), batch_size):
-        batch = accounts[i : i + batch_size]
+    for i in range(0, len(organizations), batch_size):
+        batch = organizations[i : i + batch_size]
         all_ids_in_batch = [account.id for account in batch]
 
         tasks = [
-            fetch_gos_page(f"https://vk.com/{account.screen_name}", account.id)
-            for account in batch
+            fetch_gos_page(f"https://vk.com/{organization.screen_name}", organization.id)
+            for organization in batch
         ]
         batch_results = await asyncio.gather(*tasks)
 
 
         found_ids = [
-            account_id for account_id in batch_results if account_id is not None
+            organization_id for organization_id in batch_results if organization_id is not None
         ]
         not_found_ids = list(set(all_ids_in_batch) - set(found_ids))
 
@@ -282,4 +279,4 @@ async def get_gos_bage(session: AsyncSession = Depends(get_session)):
 
         await session.commit()
 
-    return {"updated_accounts": len(accounts)}
+    return {"updated_accounts": len(organizations)}

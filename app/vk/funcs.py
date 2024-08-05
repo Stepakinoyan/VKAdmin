@@ -1,5 +1,4 @@
 import asyncio
-import json
 import time
 from datetime import datetime, timedelta
 from typing import TypeAlias
@@ -60,7 +59,7 @@ async def call(method: str, params: dict, access_token: str, retries: int = 3):
                 ):
                     console.rule(f"[red] {response.url} Too many requests per second")
                     # Если да, делаем паузу и пробуем ещё раз
-                    await asyncio.sleep(20)
+                    await asyncio.sleep(1)
                 else:
                     # Если нет ошибки, или это была последняя попытка, возвращаем результат
                     return response_data
