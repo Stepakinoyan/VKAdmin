@@ -27,14 +27,13 @@ async def lifespan(app: FastAPI):
 
     FastAPICache.init(RedisBackend(redis_), prefix="fastapi-cache")
 
-
     yield
 
 
 
 
 app = FastAPI(
-    lifespan=lifespan
+    lifespan=lifespan,
 )
 
 console = Console(color_system="truecolor", width=140)

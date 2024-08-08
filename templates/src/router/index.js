@@ -21,7 +21,7 @@ const router = createRouter({
 })
 
 router.beforeResolve(async (to, from, next) => {
-  if (!VueCookies.get("token") && to.path !== '/login') {
+  if (to.meta.requiresAuth && !VueCookies.get("token")) {
     next('/login');
   } else {
     next();

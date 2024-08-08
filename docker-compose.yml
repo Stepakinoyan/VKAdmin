@@ -1,88 +1,106 @@
-networks:
-  dev:
-
 services:
-  nginx:
-    image: nginx:stable-alpine
-    ports:
-      - "80:80"
-    volumes:
-      - './nginx.conf:/etc/nginx/nginx.conf'
-    depends_on:
-      - api
-    networks:
-      - dev
 
-  db:
-    image: postgres:15
-    container_name: vkadmin_db
-    env_file:
-      - .env-non-dev
-    ports:
-      - 5432:5432
-    environment:
-      POSTGRES_DB: postgres
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-    volumes:
-      - postgresdata:/var/lib/postgresql/data
-    networks:
-      - dev
-      
-  redis:
-    image: redis:latest
-    container_name: vkadmin_redis
-    ports:
-      - 6379:6379
-    networks:
-      - dev
+  # certbot:
+  #     image: certbot/certbot
+  #     depends_on:
+  #       - nginx
+  #     container_name: certbot
+  #     volumes:
+  #         - etc-letsencrypt:/etc/letsencrypt
+  #         - www-html:/var/www/html
+  #     entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew; sleep 12h & wait $${!}; done;'"
+  #     command: certonly --webroot --webroot-path=/var/www/html --email scrolldude69@gmail.com --agree-tos --no-eff-email -d dev1.icdv.ru
+  #     networks:
+  #       - dev
 
-  nats:
-    image: 'nats:latest'
-    ports:
-      - "4222:4222"
-    networks:
-      - dev
+  # db:
+  #   image: postgres:15
+  #   container_name: vkadmin_db
+  #   env_file:
+  #     - .env-non-dev
+  #   ports:
+  #     - 5432:5432
+  #   environment:
+  #     POSTGRES_DB: postgres
+  #     POSTGRES_USER: postgres
+  #     POSTGRES_PASSWORD: postgres
+  #   volumes:
+  #     - postgresdata:/var/lib/postgresql/data
+  #   networks:
+  #     - traefik-public
 
-  scheduler:
-    build:
-      context: .
-    command: sh -c "taskiq scheduler app.tasks.vk_stat:scheduler"
-    env_file:
-      - .env-non-dev
-    depends_on:
-      - nats
-    networks:
-      - dev
+  # redis:
+  #   image: redis:latest
+  #   container_name: vkadmin_redis
+  #   ports:
+  #     - 6379:6379
+  #   networks:
+  #     - traefik-public
+
+  # nats:
+  #   image: 'nats:latest'
+  #   ports:
+  #     - "4222:4222"
+  #   networks:
+  #     - traefik-public
+
+  # scheduler:
+  #   build:
+  #     context: .
+  #   command: sh -c "taskiq scheduler app.tasks.vk_stat:scheduler"
+  #   env_file:
+  #     - .env-non-dev
+  #   depends_on:
+  #     - nats
+  #   networks:
+  #     - traefik-public
 
   api:
     build:
       context: .
     container_name: vkadmin
+    restart: always
     env_file:
       - .env-non-dev
     depends_on:
       - db
       - redis
       - nats
-    command: sh -c "alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port 8000"
-    ports:
-      - 7777:8000
+    # command: sh -c "alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port 8000"
+    # ports:
+    #   - 7777:8000
+    restart: always
+    labels:
+      - traefik.enable=true
+      - traefik.http.services.api.loadbalancer.server.port=80
+      - traefik.http.routers.api.rule=Host(`localhost`)
+      - traefik.http.routers.api.entrypoints=http
+      - traefik.docker.network=traefik-public
     networks:
-      - dev
+        - traefik-public
 
-  frontend:
-    build:
-      context: templates/
-    container_name: vkadmin_frontend
-    ports:
-      - 5468:80
-    depends_on:
-      - api
-    networks:
-      - dev
+  # frontend:
+  #   build:
+  #     context: templates/
+  #   container_name: vkadmin_frontend
+  #   ports:
+  #     - 5468:80
+  #   depends_on:
+  #     - api
+  #   labels:
+  #     - traefik.enable=true
+  #     - traefik.http.routers.frontend.rule=Host(`localhost`) # Измените на ваше доменное имя
+  #     - traefik.http.routers.frontend.entrypoints=http
+  #     - traefik.http.services.frontend.loadbalancer.server.port=80
+  #     - traefik.docker.network=traefik-publiс
+  #   networks:
+  #     - traefik-public
 
-
+networks:
+  traefik-public:
+    external: true 
 
 volumes:
   postgresdata:
+  www-html:
+  etc-letsencrypt:

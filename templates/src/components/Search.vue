@@ -38,9 +38,10 @@
           placeholder="% выполнения" 
           class="w-full md:w-1/3 border border-gray-400 mt-2 md:mt-0" 
           @change="StatChange"
-          emptyMessage="Нет доступных опций"
+          emptyMessage="Нет доступных опций"       
+      
         />
-        <Calendar v-model="dates" dateFormat="dd-mm-yy" selectionMode="range" :manualInput="false" placeholder="Диапазон" showIcon iconDisplay="input" class="w-full md:w-2/3 border border-gray-400 mt-2 md:mt-0 py-2 md:py-0 rounded-lg" @date-select="StatChange" :pt="{input: {class: ['pl-[12px]', 'placeholder:text-gray-500']}}"/>
+        <Calendar v-model="dates" dateFormat="dd-mm-yy" selectionMode="range" :manualInput="false" placeholder="Диапазон" :showOtherMonths="true" :selectOtherMonths="true" showIcon iconDisplay="input" class="w-full md:w-2/3 border border-gray-400 mt-2 md:mt-0 py-2 md:py-0 rounded-lg" @date-select="StatChange" :pt="{input: {class: ['pl-[12px]', 'placeholder:text-gray-500']}}"/>
 
         <InputText 
           type="text" 
@@ -85,29 +86,26 @@
             <span @click="openDialog(slotProps.data)" class="hover:underline">{{ slotProps.data.name }}</span>
           </template>
         </Column>
-
+      
         <template>
-          <Column
-            v-for="(col, index) in statisticColumns"
-            :key="index"
-            :field="col.field"
-            sortable
-            :header="col.header"
-            class="text-black text-xs text-center"
-          >
+        <Column
+          v-for="(col, index) in statisticColumns"
+          :key="index"
+          :field="col.field"
+          sortable
+          :header="col.header"
+          class="text-black text-xs text-center"
+        >
           <template #body="slotProps">
             <div class="flex justify-center items-center">
               <i v-if="index == 0 || statisticColumns[index].fulfillment_percentage == statisticColumns[index-1].fulfillment_percentage"></i>
-
-              <i class="pi pi-arrow-up text-green-400 pb-1.4" v-else-if="statisticColumns[index].fulfillment_percentage > statisticColumns[index-1].fulfillment_percentage" ></i>
+              <i class="pi pi-arrow-up text-green-400 pb-1.4" v-else-if="statisticColumns[index].fulfillment_percentage > statisticColumns[index-1].fulfillment_percentage"></i>
               <i class="pi pi-arrow-down text-red-600 pb-1.4" v-else></i>
               {{ statisticColumns[index].fulfillment_percentage }}%
-
-
             </div>
           </template>
-          </Column>
-        </template>
+        </Column>
+      </template>
 
         <Column
           field="average_week_fulfillment_percentage"
@@ -147,7 +145,7 @@
 
         <Column field="members_count" sortable header="Участники" class="text-black text-xs text-center"></Column>
 
-        <Column field="statistic" header="Кол. подписок за день" :sortable="true" class="text-black text-xs text-center">
+        <Column field="statistic" header="Кол. подписок за день" :sortable="true" class="text-black text-xs text-center" v-if="!dates">
             <template #body="slotProps">
               <span v-if="slotProps.data.statistic && slotProps.data.statistic.length > 0 && slotProps.data.statistic[slotProps.data.statistic.length - 1].activity">
                 {{slotProps.data.statistic[slotProps.data.statistic.length - 1].activity.subscribed}}
@@ -155,7 +153,7 @@
               <span v-else>0</span>
             </template>
         </Column>
-        <Column field="statistic" header="Кол. лайк. за день" :sortable="true" class="text-black text-xs text-center">
+        <Column field="statistic" header="Кол. лайк. за день" :sortable="true" class="text-black text-xs text-center" v-if="!dates">
             <template #body="slotProps">
               <span v-if="slotProps.data.statistic && slotProps.data.statistic.length > 0 && slotProps.data.statistic[slotProps.data.statistic.length - 1].activity">
                 {{slotProps.data.statistic[slotProps.data.statistic.length - 1].activity.likes}}
@@ -163,7 +161,7 @@
               <span v-else>0</span>
             </template>
         </Column>
-        <Column field="statistic" header="Кол. ком. за день" :sortable="true" class="text-black text-xs text-center">
+        <Column field="statistic" header="Кол. ком. за день" :sortable="true" class="text-black text-xs text-center" v-if="!dates">
             <template #body="slotProps">
               <span v-if="slotProps.data.statistic && slotProps.data.statistic.length > 0 && slotProps.data.statistic[slotProps.data.statistic.length - 1].activity">
                 {{slotProps.data.statistic[slotProps.data.statistic.length - 1].activity.comments}}
@@ -296,15 +294,16 @@
               </span>
             </template>
           </Column>
-
+          <!-- formatDate -->
         <Column field="posts" sortable header="Посты" class="text-black text-xs text-center"></Column>
         <Column field="posts_1d" sortable header="1 день" class="text-black text-xs text-center"></Column>
         <Column field="posts_7d" sortable header="7 дней" class="text-black text-xs text-center"></Column>
         <Column field="posts_30d" sortable header="30 дней" class="text-black text-xs text-center"></Column>
-        <Column field="date_added" sortable header="Дата сбора" class="text-black text-xs text-center"></Column>
-        <Column field="level" sortable header="Уровень" class="text-black text-xs text-center"></Column>
-        <Column field="founder" sortable header="Учред." class="text-black text-xs text-center"></Column>
-        <Column field="activity" sortable header="Тип" class="text-black text-xs text-center"></Column>
+        <Column field="date_added" sortable header="Дата сбора" class="text-black text-xs text-center" v-if="!dates">
+          <template #body="slotProps">
+            {{ formatDate(slotProps.data.date_added) }}
+          </template>
+        </Column>
 
         <template #empty>
           <tr>
@@ -450,17 +449,24 @@ export default {
     exportToExcel() {
       exportToExcel(this.stats)
       .then(response => {
-          const url = window.URL.createObjectURL(new Blob([response.data]));
-          const link = document.createElement('a');
+          const url = window.URL.createObjectURL(new Blob([response.data]))
+          const link = document.createElement('a')
           link.href = url;
-          link.setAttribute('download', 'accounts_data.xlsx');
-          document.body.appendChild(link);
-          link.click();
-          document.body.removeChild(link);
+          link.setAttribute('download', 'accounts_data.xlsx')
+          document.body.appendChild(link)
+          link.click()
+          document.body.removeChild(link)
           })
           .catch(error => {
-            console.error('Error downloading the file', error);
+            console.error('Error downloading the file', error)
           });
+    },
+    formatDate(date) {
+      const d = new Date(date);
+      const day = String(d.getDate()).padStart(2, '0')
+      const month = String(d.getMonth() + 1).padStart(2, '0')
+      const year = d.getFullYear()
+      return `${day}.${month}.${year}`
     },
     openDialog(item) {
       this.selectedItem = item;
