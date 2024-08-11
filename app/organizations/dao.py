@@ -1,5 +1,5 @@
 import logging
-from datetime import date, datetime, timedelta
+from datetime import date, datetime
 
 from fastapi.encoders import jsonable_encoder
 from sqlalchemy import and_, or_, select

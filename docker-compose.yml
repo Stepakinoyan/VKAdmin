@@ -1,59 +1,34 @@
 services:
+  db:
+    image: postgres:15
+    container_name: vkadmin_db
+    env_file:
+      - .env-non-dev
+    ports:
+      - 5432:5432
+    environment:
+      POSTGRES_DB: postgres
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    volumes:
+      - postgresdata:/var/lib/postgresql/data
+    networks:
+      - traefik-public
 
-  # certbot:
-  #     image: certbot/certbot
-  #     depends_on:
-  #       - nginx
-  #     container_name: certbot
-  #     volumes:
-  #         - etc-letsencrypt:/etc/letsencrypt
-  #         - www-html:/var/www/html
-  #     entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew; sleep 12h & wait $${!}; done;'"
-  #     command: certonly --webroot --webroot-path=/var/www/html --email scrolldude69@gmail.com --agree-tos --no-eff-email -d dev1.icdv.ru
-  #     networks:
-  #       - dev
+  redis:
+    image: redis:latest
+    container_name: vkadmin_redis
+    ports:
+      - 6379:6379
+    networks:
+      - traefik-public
 
-  # db:
-  #   image: postgres:15
-  #   container_name: vkadmin_db
-  #   env_file:
-  #     - .env-non-dev
-  #   ports:
-  #     - 5432:5432
-  #   environment:
-  #     POSTGRES_DB: postgres
-  #     POSTGRES_USER: postgres
-  #     POSTGRES_PASSWORD: postgres
-  #   volumes:
-  #     - postgresdata:/var/lib/postgresql/data
-  #   networks:
-  #     - traefik-public
-
-  # redis:
-  #   image: redis:latest
-  #   container_name: vkadmin_redis
-  #   ports:
-  #     - 6379:6379
-  #   networks:
-  #     - traefik-public
-
-  # nats:
-  #   image: 'nats:latest'
-  #   ports:
-  #     - "4222:4222"
-  #   networks:
-  #     - traefik-public
-
-  # scheduler:
-  #   build:
-  #     context: .
-  #   command: sh -c "taskiq scheduler app.tasks.vk_stat:scheduler"
-  #   env_file:
-  #     - .env-non-dev
-  #   depends_on:
-  #     - nats
-  #   networks:
-  #     - traefik-public
+  nats:
+    image: 'nats:latest'
+    ports:
+      - "4222:4222"
+    networks:
+      - traefik-public
 
   api:
     build:
@@ -66,41 +41,55 @@ services:
       - db
       - redis
       - nats
-    # command: sh -c "alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port 8000"
-    # ports:
-    #   - 7777:8000
-    restart: always
+    command: sh -c "alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port 8000"
+    ports:
+      - 7777:8000
     labels:
       - traefik.enable=true
-      - traefik.http.services.api.loadbalancer.server.port=80
-      - traefik.http.routers.api.rule=Host(`localhost`)
-      - traefik.http.routers.api.entrypoints=http
       - traefik.docker.network=traefik-public
+      - traefik.http.services.api.loadbalancer.server.port=8000
+      - traefik.http.routers.api-http.rule=Host(`${DOMAIN?Variable not set}`) && PathPrefix(`/api`)
+      - traefik.http.routers.api-http.entrypoints=http
+      - traefik.http.middlewares.api-stripprefix.stripprefix.prefixes=/api
+      - traefik.http.routers.api-http.middlewares=api-stripprefix
+      - traefik.http.routers.api-https.rule=Host(`${DOMAIN?Variable not set}`) && PathPrefix(`/api`)
+      - traefik.http.routers.api-https.entrypoints=https
+      - traefik.http.routers.api-https.tls=true
+      - traefik.http.routers.api-https.tls.certresolver=le
+      - traefik.http.routers.api-https.middlewares=api-stripprefix
+    environment:
+      - DOMAIN=${DOMAIN}
     networks:
-        - traefik-public
+      - traefik-public
 
-  # frontend:
-  #   build:
-  #     context: templates/
-  #   container_name: vkadmin_frontend
-  #   ports:
-  #     - 5468:80
-  #   depends_on:
-  #     - api
-  #   labels:
-  #     - traefik.enable=true
-  #     - traefik.http.routers.frontend.rule=Host(`localhost`) # Измените на ваше доменное имя
-  #     - traefik.http.routers.frontend.entrypoints=http
-  #     - traefik.http.services.frontend.loadbalancer.server.port=80
-  #     - traefik.docker.network=traefik-publiс
-  #   networks:
-  #     - traefik-public
+  frontend:
+    build:
+      context: ./templates
+      args:
+        VITE_API_URL: https://${DOMAIN?Variable not set}
+        NODE_ENV: production
+    container_name: vkadmin_frontend
+    depends_on:
+      - api
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=traefik-public"
+      - "traefik.http.services.frontend.loadbalancer.server.port=80"
+      - "traefik.http.routers.frontend-http.rule=Host(`${DOMAIN?Variable not set}`)"
+      - "traefik.http.routers.frontend-http.entrypoints=http"
+      - "traefik.http.routers.frontend-https.rule=Host(`${DOMAIN?Variable not set}`)"
+      - "traefik.http.routers.frontend-https.entrypoints=https"
+      - "traefik.http.routers.frontend-https.tls=true"
+      - "traefik.http.routers.frontend-https.tls.certresolver=le"
+    environment:
+      - DOMAIN=${DOMAIN}
+    networks:
+      - traefik-public
 
 networks:
   traefik-public:
     external: true 
 
 volumes:
+  traefik-certificates:
   postgresdata:
-  www-html:
-  etc-letsencrypt:

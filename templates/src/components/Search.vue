@@ -9,6 +9,7 @@
           placeholder="Уровень" 
           class="w-full md:w-1/3 border border-gray-400 mt-2 md:mt-0" 
           @change="onLevelChange" 
+          :disabled="field_disabled"
           panelClass="min-w-min w-10rem"
           emptyMessage="Нет доступных опций"
         />
@@ -19,7 +20,7 @@
           placeholder="Учредитель" 
           class="w-full md:w-1/3 border border-gray-400 mt-2 md:mt-0" 
           @change="onFounderChange" 
-          :disabled="!selectedlevel"
+          :disabled="!selectedlevel || field_disabled"
           emptyMessage="Нет доступных опций"
         />
         <Dropdown 
@@ -28,7 +29,8 @@
           optionLabel="sphere" 
           placeholder="Сфера" 
           class="w-full md:w-1/3 border border-gray-400 mt-2 md:mt-0" 
-          @change="StatChange" 
+          @change="loadFilteredData" 
+          :disabled="field_disabled"
           emptyMessage="Нет доступных опций"
         />
         <Dropdown 
@@ -37,18 +39,20 @@
           optionLabel="zone" 
           placeholder="% выполнения" 
           class="w-full md:w-1/3 border border-gray-400 mt-2 md:mt-0" 
-          @change="StatChange"
-          emptyMessage="Нет доступных опций"       
-      
+          @change="loadFilteredData"
+          :disabled="field_disabled"
+          emptyMessage="Нет доступных опций"
         />
-        <Calendar v-model="dates" dateFormat="dd-mm-yy" selectionMode="range" :manualInput="false" placeholder="Диапазон" :showOtherMonths="true" :selectOtherMonths="true" showIcon iconDisplay="input" class="w-full md:w-2/3 border border-gray-400 mt-2 md:mt-0 py-2 md:py-0 rounded-lg" @date-select="StatChange" :pt="{input: {class: ['pl-[12px]', 'placeholder:text-gray-500']}}"/>
+        
+        <Calendar v-model="dates" @update:model-value="loadFilteredData" dateFormat="dd-mm-yy" selectionMode="range" :manualInput="false" placeholder="Диапазон" :showOtherMonths="true" @date-select="StatChange" :selectOtherMonths="true" showIcon iconDisplay="input" class="w-full md:w-2/3 border border-gray-400 mt-2 md:mt-0 py-2 md:py-0 rounded-lg"  :pt="{input: {class: ['pl-[12px]', 'placeholder:text-gray-500']}}" :disabled="field_disabled"/>
 
         <InputText 
           type="text" 
           v-model="searching_name" 
           placeholder="Организация" 
           class="w-full md:w-2/3 border border-gray-400 placeholder:text-gray-500 pl-[12px] py-2 md:py-0 mt-2 md:mt-0" 
-          @input="StatChange"
+          @input="loadFilteredData"
+          :disabled="field_disabled"
         />
       </div>
 
@@ -79,7 +83,7 @@
           sortable
           header="Название"
           class="text-xs cursor-pointer text-left"
-          style="min-width: 240px;"
+          style="min-width: 240px; max-width: 240px;"
           frozen
         >
           <template #body="slotProps">
@@ -294,11 +298,10 @@
               </span>
             </template>
           </Column>
-          <!-- formatDate -->
-        <Column field="posts" sortable header="Посты" class="text-black text-xs text-center"></Column>
-        <Column field="posts_1d" sortable header="1 день" class="text-black text-xs text-center"></Column>
-        <Column field="posts_7d" sortable header="7 дней" class="text-black text-xs text-center"></Column>
-        <Column field="posts_30d" sortable header="30 дней" class="text-black text-xs text-center"></Column>
+        <Column field="posts" sortable header="Посты" class="text-black text-xs text-center" v-if="!dates"></Column>
+        <Column field="posts_1d" sortable header="1 день" class="text-black text-xs text-center" v-if="!dates"></Column>
+        <Column field="posts_7d" sortable header="7 дней" class="text-black text-xs text-center" v-if="!dates"></Column>
+        <Column field="posts_30d" sortable header="30 дней" class="text-black text-xs text-center" v-if="!dates"></Column>
         <Column field="date_added" sortable header="Дата сбора" class="text-black text-xs text-center" v-if="!dates">
           <template #body="slotProps">
             {{ formatDate(slotProps.data.date_added) }}
@@ -365,6 +368,7 @@ export default {
       loading: false,
       dialogVisible: false,
       previousValues: {},
+      field_disabled: false,
       DataTableStyle: {
         root: ({ props }) => ({
           class: [
@@ -447,18 +451,24 @@ export default {
   },
   methods: {
     exportToExcel() {
+      this.loading = true
+      this.field_disabled = true 
       exportToExcel(this.stats)
       .then(response => {
           const url = window.URL.createObjectURL(new Blob([response.data]))
           const link = document.createElement('a')
           link.href = url;
-          link.setAttribute('download', 'accounts_data.xlsx')
+          link.setAttribute('download', 'organizations.xlsx')
           document.body.appendChild(link)
           link.click()
           document.body.removeChild(link)
+          this.loading = false;
+          this.field_disabled = false
           })
           .catch(error => {
             console.error('Error downloading the file', error)
+            this.loading = false;
+            this.field_disabled = false
           });
     },
     formatDate(date) {

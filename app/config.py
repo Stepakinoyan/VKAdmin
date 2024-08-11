@@ -28,8 +28,8 @@ class Settings(BaseSettings):
     REDIS_HOST: str
     REDIS_PORT: int
 
-    # USERNAME: str
-    # HASHED_PASSWORD: str
+    DOMAIN: str
+    BACKEND_CORS_ORIGINS: str
 
     model_config = SettingsConfigDict(env_file=".env")
 

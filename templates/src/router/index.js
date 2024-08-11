@@ -7,6 +7,18 @@ const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
     {
+      path: '/',
+      name: 'home',
+      beforeEnter: (to, from, next) => {
+        const token = VueCookies.get('token');
+        if (token) {
+          next('/dashboard');
+        } else {
+          next('/login');
+        }
+      }
+    },
+    {
       path: '/login',
       name: 'login',
       component: HomeView
@@ -20,12 +32,17 @@ const router = createRouter({
   ]
 })
 
-router.beforeResolve(async (to, from, next) => {
-  if (to.meta.requiresAuth && !VueCookies.get("token")) {
-    next('/login');
+router.beforeEach((to, from, next) => {
+  if (to.meta.requiresAuth) {
+    const token = VueCookies.get('token');
+    if (token) {
+      next();
+    } else {
+      next('/login');
+    }
   } else {
     next();
   }
-});
+})
 
 export default router
