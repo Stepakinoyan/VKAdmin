@@ -28,7 +28,7 @@ class OrganizationsDTO(BaseModel):
     has_widget: Optional[bool] = Field(default=False)
     connected: Optional[bool] = Field(default=False)
     widget_count: Optional[int] = Field(default=0)
-    members_count: Optional[int] = 0
+    members_count: Optional[int] = Field(default=0)
     url: Optional[str]
     site: Optional[str]
     date_added: Optional[datetime]

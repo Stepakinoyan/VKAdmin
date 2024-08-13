@@ -147,6 +147,7 @@ async def get_stat(session: AsyncSession = Depends(get_session)):
                             organization_dto.model_dump()
                         )
                     )
+                    stat.activity = await get_activity(group["id"])
                 else:
                     new_stat = Statistic(
                         date_id=date_id,
@@ -155,6 +156,7 @@ async def get_stat(session: AsyncSession = Depends(get_session)):
                         fulfillment_percentage=await get_percentage_of_fulfillment_of_basic_requirements(
                             organization_dto.model_dump()
                         ),
+                        members_count=group.get("members_count", 0),
                         activity=await get_activity(group["id"]),
                     )
                     session.add(new_stat)
@@ -197,6 +199,8 @@ async def get_stat(session: AsyncSession = Depends(get_session)):
         except SQLAlchemyError:
             await session.rollback()
             await session.commit()
+        except httpx.ConnectError:
+            continue
             
     return {"status": "completed"}
 
@@ -207,10 +211,10 @@ async def get_group_data(session: AsyncSession = Depends(get_session)):
     organizations = result.scalars().all()
 
     tasks = [VkDAO.get_group_data(group_id=group_id) for group_id in organizations]
+
     batch_results = await asyncio.gather(*tasks)
 
     return {"status": f"completed: {len(batch_results)}", "data": batch_results}
-
 
 @router.post("/wall_get_all")
 async def wall_get_all(session: AsyncSession = Depends(get_session)):

@@ -14,6 +14,7 @@ class Statistic(Base):
     date_id: Mapped[str] = mapped_column(primary_key=True)
     organization_id: Mapped[int] = mapped_column(ForeignKey("organizations.id"))
     date_added: Mapped[date] = mapped_column(default=datetime.utcnow().date)
+    members_count: Mapped[int] = mapped_column(default=0)
     fulfillment_percentage: Mapped[int] = mapped_column()
 
     activity: Mapped[Optional[dict]] = mapped_column(JSON)

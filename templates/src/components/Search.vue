@@ -90,26 +90,28 @@
             <span @click="openDialog(slotProps.data)" class="hover:underline">{{ slotProps.data.name }}</span>
           </template>
         </Column>
-      
+
         <template>
-        <Column
-          v-for="(col, index) in statisticColumns"
-          :key="index"
-          :field="col.field"
-          sortable
-          :header="col.header"
-          class="text-black text-xs text-center"
-        >
-          <template #body="slotProps">
-            <div class="flex justify-center items-center">
-              <i v-if="index == 0 || statisticColumns[index].fulfillment_percentage == statisticColumns[index-1].fulfillment_percentage"></i>
-              <i class="pi pi-arrow-up text-green-400 pb-1.4" v-else-if="statisticColumns[index].fulfillment_percentage > statisticColumns[index-1].fulfillment_percentage"></i>
-              <i class="pi pi-arrow-down text-red-600 pb-1.4" v-else></i>
-              {{ statisticColumns[index].fulfillment_percentage }}%
-            </div>
-          </template>
-        </Column>
-      </template>
+          <Column
+            v-for="(col, colIndex) in columns"
+            :key="colIndex"
+            :field="col.field"
+            sortable
+            :header="col.header"
+            class="text-black text-xs text-center"
+          >
+            <template #body="slotProps">
+              <div class="flex justify-center items-center">
+                <i v-if="colIndex === 0 || getFulfillmentPercentage(slotProps.data.name, colIndex) === getFulfillmentPercentage(slotProps.data.name, colIndex - 1)"></i>
+                <i class="pi pi-arrow-up text-green-400 pb-1.4" v-else-if="getFulfillmentPercentage(slotProps.data.name, colIndex) > getFulfillmentPercentage(slotProps.data.name, colIndex - 1)"></i>
+                <i class="pi pi-arrow-down text-red-600 pb-1.4" v-else></i>
+                {{ getFulfillmentPercentage(slotProps.data.name, colIndex) }}%
+              </div>
+            </template>
+          </Column>
+        </template>
+
+
 
         <Column
           field="average_week_fulfillment_percentage"
@@ -147,7 +149,16 @@
           </template>
         </Column>
 
-        <Column field="members_count" sortable header="Участники" class="text-black text-xs text-center"></Column>
+        <Column field="members_count" sortable header="Участники" class="text-black text-xs text-center">
+          <template #body="slotProps">
+            <div class="flex justify-center items-center">
+              <i v-if="slotProps.data.statistic.length <= 1 || slotProps.data.statistic[slotProps.data.statistic.length - 1]?.members_count === slotProps.data.statistic[slotProps.data.statistic.length - 2]?.members_count"></i>
+              <i class="pi pi-arrow-up text-green-400 pb-1.4" v-else-if="slotProps.data.statistic[slotProps.data.statistic.length - 1]?.members_count > slotProps.data.statistic[slotProps.data.statistic.length - 2]?.members_count"></i>
+              <i class="pi pi-arrow-down text-red-600 pb-1.4" v-else></i>
+              {{ slotProps.data.members_count || 0 }}
+            </div>
+          </template>
+        </Column>
 
         <Column field="statistic" header="Кол. подписок за день" :sortable="true" class="text-black text-xs text-center" v-if="!dates">
             <template #body="slotProps">
@@ -278,24 +289,31 @@
 
         <Column field="widget_count" sortable header="Виджеты" class="text-black text-xs text-center cursor-pointer">
             <template #body="slotProps">
-              <span
-                v-if="slotProps.data.widget_count >= 2"
-                v-tooltip="'+10%'"
-              >
-                {{ slotProps.data.widget_count }}
-              </span>
-              <span
-                v-else-if="slotProps.data.widget_count == 1"
-                v-tooltip="'+5%'"
-              >
-                {{ slotProps.data.widget_count }}
-              </span>
-              <span
-                v-else
-                v-tooltip="'0%'"
-              >
-                {{ slotProps.data.widget_count || "0" }}
-              </span>
+              <div class="flex justify-center items-center">
+                <i v-if="slotProps.data.statistic.length <= 1 || slotProps.data.statistic[slotProps.data.statistic.length - 1]?.widget_count === slotProps.data.statistic[slotProps.data.statistic.length - 2]?.widget_count"></i>
+                <i class="pi pi-arrow-up text-green-400 pb-1.4" v-else-if="slotProps.data.statistic[slotProps.data.statistic.length - 1]?.widget_count > slotProps.data.statistic[slotProps.data.statistic.length - 2]?.widget_count"></i>
+                <i class="pi pi-arrow-down text-red-600 pb-1.4" v-else></i>
+
+                <span
+                  v-if="slotProps.data.widget_count >= 2"
+                  v-tooltip="'+10%'"
+                >
+                  {{ slotProps.data.widget_count }}
+                </span>
+                <span
+                  v-else-if="slotProps.data.widget_count == 1"
+                  v-tooltip="'+5%'"
+                >
+                  {{ slotProps.data.widget_count }}
+                </span>
+                <span
+                  v-else
+                  v-tooltip="'0%'"
+                >
+                  {{ slotProps.data.widget_count || "0" }}
+                </span>
+              </div>
+              
             </template>
           </Column>
         <Column field="posts" sortable header="Посты" class="text-black text-xs text-center" v-if="!dates"></Column>
@@ -315,7 +333,7 @@
             </td>
           </tr>
         </template>
-      </DataTable>
+  </DataTable>
   <Dialog v-model:visible="dialogVisible" :style="{ width: '25rem' }" :modal="true" :closable="true">
     <div class="space-y-2">
       <div class="text-black">
@@ -441,7 +459,8 @@ export default {
       ],
       stats: [],
       statisticColumns: [],
-      memberColumns: [],
+      columns: [],
+      statisticsMap: {},
       selectedItem: {},
     };
   },
@@ -509,25 +528,42 @@ export default {
       });
     },
     generateStatisticColumns(items) {
-      const statisticColumns = [];
-      const memberColumns = [];
+      const columns = [];
+      const statisticsMap = {};
+
       if (items.length > 0 && items[0].statistic) {
-        // Изменение сортировки на порядок убывания
-        const sortedStatistics = items[0].statistic.sort((a, b) => new Date(b.date_added) - new Date(a.date_added));
-        sortedStatistics.forEach((stat, index) => {
-          const date = new Date(stat.date_added);
-          const formattedDate = date.toLocaleDateString("ru-RU", {
-            year: 'numeric',
-            month: '2-digit',
-            day: '2-digit'
+        items.forEach(item => {
+          const sortedStatistics = item.statistic.sort((a, b) => new Date(b.date_added) - new Date(a.date_added)).reverse();
+
+          sortedStatistics.forEach((stat, statIndex) => {
+            const date = new Date(stat.date_added);
+            const formattedDate = date.toLocaleDateString("ru-RU", {
+              year: 'numeric',
+              month: '2-digit',
+              day: '2-digit'
+            });
+
+            if (!columns[statIndex]) {
+              columns[statIndex] = {
+                field: `statistic_percentage_${statIndex + 1}`,
+                header: formattedDate
+              };
+            }
+
+            if (!statisticsMap[item.name]) {
+              statisticsMap[item.name] = [];
+            }
+
+            statisticsMap[item.name][statIndex] = stat.fulfillment_percentage;
           });
-          statisticColumns.push({ field: `statistic_percentage_${index + 1}`, fulfillment_percentage: sortedStatistics[index].fulfillment_percentage,  header: formattedDate });
         });
       }
-      this.statisticColumns = statisticColumns;
-      this.memberColumns = memberColumns;
-      
-      statisticColumns.reverse()
+
+      this.columns = columns;
+      this.statisticsMap = statisticsMap;
+    },
+    getFulfillmentPercentage(name, index) {
+      return this.statisticsMap[name] ? this.statisticsMap[name][index] : 0;
     },
     onLevelChange() {
       this.selectedfounder = null;

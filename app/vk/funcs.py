@@ -178,6 +178,7 @@ async def wall_get_data(group_id: int):
             return {group_id: "NO DATA"}
 
         return group_id
+        
 
 
 Percent: TypeAlias = int
@@ -290,11 +291,10 @@ def get_week_fulfillment_percentage(
 
 
 async def fetch_group_data(group_id: int) -> Group:
-    auth = settings.VK_SERVICE_TOKEN
     fields = "members_count,city,status,description,cover,activity,menu"
     amurtime = pytz.timezone("Asia/Yakutsk")
 
-    data = await call("groups.getById", {"group_id": group_id, "fields": fields}, auth)
+    data = await call("groups.getById", {"group_id": group_id, "fields": fields}, settings.VK_SERVICE_TOKEN)
 
     if not isinstance(data, dict):
         raise TypeError(f"Expected data to be a dictionary, got {type(data)} instead")
@@ -317,15 +317,18 @@ async def get_activity(group_id: int) -> Activity | None:
                 "intervals_count": 1,
                 "extended": 1,
             },
-            settings.VK_ADMIN_TOKEN,
+            settings.VK_ADMIN_TOKEN
         )
+        widget_count = await call("groups.getById", {"group_id": group_id, "fields": "menu"}, settings.VK_SERVICE_TOKEN)
 
         print(f"{group_id}: {data['response'][0].get('activity')}")
-        return (
-            Activity(**data["response"][0].get("activity")).model_dump()
-            if data["response"][0].get("activity")
-            else None
-        )
+        activity_data = data["response"][0].get("activity")
+        if activity_data:
+            return (
+                Activity(**activity_data, widget_count=len(widget_count.get("response")["groups"][0].get("menu", {}).get("items", []))).model_dump()
+            )
+        else:
+            return None
 
     except KeyError:
         return None
