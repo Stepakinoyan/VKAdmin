@@ -1,8 +1,8 @@
-"""Added column connected to organizations
+"""Added tables
 
-Revision ID: 386ed5e14e1e
+Revision ID: 48c1b33c5a71
 Revises: 
-Create Date: 2024-08-01 15:09:35.023429
+Create Date: 2024-08-13 11:05:36.546220
 
 """
 from typing import Sequence, Union
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = '386ed5e14e1e'
+revision: str = '48c1b33c5a71'
 down_revision: Union[str, None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -35,14 +35,14 @@ def upgrade() -> None:
     sa.Column('sphere_3', sa.String(), nullable=True),
     sa.Column('activity', sa.String(), nullable=True),
     sa.Column('channel_id', sa.Integer(), nullable=False),
+    sa.Column('members_count', sa.Integer(), nullable=False),
     sa.Column('has_avatar', sa.Boolean(), nullable=False),
     sa.Column('has_cover', sa.Boolean(), nullable=False),
     sa.Column('has_description', sa.Boolean(), nullable=False),
     sa.Column('has_gos_badge', sa.Boolean(), nullable=False),
     sa.Column('has_widget', sa.Boolean(), nullable=True),
     sa.Column('widget_count', sa.Integer(), nullable=True),
-    sa.Column('members_count', sa.Integer(), nullable=False),
-    sa.Column('connected', sa.Boolean(), nullable=False),
+    sa.Column('connected', sa.Boolean(), nullable=True),
     sa.Column('url', sa.String(), nullable=True),
     sa.Column('site', sa.String(), nullable=True),
     sa.Column('date_added', sa.DateTime(), nullable=True),
@@ -67,6 +67,7 @@ def upgrade() -> None:
     sa.Column('date_id', sa.String(), nullable=False),
     sa.Column('organization_id', sa.Integer(), nullable=False),
     sa.Column('date_added', sa.Date(), nullable=False),
+    sa.Column('members_count', sa.Integer(), nullable=False),
     sa.Column('fulfillment_percentage', sa.Integer(), nullable=False),
     sa.Column('activity', sa.JSON(), nullable=True),
     sa.ForeignKeyConstraint(['organization_id'], ['organizations.id'], ),
