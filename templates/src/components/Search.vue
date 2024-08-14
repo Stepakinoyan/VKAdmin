@@ -57,9 +57,9 @@
       </div>
 
       <InputGroup class="w-full lg:w-1/4 flex justify-end space-x-8 pr-2.5">
-          <Button icon="pi pi-filter-slash" class="w-10 h-10 bg-slate-100" @click="resetFilters()"></Button>
+          <Button icon="pi pi-filter-slash" class="w-10 h-10 bg-slate-100" @click="resetFilters()" :disabled="field_disabled"></Button>
           <Button icon="pi pi-file-excel" class="w-10 h-10 bg-slate-100" v-tooltip.bottom="'Экспорт в Excel'" @click="exportToExcel()"></Button>
-          <Button icon="pi pi-sign-out" class="w-10 h-10 bg-slate-100" @click="SignOut()"></Button>
+          <Button icon="pi pi-sign-out" class="w-10 h-10 bg-slate-100" @click="SignOut()" :disabled="field_disabled"></Button>
       </InputGroup>
     </div>
     <DataTable
@@ -288,34 +288,25 @@
         </Column>
 
         <Column field="widget_count" sortable header="Виджеты" class="text-black text-xs text-center cursor-pointer">
-            <template #body="slotProps">
-              <div class="flex justify-center items-center">
-                <i v-if="slotProps.data.statistic.length <= 1 || slotProps.data.statistic[slotProps.data.statistic.length - 1]?.widget_count === slotProps.data.statistic[slotProps.data.statistic.length - 2]?.widget_count"></i>
-                <i class="pi pi-arrow-up text-green-400 pb-1.4" v-else-if="slotProps.data.statistic[slotProps.data.statistic.length - 1]?.widget_count > slotProps.data.statistic[slotProps.data.statistic.length - 2]?.widget_count"></i>
-                <i class="pi pi-arrow-down text-red-600 pb-1.4" v-else></i>
+          <template #body="slotProps">
+            <div class="flex justify-center items-center">
+              <i v-if="slotProps.data.statistic.length <= 1 || slotProps.data.widget_count === slotProps.data.statistic[slotProps.data.statistic.length - 2]?.activity.widget_count"></i>
+              <i class="pi pi-arrow-up text-green-400 pb-1.4" v-else-if="slotProps.data.widget_count > slotProps.data.statistic[slotProps.data.statistic.length - 2]?.activity.widget_count"></i>
+              <i class="pi pi-arrow-down text-red-600 pb-1.4" v-else></i>
 
-                <span
-                  v-if="slotProps.data.widget_count >= 2"
-                  v-tooltip="'+10%'"
-                >
-                  {{ slotProps.data.widget_count }}
-                </span>
-                <span
-                  v-else-if="slotProps.data.widget_count == 1"
-                  v-tooltip="'+5%'"
-                >
-                  {{ slotProps.data.widget_count }}
-                </span>
-                <span
-                  v-else
-                  v-tooltip="'0%'"
-                >
-                  {{ slotProps.data.widget_count || "0" }}
-                </span>
-              </div>
-              
-            </template>
-          </Column>
+              <span v-if="slotProps.data.widget_count >= 2" v-tooltip="'+10%'">
+                {{ slotProps.data.widget_count }}
+              </span>
+              <span v-else-if="slotProps.data.widget_count == 1" v-tooltip="'+5%'">
+                {{ slotProps.data.widget_count }}
+              </span>
+              <span v-else v-tooltip="'0%'">
+                {{ slotProps.data.widget_count || "0" }}
+              </span>
+            </div>
+          </template>
+        </Column>
+
         <Column field="posts" sortable header="Посты" class="text-black text-xs text-center" v-if="!dates"></Column>
         <Column field="posts_1d" sortable header="1 день" class="text-black text-xs text-center" v-if="!dates"></Column>
         <Column field="posts_7d" sortable header="7 дней" class="text-black text-xs text-center" v-if="!dates"></Column>
@@ -654,6 +645,7 @@ export default {
       this.spheres = [];
       this.stats = [];
       this.loadAllData();
+      this.getSpheres()
     },
     SignOut() {
       VueCookies.remove('token');
