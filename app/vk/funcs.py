@@ -59,7 +59,7 @@ async def call(method: str, params: dict, access_token: str, retries: int = 3):
                 ):
                     console.rule(f"[red] {response.url} Too many requests per second")
                     # Если да, делаем паузу и пробуем ещё раз
-                    await asyncio.sleep(1)
+                    await asyncio.sleep(2)
                 else:
                     # Если нет ошибки, или это была последняя попытка, возвращаем результат
                     return response_data
@@ -92,10 +92,11 @@ async def fetch_gos_page(url, organization_id) -> int | None:
                     print(
                         f"Badge not found or error for {organization_id}: {url} with status {response.status_code}"
                     )
-        except httpx.ConnectTimeout:
-                print(
-                    f"Badge not found or error for {organization_id}: {url} with status {response.status_code}"
-                )   
+        except Exception as e:
+            print(
+                f"Badge not found or error for {organization_id}: {url} with exception {e}"
+            )
+        
         return None
 
 
@@ -178,7 +179,6 @@ async def wall_get_data(group_id: int):
             return {group_id: "NO DATA"}
 
         return group_id
-        
 
 
 Percent: TypeAlias = int
@@ -193,7 +193,7 @@ async def get_percentage_of_fulfillment_of_basic_requirements(
     if organization.get("has_gos_badge"):
         percentage += 10
         print("has_gos_badge: +10%")
-    
+
     # Подключение (10 %)
     if organization.get("connected"):
         percentage += 10
@@ -294,7 +294,11 @@ async def fetch_group_data(group_id: int) -> Group:
     fields = "members_count,city,status,description,cover,activity,menu"
     amurtime = pytz.timezone("Asia/Yakutsk")
 
-    data = await call("groups.getById", {"group_id": group_id, "fields": fields}, settings.VK_SERVICE_TOKEN)
+    data = await call(
+        "groups.getById",
+        {"group_id": group_id, "fields": fields},
+        settings.VK_SERVICE_TOKEN,
+    )
 
     if not isinstance(data, dict):
         raise TypeError(f"Expected data to be a dictionary, got {type(data)} instead")
@@ -317,18 +321,31 @@ async def get_activity(group_id: int) -> Activity | None:
                 "intervals_count": 1,
                 "extended": 1,
             },
-            settings.VK_ADMIN_TOKEN
+            settings.VK_ADMIN_TOKEN,
         )
-        widget_count = await call("groups.getById", {"group_id": group_id, "fields": "menu"}, settings.VK_SERVICE_TOKEN)
+        widget_count = await call(
+            "groups.getById",
+            {"group_id": group_id, "fields": "menu"},
+            settings.VK_SERVICE_TOKEN,
+        )
 
         print(f"{group_id}: {data['response'][0].get('activity')}")
         activity_data = data["response"][0].get("activity")
-        if activity_data:
-            return (
-                Activity(**activity_data, widget_count=len(widget_count.get("response")["groups"][0].get("menu", {}).get("items", []))).model_dump()
-            )
-        else:
-            return None
 
-    except KeyError:
-        return None
+        return Activity(
+            **activity_data,
+            widget_count=len(
+                widget_count.get("response")["groups"][0]
+                .get("menu", {})
+                .get("items", [])
+            ),
+        ).model_dump()
+
+    except (KeyError, TypeError):
+        return Activity(
+            widget_count=len(
+                widget_count.get("response")["groups"][0]
+                .get("menu", {})
+                .get("items", [])
+            )
+        ).model_dump()

@@ -2,6 +2,7 @@ import httpx
 from faststream.nats import NatsBroker
 from taskiq.schedule_sources import LabelScheduleSource
 from taskiq_faststream import BrokerWrapper, StreamScheduler
+
 from app.config import settings
 
 broker = NatsBroker(servers="nats://nats:4222")

@@ -116,6 +116,7 @@ async def get_stat(session: AsyncSession = Depends(get_session)):
         if "error" in data:
             console.rule(f"[red] Error retrieving group data: {data['error']}")
             continue  # Skip this chunk or handle it as needed
+
         try:
             for group in data.get("response", {}).get("groups", []):
                 # Генерируем date_id
@@ -196,12 +197,13 @@ async def get_stat(session: AsyncSession = Depends(get_session)):
                 await session.execute(update_stmt)
 
             await session.commit()
-        except SQLAlchemyError:
+        except SQLAlchemyError as e:
+            print(f"Database error: {e}")
             await session.rollback()
-            await session.commit()
-        except httpx.ConnectError:
-            continue
+        except httpx.ConnectError as e:
+            print(f"Connection error: {e}")
             
+
     return {"status": "completed"}
 
 

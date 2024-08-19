@@ -1,5 +1,6 @@
 import logging
 from datetime import date, datetime
+from typing import Optional
 
 from fastapi.encoders import jsonable_encoder
 from sqlalchemy import and_, or_, select
@@ -7,13 +8,14 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from app.dao.dao import BaseDAO
-from app.organizations.funcs import get_stats_by_dates, get_unique_spheres
+from app.organizations.funcs import get_last_monday, get_stats_by_dates, amurtime
 from app.organizations.models import Organizations
 from app.organizations.schemas import (
     OrganizationsDTO,
 )
-from app.organizations.types import FounderType, SphereType
 from app.statistic.schemas import StatisticDTO
+
+
 
 
 class OrganizationsDAO(BaseDAO):
@@ -30,7 +32,7 @@ class OrganizationsDAO(BaseDAO):
     @classmethod
     async def get_founders_by_level(
         self, level: str, session: AsyncSession
-    ) -> list[FounderType]:
+    ):
         get_founders = (
             select(self.model.founder)
             .filter_by(level=level)
@@ -44,7 +46,7 @@ class OrganizationsDAO(BaseDAO):
     @classmethod
     async def get_spheres_by(
         self, level: str, founder: str, session: AsyncSession
-    ) -> list[SphereType]:
+    ):
         get_spheres = select(
             self.model.sphere_1, self.model.sphere_2, self.model.sphere_3
         )
@@ -55,7 +57,7 @@ class OrganizationsDAO(BaseDAO):
                     self.model.level.ilike(f"%{level}%") if level else True,
                     self.model.founder.ilike(f"%{founder}%") if founder else True,
                 )
-            )
+            ).distinct()
 
         get_spheres = get_spheres.distinct(
             self.model.sphere_1, self.model.sphere_2, self.model.sphere_3
@@ -64,7 +66,7 @@ class OrganizationsDAO(BaseDAO):
         results = await session.execute(get_spheres)
         results = results.scalars().all()
 
-        return get_unique_spheres(results)
+        return results
 
     @classmethod
     async def filter_channels(
@@ -74,10 +76,16 @@ class OrganizationsDAO(BaseDAO):
         name: str,
         sphere: str,
         zone: str,
-        date_from: date,
-        date_to: date,
+        date_from: Optional[date],
+        date_to: Optional[date],
         session: AsyncSession,
-    ) -> list[OrganizationsDTO]:
+    ):
+        if not date_from:
+            date_from = get_last_monday()
+        
+        if not date_to:
+            date_to = datetime.now(amurtime).date()
+
         try:
             date_from_dt = datetime.combine(date_from, datetime.min.time())
             date_to_dt = datetime.combine(date_to, datetime.min.time())

@@ -1,7 +1,7 @@
-import { createRouter, createWebHistory } from 'vue-router'
-import HomeView from '../views/HomeView.vue'
-import DashBoard from '../views/DashBoard.vue'
-import VueCookies from 'vue-cookies'
+import { createRouter, createWebHistory } from 'vue-router';
+import HomeView from '../views/HomeView.vue';
+import DashBoard from '../views/DashBoard.vue';
+import VueCookies from 'vue-cookies';
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -9,12 +9,13 @@ const router = createRouter({
     {
       path: '/',
       name: 'home',
+      component: HomeView,
       beforeEnter: (to, from, next) => {
         const token = VueCookies.get('token');
         if (token) {
           next('/dashboard');
         } else {
-          next('/login');
+          next();
         }
       }
     },
@@ -30,19 +31,16 @@ const router = createRouter({
       meta: { requiresAuth: true }
     }
   ]
-})
+});
 
+// Охранник маршрутов для проверки авторизации
 router.beforeEach((to, from, next) => {
-  if (to.meta.requiresAuth) {
-    const token = VueCookies.get('token');
-    if (token) {
-      next();
-    } else {
-      next('/login');
-    }
+  const token = VueCookies.get('token');
+  if (to.meta.requiresAuth && !token) {
+    next('/login');
   } else {
     next();
   }
-})
+});
 
-export default router
+export default router;

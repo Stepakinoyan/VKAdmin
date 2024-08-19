@@ -4,14 +4,15 @@ from datetime import datetime
 
 import httpx
 from sqlalchemy import update
-from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import sessionmaker
 
 from app.config import settings
 from app.dao.dao import BaseDAO
 from app.database import async_session_maker, engine, get_session
 from app.organizations.models import Organizations
+from app.statistic.schemas import Activity
 from app.vk.funcs import call, fetch_group_data
 
 semaphore = asyncio.Semaphore(3)
@@ -152,7 +153,8 @@ class VkDAO(BaseDAO):
         async with semaphore_:
             try:
                 data = await fetch_group_data(group_id=group_id)
-            
+                print(group_id)
+
                 async with async_session_maker() as session:
                     update_vk_attributes = (
                         update(self.model)
@@ -163,7 +165,9 @@ class VkDAO(BaseDAO):
                             status=data.status,
                             date_added=data.date_added,
                             has_description=bool(data.description),
-                            has_avatar=any([data.photo_50, data.photo_100, data.photo_200]),
+                            has_avatar=any(
+                                [data.photo_50, data.photo_100, data.photo_200]
+                            ),
                             activity=data.activity,
                             has_widget=bool(data.menu),
                             widget_count=len(data.menu.items)
@@ -174,7 +178,7 @@ class VkDAO(BaseDAO):
                             members_count=data.members_count,
                         )
                     )
-
+                    
                     await session.execute(update_vk_attributes)
                     await session.commit()
             except SQLAlchemyError:
@@ -217,4 +221,13 @@ class VkDAO(BaseDAO):
                 print(f"Failed to update weekly reach for group_id {group_id}")
             except SQLAlchemyError:
                 await session.rollback()
-                await session.commit()                
+                await session.commit()
+
+    @classmethod
+    async def update_activity(self, group_id: int, activity: dict[Activity], session: AsyncSession):
+        activity_updating = (
+            update(self.model)
+            .where(self.model.channel_id == group_id)
+            .values(**activity)
+        )
+        await session.execute(activity_updating)

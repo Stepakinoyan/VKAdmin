@@ -18,7 +18,7 @@ pytest-asyncio = "^0.23.7"
 redis = "^5.0.4"
 aioredis = "^2.0.1"
 pyjwt = "^2.8.0"
-passlib = {extras = ["bcrypt"], version = "^1.7.4"}
+passlib = {version = "1.7.4", extras = ["bcrypt"]}
 python-jose = "^3.3.0"
 openpyxl = "^3.1.3"
 ruff = "^0.4.7"
@@ -28,8 +28,10 @@ taskiq = "^0.11.4"
 taskiq-faststream = {extras = ["nats"], version = "^0.1.8"}
 fastapi-cache2 = "^0.2.1"
 uvicorn = {extras = ["standard"], version = "^0.30.6"}
+bcrypt = "4.0.1"
 
 
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
+

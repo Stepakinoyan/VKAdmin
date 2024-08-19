@@ -3,7 +3,7 @@
         <form class="bg-white p-6 rounded-md w-full max-w-sm py-20">
             <div class="space-y-3">
                 <InputGroup>
-                    <InputText v-model="email" placeholder="Почта" class="border border-black placeholder:text-surface-400 p-2.5 rounded-md"/>
+                    <InputText v-model="email" placeholder="Почта" class="border border-gray-400 placeholder:text-gray-500 p-2.5 rounded-md"/>
                 </InputGroup>
                 <InputGroup>
                     <Password v-model="password" placeholder="Пароль" :feedback="false" :pt="{
@@ -31,10 +31,10 @@
                                     { 'first:ml-0 -ml-px': parent.instance.$name == 'InputGroup' && !props.showButtons },
                                     // Colors
                                     'text-surface-600 dark:text-surface-200',
-                                    'placeholder:text-surface-400 dark:placeholder:text-surface-500',
+                                    'placeholder:text-gray-500',
                                     'bg-surface-0 dark:bg-surface-900',
                                     'border',
-                                    { 'border-surface-300 dark:border-surface-600': !parent.props.invalid },
+                                    { 'border-gray-400': !parent.props.invalid },
                                     // Invalid State
                                     { 'border-red-500 dark:border-red-400': parent.props.invalid },
                                     // States
@@ -57,9 +57,9 @@
         </form>
     </div>
 </template>
+
 <script>
 import axios from "axios";
-import VueCookies from 'vue-cookies';
 
 export default {
     data() {
@@ -76,7 +76,6 @@ export default {
                 password: this.password
             })
             .then((res) => {
-                VueCookies.set('token', res.data.access_token, 3600);
                 this.$router.push('/dashboard');
             })
             .catch((error) => {

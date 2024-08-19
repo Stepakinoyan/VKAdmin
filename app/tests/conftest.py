@@ -5,7 +5,7 @@ import pytest
 from fastapi_cache import FastAPICache
 from fastapi_cache.backends.redis import RedisBackend
 from httpx import AsyncClient
-from sqlalchemy.dialects.postgresql import insert as pg_insert
+from sqlalchemy import insert
 
 from app.auth.models import Users
 from app.config import settings
@@ -38,15 +38,13 @@ async def prepare_database():
             (Users, users),
             (Organizations, organizations),
         ]:
-            for i in range(0, len(values), 1000):  # Разбиваем на батчи по 1000 записей
-                batch = values[i : i + 1000]
-                query = pg_insert(Model).values(batch)
-                await session.execute(query)
+            query = insert(Model).values(values)
+            await session.execute(query)
         await session.commit()
 
-
-@pytest.fixture(scope="session")
+@pytest.fixture(scope="function")
 async def ac():
+    "Асинхронный клиент для тестирования эндпоинтов"
     async with AsyncClient(app=fastapi_app, base_url="http://test") as ac:
         yield ac
 
@@ -54,15 +52,13 @@ async def ac():
 @pytest.fixture(scope="session")
 async def authenticated_ac():
     async with AsyncClient(app=fastapi_app, base_url="http://test") as ac:
-        await ac.post(
-            "/auth/login",
-            json={
-                "email": "test@test.com",
-                "password": "test",
-            },
-        )
-        assert ac.cookies["access_token"]
-
+        await ac.post("/auth/login", json={
+            "email": "test@test.com",
+            "password": "test",
+        })
+        
+        assert ac.cookies["token"]
+        yield ac
 
 @pytest.fixture(scope="session", autouse=True)
 async def init_cache():

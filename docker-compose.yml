@@ -62,6 +62,20 @@ services:
     networks:
       - traefik-public
 
+  scheduler:
+    build:
+      context: .
+    container_name: vkadmin-scheduler
+    restart: always
+    env_file:
+      - .env-non-dev
+    depends_on:
+      - nats
+      - api
+    command: sh -c "taskiq scheduler app.tasks.vk_stat:scheduler"
+    networks:
+      - traefik-public
+
   frontend:
     build:
       context: ./templates

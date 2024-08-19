@@ -43,8 +43,8 @@
           :disabled="field_disabled"
           emptyMessage="Нет доступных опций"
         />
-        
-        <Calendar v-model="dates" @update:model-value="loadFilteredData" dateFormat="dd-mm-yy" selectionMode="range" :manualInput="false" placeholder="Диапазон" :showOtherMonths="true" @date-select="StatChange" :selectOtherMonths="true" showIcon iconDisplay="input" class="w-full md:w-2/3 border border-gray-400 mt-2 md:mt-0 py-2 md:py-0 rounded-lg"  :pt="{input: {class: ['pl-[12px]', 'placeholder:text-gray-500']}}" :disabled="field_disabled"/>
+
+        <Calendar v-model="dates" @update:model-value="handleDateSelection" dateFormat="dd-mm-yy" selectionMode="range" :manualInput="false" placeholder="Диапазон" :showOtherMonths="true"  :selectOtherMonths="true" showIcon iconDisplay="input" class="w-full md:w-2/3 border border-gray-400 mt-2 md:mt-0 py-2 md:py-0 rounded-lg"  :pt="{input: {class: ['pl-[12px]', 'placeholder:text-gray-500']}}" :disabled="field_disabled"  :minDate="minDateDisabled" :maxDate="maxDateDisabled"/>
 
         <InputText 
           type="text" 
@@ -118,7 +118,7 @@
           sortable
           header="% за неделю"
           class="text-black text-xs text-center"
-          v-if="!dates"
+          v-if="showColumns"
         >
           <template #body="slotProps">
             <Tag v-if="slotProps.data.average_week_fulfillment_percentage >= 90" severity="success">
@@ -136,7 +136,7 @@
           sortable
           header="% за месяц"
           class="text-black text-xs text-center"
-          v-if="!dates"
+          v-if="showColumns"
         >
           <template #body="slotProps">
             <Tag v-if="slotProps.data.average_fulfillment_percentage >= 90" severity="success">
@@ -160,7 +160,7 @@
           </template>
         </Column>
 
-        <Column field="statistic" header="Кол. подписок за день" :sortable="true" class="text-black text-xs text-center" v-if="!dates">
+        <Column field="statistic.activity.subscribed" header="подписок за день" :sortable="true" class="text-black text-xs text-center" v-if="showColumns">
             <template #body="slotProps">
               <span v-if="slotProps.data.statistic && slotProps.data.statistic.length > 0 && slotProps.data.statistic[slotProps.data.statistic.length - 1].activity">
                 {{slotProps.data.statistic[slotProps.data.statistic.length - 1].activity.subscribed}}
@@ -168,7 +168,7 @@
               <span v-else>0</span>
             </template>
         </Column>
-        <Column field="statistic" header="Кол. лайк. за день" :sortable="true" class="text-black text-xs text-center" v-if="!dates">
+        <Column field="statistic.activity.likes" header="лайков за день" :sortable="true" class="text-black text-xs text-center" v-if="showColumns">
             <template #body="slotProps">
               <span v-if="slotProps.data.statistic && slotProps.data.statistic.length > 0 && slotProps.data.statistic[slotProps.data.statistic.length - 1].activity">
                 {{slotProps.data.statistic[slotProps.data.statistic.length - 1].activity.likes}}
@@ -176,7 +176,7 @@
               <span v-else>0</span>
             </template>
         </Column>
-        <Column field="statistic" header="Кол. ком. за день" :sortable="true" class="text-black text-xs text-center" v-if="!dates">
+        <Column field="statistic.activity.comments" header="ком. за день" :sortable="true" class="text-black text-xs text-center" v-if="showColumns">
             <template #body="slotProps">
               <span v-if="slotProps.data.statistic && slotProps.data.statistic.length > 0 && slotProps.data.statistic[slotProps.data.statistic.length - 1].activity">
                 {{slotProps.data.statistic[slotProps.data.statistic.length - 1].activity.comments}}
@@ -185,7 +185,7 @@
             </template>
         </Column>
 
-        <Column field="has_gos_badge" sortable header="Гос. метка" class="text-black text-xs text-center cursor-pointer">
+        <Column field="has_gos_badge" header="Гос. метка" class="text-black text-xs text-center cursor-pointer">
           <template #body="slotProps">
             <i
               v-if="slotProps.data.has_gos_badge"
@@ -203,7 +203,7 @@
         </Column>
 
 
-        <Column field="has_avatar" sortable header="Аватар" class="text-black text-xs text-center cursor-pointer">
+        <Column field="has_avatar" header="Аватар" class="text-black text-xs text-center cursor-pointer">
           <template #body="slotProps">
             <i
               v-if="slotProps.data.has_avatar"
@@ -220,7 +220,7 @@
           </template>
         </Column>
 
-        <Column field="has_cover" sortable header="Обложка" class="text-black text-xs text-center cursor-pointer">
+        <Column field="has_cover" header="Обложка" class="text-black text-xs text-center cursor-pointer">
           <template #body="slotProps">
             <i
               v-if="slotProps.data.has_cover"
@@ -237,7 +237,7 @@
           </template>
         </Column>
 
-        <Column field="has_description" sortable header="Описание" class="text-black text-xs text-center cursor-pointer">
+        <Column field="has_description" header="Описание" class="text-black text-xs text-center cursor-pointer">
           <template #body="slotProps">
             <i
               v-if="slotProps.data.has_description"
@@ -254,7 +254,7 @@
           </template>
         </Column>
 
-        <Column field="has_widget" sortable header="Виджет" class="text-black text-xs text-center cursor-pointer">
+        <Column field="has_widget" header="Виджет" class="text-black text-xs text-center cursor-pointer">
           <template #body="slotProps">
             <i
               v-if="slotProps.data.has_widget"
@@ -270,7 +270,7 @@
             ></i>
           </template>
         </Column>
-        <Column field="connected" sortable header="Подключение" class="text-black text-xs text-center cursor-pointer">
+        <Column field="connected" header="Подключение" class="text-black text-xs text-center cursor-pointer">
           <template #body="slotProps">
             <i
               v-if="slotProps.data.connected"
@@ -307,11 +307,11 @@
           </template>
         </Column>
 
-        <Column field="posts" sortable header="Посты" class="text-black text-xs text-center" v-if="!dates"></Column>
-        <Column field="posts_1d" sortable header="1 день" class="text-black text-xs text-center" v-if="!dates"></Column>
-        <Column field="posts_7d" sortable header="7 дней" class="text-black text-xs text-center" v-if="!dates"></Column>
-        <Column field="posts_30d" sortable header="30 дней" class="text-black text-xs text-center" v-if="!dates"></Column>
-        <Column field="date_added" sortable header="Дата сбора" class="text-black text-xs text-center" v-if="!dates">
+        <Column field="posts" sortable header="Посты" class="text-black text-xs text-center" v-if="showColumns"></Column>
+        <Column field="posts_1d" sortable header="1 день" class="text-black text-xs text-center" v-if="showColumns"></Column>
+        <Column field="posts_7d" sortable header="7 дней" class="text-black text-xs text-center" v-if="showColumns"></Column>
+        <Column field="posts_30d" sortable header="30 дней" class="text-black text-xs text-center" v-if="showColumns"></Column>
+        <Column field="date_added" header="Дата сбора" class="text-black text-xs text-center" v-if="showColumns">
           <template #body="slotProps">
             {{ formatDate(slotProps.data.date_added) }}
           </template>
@@ -378,6 +378,8 @@ export default {
       dialogVisible: false,
       previousValues: {},
       field_disabled: false,
+      minDateDisabled: null,  
+      maxDateDisabled: null,
       DataTableStyle: {
         root: ({ props }) => ({
           class: [
@@ -430,7 +432,7 @@ export default {
       selectedfounder: null,
       selectedsphere: null,
       selectedzone: null,
-      dates: null,
+      dates: [],
       searching_name: '',
       founders: [],
       spheres: [],
@@ -458,6 +460,41 @@ export default {
   mounted() {
     this.loadAllData();
     this.getSpheres();
+  },
+  computed: {
+    handleDateSelection() {
+      if (Array.isArray(this.dates) && this.dates.length > 0) {
+        const start = this.dates[0];
+        const end = this.dates[1];
+        
+        if (start !== null && end !== null) {
+          this.loadFilteredData()
+        }
+
+      }
+      
+      return true;
+    },
+    showColumns() {
+      if (Array.isArray(this.dates) && this.dates.length > 0) {
+        const start = this.dates[0];
+        const end = this.dates[1];
+        
+        if (start !== null && end === null) {
+          return true;
+        }
+        
+        if (start !== null && end !== null) {
+          return false;
+        }
+
+        if (start === null && end === null) {
+          return true;
+        }
+      }
+      
+      return true;
+    },
   },
   methods: {
     exportToExcel() {
@@ -494,7 +531,9 @@ export default {
     },
     loadAllData() {
       this.loading = true;
-      axios.get('/filter/get_stats')
+      const token = VueCookies.get('token');
+      const authHeader = token ? `Bearer ${token}` : '';
+      axios.get('/filter/get_stats', { headers: { authorization: authHeader } })
         .then(response => {
           const items = response.data;
           this.stats = this.transformData(items);
@@ -502,6 +541,9 @@ export default {
           this.loading = false;
         })
         .catch(error => {
+          if(error.response.status == 401){
+              this.$router.go("/login");
+          }
           console.error('Error fetching stats:', error);
           this.loading = false;
         });
@@ -578,6 +620,7 @@ export default {
             this.founders = response.data;
           })
           .catch(error => {
+            
             console.error('Error fetching founders:', error);
           });
       } else {
@@ -602,6 +645,8 @@ export default {
     },
     loadFilteredData() {
       this.loading = true;
+      this.minDateDisabled = new Date(9999, 12, 31);
+      this.maxDateDisabled = new Date(1, 1, 1);
       const levelParam = this.selectedlevel ? `level=${this.selectedlevel.level}` : '';
       const founderParam = this.selectedfounder ? `founder=${this.selectedfounder.founder}` : '';
       const sphereParam = this.selectedsphere ? `sphere=${this.selectedsphere.sphere}` : '';
@@ -615,16 +660,24 @@ export default {
         .join('&');
         
 
-      axios.get(`/filter/get_stats?${queryParams}`)
+      axios.get(`/filter/get_stats?${queryParams}`, { headers: { authorization: VueCookies.get('token') }})
+      
         .then(response => {
           const items = response.data;
           this.stats = this.transformData(items);
           this.generateStatisticColumns(items);
           this.loading = false;
+          this.minDateDisabled = null;
+          this.maxDateDisabled = null;
         })
         .catch(error => {
+          if(error.response.status == 401){
+              this.$router.go("/login");
+          }
           console.error('Error fetching stats:', error);
           this.loading = false;
+          this.minDateDisabled = new Date(9999, 12, 31);
+          this.maxDateDisabled = new Date(1, 1, 1);
         });
     },
     formatDate(dateStr) {
@@ -687,6 +740,14 @@ html{
     border: #9ca3af 1px solid;
     border-radius: 4px;
     padding: 8px;
+}
+
+.p-sortable-column:not(.p-highlight) .p-sortable-column-icon {
+    display: none;
+}
+
+.p-sortable-column.p-highlight .p-sortable-column-icon {
+    display: inline-block;
 }
 
 

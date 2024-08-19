@@ -1,11 +1,8 @@
 from datetime import date, datetime
 from typing import Literal, Optional
 
-import pytz
-from dateutil.relativedelta import MO, relativedelta
-from fastapi import Query
+from app.organizations.funcs import amurtime
 
-amurtime = pytz.timezone("Asia/Yakutsk")
 now = datetime.now(amurtime)
 
 
@@ -46,9 +43,7 @@ class FilterSpheresParams:
         self.founder = founder
 
 
-def get_last_monday():
-    today = date.today()
-    return today + relativedelta(weekday=MO(-1))
+
 
 
 class FilterChannelsParams:
@@ -68,8 +63,8 @@ class FilterChannelsParams:
         founder: Optional[str] = "",
         sphere: Optional[str] = "",
         name: Optional[str] = "",
-        date_from: Optional[date] = Query(default=get_last_monday()),
-        date_to: Optional[date] = datetime.now().date(),
+        date_from: Optional[date] = "",
+        date_to: Optional[date] = "",
     ):
         self.level = level
         self.zone = zone

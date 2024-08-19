@@ -3,11 +3,11 @@ import json
 import pandas
 from openpyxl import Workbook
 from sqlalchemy import insert, update
-from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.dao.dao import BaseDAO
-from app.excel_to_db.schemas import Item, Connection
+from app.excel_to_db.schemas import Connection, Item
 from app.organizations.models import Organizations
 from app.organizations.schemas import OrganizationsDTO
 
@@ -76,7 +76,7 @@ class ExcelDAO(BaseDAO):
             await session.commit()
         except SQLAlchemyError:
             await session.rollback()
-            await session.commit()    
+            await session.commit()
 
     @classmethod
     async def save_accounts_to_xlsx(self, stats: list):

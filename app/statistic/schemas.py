@@ -5,11 +5,11 @@ from pydantic import BaseModel, Field
 
 
 class Activity(BaseModel):
-    comments: int = Field(default=0)
-    likes: int = Field(default=0)
-    subscribed: int = Field(default=0)
+    comments: Optional[int] = Field(default=0)
+    likes: Optional[int] = Field(default=0)
+    subscribed: Optional[int] = Field(default=0)
     widget_count: Optional[int] = Field(default=0)
-    
+
 
 class StatisticDTO(BaseModel):
     date_id: str

@@ -1,10 +1,9 @@
 from datetime import datetime, timedelta
-
+from typing import Annotated
 from fastapi import Depends, Request
 from jose import ExpiredSignatureError, JWTError, jwt
 from passlib.context import CryptContext
 from pydantic import EmailStr
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.auth.dao import UserDAO
 from app.config import settings
@@ -35,21 +34,21 @@ def create_access_token(data: dict) -> str:
     return encoded_jwt
 
 
-async def authenticate_user(session: AsyncSession, email: EmailStr, password: str):
-    user = await UserDAO.find_user(session=session, email=email)
+async def authenticate_user(email: EmailStr, password: str):
+    user = await UserDAO.find_user(email=email)
     if not (user and verify_password(password, user.password)):
         raise IncorrectEmailOrPasswordException
     return user
 
 
 def get_token(request: Request):
-    token = request.cookies.get("access_token")
+    token = request.cookies.get("token")
     if not token:
         raise TokenAbsentException
     return token
 
 
-async def get_current_user(token: str = Depends(get_token)):
+async def get_current_user(token: Annotated[str, Depends(get_token)]):
     try:
         payload = jwt.decode(token, settings.SECRET_KEY, settings.ALGORITHM)
     except ExpiredSignatureError:

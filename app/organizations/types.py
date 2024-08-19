@@ -1,5 +1,6 @@
 from datetime import datetime
 from typing import Optional, TypedDict
+from pydantic import BaseModel
 
 
 class OrganizationType(TypedDict):
@@ -33,9 +34,9 @@ class OrganizationType(TypedDict):
     posts_30d: int
 
 
-class SphereType(TypedDict):
+class SphereDTO(BaseModel):
     sphere: str
 
 
-class FounderType(TypedDict):
+class FounderDTO(BaseModel):
     founder: str

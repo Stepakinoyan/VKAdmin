@@ -1,3 +1,5 @@
+from contextlib import asynccontextmanager
+
 import redis.asyncio as redis
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -11,8 +13,6 @@ from app.excel_to_db.router import router as router_excel
 from app.organizations.router import router as router_filter
 from app.prepare_db.router import router as prepare_db_router
 from app.vk.router import router as vk_router
-from contextlib import asynccontextmanager
-
 
 
 @asynccontextmanager
@@ -30,8 +30,6 @@ async def lifespan(app: FastAPI):
     yield
 
 
-
-
 app = FastAPI(
     lifespan=lifespan,
 )
@@ -46,26 +44,17 @@ redis_ = redis.from_url(
 )
 
 
-# if settings.BACKEND_CORS_ORIGINS:
-#     app.add_middleware(
-#         CORSMiddleware,
-#         allow_origins=[
-#             str(origin).strip("/") for origin in settings.BACKEND_CORS_ORIGINS
-#         ],
-#         allow_credentials=True,
-#         allow_methods=["*"],
-#         allow_headers=["*"],
-#     )
 
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
-        "http://localhost:5173"
+        str(origin).strip("/") for origin in settings.BACKEND_CORS_ORIGINS.split(",")
     ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
 
 
 app.include_router(router_auth)

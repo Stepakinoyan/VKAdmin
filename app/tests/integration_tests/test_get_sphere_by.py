@@ -14,11 +14,13 @@ from httpx import AsyncClient
     ],
 )
 async def test_get_sphere_by(
-    level: Optional[str], founder: Optional[str], ac: AsyncClient
+    level: Optional[str], founder: Optional[str], authenticated_ac: AsyncClient
 ):
-    response = await ac.get(
+    response = await authenticated_ac.get(
         "/filter/get_spheres_by", params={"level": level, "founder": founder}
     )
 
-    print(response.json())
-    assert response.status_code == 200
+    print("Response JSON:", response.json())
+    assert response.status_code == 200, f"Unexpected status code: {response.status_code}"
+    data = response.json()
+    assert isinstance(data, list), "Response data is not a list"

@@ -10,11 +10,12 @@ from httpx import AsyncClient
     ],
 )
 async def test_get_founder_by_level(
-    level: str, founder: str, sphere: str, ac: AsyncClient
+    level: str, founder: str, sphere: str, authenticated_ac: AsyncClient
 ):
-    response = await ac.get(
+    response = await authenticated_ac.get(
         "/filter/get_stats",
         params={"level": level, "founder": founder, "sphere": sphere},
+        
     )
 
     data = response.json()

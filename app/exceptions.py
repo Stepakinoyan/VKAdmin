@@ -30,5 +30,5 @@ class IncorrectTokenFormatException(BaseHTTPException):
 
 
 class TokenAbsentException(BaseHTTPException):
-    status_code = status.HTTP_400_BAD_REQUEST
-    detail = "Токен отсутствует"
+    status_code = status.HTTP_401_UNAUTHORIZED
+    detail = "Вы не авторизованы"
