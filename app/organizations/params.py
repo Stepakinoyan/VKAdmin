@@ -25,7 +25,7 @@ class FilterFounderParams:
 class FilterSpheresParams:
     def __init__(
         self,
-        level: Optional[
+        level: 
             Literal[
                 "",
                 "Регион",
@@ -35,8 +35,7 @@ class FilterSpheresParams:
                 "Законодательный орган",
                 "Другое",
                 "ВУЗ",
-            ]
-        ] = "",
+            ] = None,
         founder: Optional[str] = None,
     ):
         self.level = level

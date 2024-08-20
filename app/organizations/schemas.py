@@ -59,3 +59,11 @@ class OrganizationsDTO(BaseModel):
 
     class Config:
         json_encoders = {datetime: lambda v: v.isoformat()}
+
+
+class SphereDTO(BaseModel):
+    sphere: str
+
+
+class FounderDTO(BaseModel):
+    founder: str

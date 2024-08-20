@@ -1,6 +1,8 @@
 from datetime import datetime
-from typing import Optional, TypedDict
-from pydantic import BaseModel
+from typing import Optional, TypedDict, TypeAlias
+
+
+SphereStr: TypeAlias = str
 
 
 class OrganizationType(TypedDict):
@@ -32,11 +34,3 @@ class OrganizationType(TypedDict):
     posts_1d: int
     posts_7d: int
     posts_30d: int
-
-
-class SphereDTO(BaseModel):
-    sphere: str
-
-
-class FounderDTO(BaseModel):
-    founder: str

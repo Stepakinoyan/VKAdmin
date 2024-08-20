@@ -14,14 +14,12 @@ from app.organizations.params import (
     FilterFounderParams,
     FilterSpheresParams,
 )
-from app.organizations.schemas import OrganizationsDTO
-from app.organizations.types import FounderDTO, SphereDTO
+from app.organizations.schemas import FounderDTO, SphereDTO, OrganizationsDTO
 
 router = APIRouter(prefix="/filter", tags=["Фильтрация данных"])
 
 
 @router.get("/get_founders")
-@cache(expire=60)
 async def get_founders(
     current_user: Annotated[Users, Depends(get_current_user)],
     filterfounderparams: FilterFounderParams = Depends(),

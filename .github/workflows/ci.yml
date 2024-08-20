@@ -75,6 +75,7 @@ jobs:
         echo CLIENT_ID=${{ secrets.CLIENT_ID }} >> $GITHUB_ENV
         echo CLIENT_SECRET=${{ secrets.CLIENT_SECRET }} >> $GITHUB_ENV
         echo REDIRECT_URI=${{ secrets.REDIRECT_URI }} >> $GITHUB_ENV
+        echo DOMAIN=localhost >> $GITHUB_ENV
 
     - name: Run tests
       run: poetry run pytest

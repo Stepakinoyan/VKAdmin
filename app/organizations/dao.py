@@ -8,7 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from app.dao.dao import BaseDAO
-from app.organizations.funcs import get_last_monday, get_stats_by_dates, amurtime
+from app.organizations.funcs import get_last_monday, get_stats_by_dates, amurtime, get_unique_spheres
 from app.organizations.models import Organizations
 from app.organizations.schemas import (
     OrganizationsDTO,
@@ -21,13 +21,6 @@ from app.statistic.schemas import StatisticDTO
 class OrganizationsDAO(BaseDAO):
     model = Organizations
 
-    @classmethod
-    async def get_all_stats(self, session: AsyncSession):
-        get_stats = select(self.model).options(selectinload(self.model.statistic))
-
-        results = await session.execute(get_stats)
-
-        return results.scalars().all()
 
     @classmethod
     async def get_founders_by_level(
@@ -49,24 +42,17 @@ class OrganizationsDAO(BaseDAO):
     ):
         get_spheres = select(
             self.model.sphere_1, self.model.sphere_2, self.model.sphere_3
-        )
-
-        if level or founder:
-            get_spheres = get_spheres.where(
+        ).where(
                 and_(
                     self.model.level.ilike(f"%{level}%") if level else True,
                     self.model.founder.ilike(f"%{founder}%") if founder else True,
                 )
             ).distinct()
 
-        get_spheres = get_spheres.distinct(
-            self.model.sphere_1, self.model.sphere_2, self.model.sphere_3
-        )
-
         results = await session.execute(get_spheres)
         results = results.scalars().all()
 
-        return results
+        return get_unique_spheres(results)
 
     @classmethod
     async def filter_channels(
