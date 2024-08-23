@@ -37,7 +37,7 @@ async def handler():
         print(f"/vk/wall_get_all: {wall_get_all.status_code}")
 
         get_stat = await client.post(
-            f"https://{settings.DOMAIN}/api/vk/get_stat", timeout=6000
+            f"http://{settings.DOMAIN}/api/vk/get_stat", timeout=6000
         )
         print(f"/vk/get_stat: {get_stat.status_code}")
 

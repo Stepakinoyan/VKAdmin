@@ -16,7 +16,6 @@ from app.statistic.schemas import Activity
 from app.vk.funcs import call, fetch_group_data
 
 semaphore = asyncio.Semaphore(3)
-semaphore_ = asyncio.Semaphore(1)
 
 
 class VkDAO(BaseDAO):
@@ -150,7 +149,7 @@ class VkDAO(BaseDAO):
 
     @classmethod
     async def get_group_data(self, group_id: int):
-        async with semaphore_:
+        async with asyncio.Semaphore(1):
             try:
                 data = await fetch_group_data(group_id=group_id)
                 print(group_id)
@@ -178,7 +177,7 @@ class VkDAO(BaseDAO):
                             members_count=data.members_count,
                         )
                     )
-                    
+
                     await session.execute(update_vk_attributes)
                     await session.commit()
             except SQLAlchemyError:
@@ -191,7 +190,7 @@ class VkDAO(BaseDAO):
 
     @classmethod
     async def update_weekly_reach(self, group_id: int):
-        async with semaphore_:
+        async with asyncio.Semaphore(1):
             try:
                 data = await call(
                     "stats.get",
@@ -224,7 +223,9 @@ class VkDAO(BaseDAO):
                 await session.commit()
 
     @classmethod
-    async def update_activity(self, group_id: int, activity: dict[Activity], session: AsyncSession):
+    async def update_activity(
+        self, group_id: int, activity: dict[Activity], session: AsyncSession
+    ):
         activity_updating = (
             update(self.model)
             .where(self.model.channel_id == group_id)

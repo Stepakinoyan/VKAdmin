@@ -42,6 +42,7 @@ async def prepare_database():
             await session.execute(query)
         await session.commit()
 
+
 @pytest.fixture(scope="function")
 async def ac():
     "Асинхронный клиент для тестирования эндпоинтов"
@@ -52,13 +53,17 @@ async def ac():
 @pytest.fixture(scope="session")
 async def authenticated_ac():
     async with AsyncClient(app=fastapi_app, base_url="http://test") as ac:
-        await ac.post("/auth/login", json={
-            "email": "test@test.com",
-            "password": "test",
-        })
-        
+        await ac.post(
+            "/auth/login",
+            json={
+                "email": "test@test.com",
+                "password": "test",
+            },
+        )
+
         assert ac.cookies["token"]
         yield ac
+
 
 @pytest.fixture(scope="session", autouse=True)
 async def init_cache():

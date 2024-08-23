@@ -1,6 +1,5 @@
 from datetime import datetime
-from typing import Optional, TypedDict, TypeAlias
-
+from typing import Optional, TypeAlias, TypedDict
 
 SphereStr: TypeAlias = str
 

@@ -26,9 +26,14 @@ export default {
               "surface-800": "rgb(var(--surface-800))",
               "surface-900": "rgb(var(--surface-900))",
               "surface-950": "rgb(var(--surface-950))",
-              "gosuslugi": "#f0f4f8",
-              "bggosuslugi": "#E4ECFD"
+              "gosuslugi": "#FAFCFF",
+              "gosuslugi-border": "#E2E8F0",
+              'soft-blue': '#eff5f9',
+              'grey-blue': "#66727f"
           },
+          fontSize: {
+            base: '15px'
+          }
       },
   },
   plugins: [],

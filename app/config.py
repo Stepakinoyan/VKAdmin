@@ -1,6 +1,6 @@
-from pydantic import Field
 from typing import Literal, Optional
 
+from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -30,7 +30,7 @@ class Settings(BaseSettings):
     REDIS_PORT: int
 
     DOMAIN: str
-    BACKEND_CORS_ORIGINS: Optional[str] = Field(default='http://localhost:5173')
+    BACKEND_CORS_ORIGINS: Optional[str] = Field(default="http://localhost:5173")
 
     model_config = SettingsConfigDict(env_file=".env")
 

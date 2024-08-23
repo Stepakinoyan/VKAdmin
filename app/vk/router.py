@@ -8,9 +8,9 @@ from fastapi import APIRouter, Depends, HTTPException, Request, status
 from fastapi.responses import RedirectResponse
 from rich.console import Console
 from sqlalchemy import select, update
-from sqlalchemy.orm import selectinload
-from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
 from app.config import settings
 from app.database import get_session
@@ -99,7 +99,7 @@ async def get_stat(session: AsyncSession = Depends(get_session)):
     account_ids = result.scalars().all()
 
     # Разбиваем список по 500 значений
-    chunks = [account_ids[i: i + 500] for i in range(0, len(account_ids), 500)]
+    chunks = [account_ids[i : i + 500] for i in range(0, len(account_ids), 500)]
 
     for chunk in chunks:
         # Преобразуем chunk к формату, подходящему для запроса
@@ -182,8 +182,10 @@ async def get_stat(session: AsyncSession = Depends(get_session)):
                 week_percentage_of_fulfillment = get_week_fulfillment_percentage(
                     statistics=organization_dto.statistic
                 )
-                month_percentage_of_fulfillment = get_average_month_fulfillment_percentage(
-                    statistics=organization_dto.statistic
+                month_percentage_of_fulfillment = (
+                    get_average_month_fulfillment_percentage(
+                        statistics=organization_dto.statistic
+                    )
                 )
 
                 update_stmt = (
@@ -202,7 +204,6 @@ async def get_stat(session: AsyncSession = Depends(get_session)):
             await session.rollback()
         except httpx.ConnectError as e:
             print(f"Connection error: {e}")
-            
 
     return {"status": "completed"}
 
@@ -217,6 +218,7 @@ async def get_group_data(session: AsyncSession = Depends(get_session)):
     batch_results = await asyncio.gather(*tasks)
 
     return {"status": f"completed: {len(batch_results)}", "data": batch_results}
+
 
 @router.post("/wall_get_all")
 async def wall_get_all(session: AsyncSession = Depends(get_session)):
@@ -253,14 +255,17 @@ async def get_gos_bage(session: AsyncSession = Depends(get_session)):
         all_ids_in_batch = [account.id for account in batch]
 
         tasks = [
-            fetch_gos_page(f"https://vk.com/{organization.screen_name}", organization.id)
+            fetch_gos_page(
+                f"https://vk.com/{organization.screen_name}", organization.id
+            )
             for organization in batch
         ]
         batch_results = await asyncio.gather(*tasks)
 
-
         found_ids = [
-            organization_id for organization_id in batch_results if organization_id is not None
+            organization_id
+            for organization_id in batch_results
+            if organization_id is not None
         ]
         not_found_ids = list(set(all_ids_in_batch) - set(found_ids))
 

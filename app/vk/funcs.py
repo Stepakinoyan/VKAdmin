@@ -15,6 +15,8 @@ from app.organizations.models import Organizations
 from app.organizations.types import OrganizationType
 from app.statistic.schemas import Activity, StatisticDTO
 from app.vk.schemas import Group
+from app.vk.types import Percent
+from app.organizations.funcs import amurtime
 
 redis_ = redis.from_url(
     settings.redis_url,
@@ -24,7 +26,6 @@ redis_ = redis.from_url(
     socket_keepalive=True,
 )
 console = Console(color_system="truecolor", width=140)
-amurtime = pytz.timezone("Asia/Yakutsk")
 
 
 async def call(method: str, params: dict, access_token: str, retries: int = 3):
@@ -96,7 +97,7 @@ async def fetch_gos_page(url, organization_id) -> int | None:
             print(
                 f"Badge not found or error for {organization_id}: {url} with exception {e}"
             )
-        
+
         return None
 
 
@@ -181,7 +182,7 @@ async def wall_get_data(group_id: int):
         return group_id
 
 
-Percent: TypeAlias = int
+
 
 
 async def get_percentage_of_fulfillment_of_basic_requirements(
@@ -189,12 +190,10 @@ async def get_percentage_of_fulfillment_of_basic_requirements(
 ) -> Percent:
     percentage = 0
 
-    # Госметка (10 %)
     if organization.get("has_gos_badge"):
         percentage += 10
         print("has_gos_badge: +10%")
 
-    # Подключение (10 %)
     if organization.get("connected"):
         percentage += 10
         print("connection: +10%")
@@ -210,7 +209,6 @@ async def get_percentage_of_fulfillment_of_basic_requirements(
         percentage += 10
         print("has_cover: +10%")
 
-    # Виджеты (10 %)
     widget_count = organization.get("widget_count", 0)
     if widget_count >= 2:
         percentage += 10
@@ -265,11 +263,10 @@ def get_average_month_fulfillment_percentage(
 
 
 def get_week_fulfillment_percentage(
-    statistics: list[StatisticDTO], timezone: str = "Asia/Yakutsk"
-) -> int:
+    statistics: list[StatisticDTO]
+) -> Percent:
     if not statistics:
         return 0
-    amurtime = pytz.timezone(timezone)
     today = datetime.now(amurtime)
     start_of_week = today - timedelta(days=today.weekday())
     end_of_week = start_of_week + timedelta(days=6)
@@ -292,7 +289,6 @@ def get_week_fulfillment_percentage(
 
 async def fetch_group_data(group_id: int) -> Group:
     fields = "members_count,city,status,description,cover,activity,menu"
-    amurtime = pytz.timezone("Asia/Yakutsk")
 
     data = await call(
         "groups.getById",

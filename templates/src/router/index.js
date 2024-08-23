@@ -1,6 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router';
-import HomeView from '../views/HomeView.vue';
+import Form from '../components/Form.vue';
 import DashBoard from '../views/DashBoard.vue';
+import Help from '../views/Help.vue';
 import VueCookies from 'vue-cookies';
 
 const router = createRouter({
@@ -9,7 +10,7 @@ const router = createRouter({
     {
       path: '/',
       name: 'home',
-      component: HomeView,
+      component: Form,
       beforeEnter: (to, from, next) => {
         const token = VueCookies.get('token');
         if (token) {
@@ -22,12 +23,18 @@ const router = createRouter({
     {
       path: '/login',
       name: 'login',
-      component: HomeView
+      component: Form
     },
     {
       path: '/dashboard',
       name: 'dashboard',
       component: DashBoard,
+      meta: { requiresAuth: true }
+    },
+    {
+      path: '/help',
+      name: 'help',
+      component: Help,
       meta: { requiresAuth: true }
     }
   ]

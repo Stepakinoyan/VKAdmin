@@ -11,10 +11,11 @@ import InputGroup from 'primevue/inputgroup';
 import DataTable from 'primevue/datatable';
 import Calendar from 'primevue/calendar';
 import Dropdown from 'primevue/dropdown';
-
+import Menubar from 'primevue/menubar';
 import InputText from 'primevue/inputtext';
 import Password from 'primevue/password';
 import Dialog from 'primevue/dialog';
+import Card from 'primevue/card';
 import Tag from 'primevue/tag';
 import Column from 'primevue/column';
 import Tooltip from 'primevue/tooltip';
@@ -36,7 +37,8 @@ app.component("Password", Password)
 app.component("Calendar", Calendar)
 app.component("Tag", Tag)
 app.component("Dialog", Dialog)
-
+app.component("Menubar", Menubar)
+app.component("Card", Card)
 
 
 app.directive('tooltip', Tooltip);

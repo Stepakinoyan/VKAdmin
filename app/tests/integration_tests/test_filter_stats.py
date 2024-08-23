@@ -5,8 +5,8 @@ from httpx import AsyncClient
 @pytest.mark.parametrize(
     "level,founder,sphere",
     [
-        ("МО", "Архаринский", "Школы"),
-        ("МО", "Архаринский", "Детские сады"),
+        ("МО", "Благовещенск", "Школы"),
+        ("МО", "Селемджинский", "Культура"),
     ],
 )
 async def test_get_founder_by_level(
@@ -15,7 +15,6 @@ async def test_get_founder_by_level(
     response = await authenticated_ac.get(
         "/filter/get_stats",
         params={"level": level, "founder": founder, "sphere": sphere},
-        
     )
 
     data = response.json()

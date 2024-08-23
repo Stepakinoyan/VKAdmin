@@ -8,24 +8,18 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from app.dao.dao import BaseDAO
-from app.organizations.funcs import get_last_monday, get_stats_by_dates, amurtime, get_unique_spheres
+from app.organizations.funcs import amurtime, get_last_monday, get_unique_spheres
 from app.organizations.models import Organizations
-from app.organizations.schemas import (
-    OrganizationsDTO,
-)
+from app.organizations.schemas import OrganizationsDTO
+from app.statistic.funcs import get_stats_by_dates
 from app.statistic.schemas import StatisticDTO
-
-
 
 
 class OrganizationsDAO(BaseDAO):
     model = Organizations
 
-
     @classmethod
-    async def get_founders_by_level(
-        self, level: str, session: AsyncSession
-    ):
+    async def get_founders_by_level(self, level: str, session: AsyncSession):
         get_founders = (
             select(self.model.founder)
             .filter_by(level=level)
@@ -37,17 +31,17 @@ class OrganizationsDAO(BaseDAO):
         return results.mappings().all()
 
     @classmethod
-    async def get_spheres_by(
-        self, level: str, founder: str, session: AsyncSession
-    ):
-        get_spheres = select(
-            self.model.sphere_1, self.model.sphere_2, self.model.sphere_3
-        ).where(
+    async def get_spheres_by(self, level: str, founder: str, session: AsyncSession):
+        get_spheres = (
+            select(self.model.sphere_1, self.model.sphere_2, self.model.sphere_3)
+            .where(
                 and_(
                     self.model.level.ilike(f"%{level}%") if level else True,
                     self.model.founder.ilike(f"%{founder}%") if founder else True,
                 )
-            ).distinct()
+            )
+            .distinct()
+        )
 
         results = await session.execute(get_spheres)
         results = results.scalars().all()
@@ -68,7 +62,7 @@ class OrganizationsDAO(BaseDAO):
     ):
         if not date_from:
             date_from = get_last_monday()
-        
+
         if not date_to:
             date_to = datetime.now(amurtime).date()
 

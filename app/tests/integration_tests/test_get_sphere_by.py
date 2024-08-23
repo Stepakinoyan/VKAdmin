@@ -20,7 +20,7 @@ async def test_get_sphere_by(
         "/filter/get_spheres_by", params={"level": level, "founder": founder}
     )
 
-    print("Response JSON:", response.json())
-    assert response.status_code == 200, f"Unexpected status code: {response.status_code}"
-    data = response.json()
-    assert isinstance(data, list), "Response data is not a list"
+    assert (
+        response.status_code == 200
+    ), f"Unexpected status code: {response.status_code}"
+    assert isinstance(response.json(), list), "Response data is not a list"

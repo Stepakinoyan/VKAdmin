@@ -14,7 +14,7 @@ from app.organizations.params import (
     FilterFounderParams,
     FilterSpheresParams,
 )
-from app.organizations.schemas import FounderDTO, SphereDTO, OrganizationsDTO
+from app.organizations.schemas import FounderDTO, OrganizationsDTO, SphereDTO
 
 router = APIRouter(prefix="/filter", tags=["Фильтрация данных"])
 
@@ -24,7 +24,7 @@ async def get_founders(
     current_user: Annotated[Users, Depends(get_current_user)],
     filterfounderparams: FilterFounderParams = Depends(),
     session: AsyncSession = Depends(get_session),
-)  -> list[FounderDTO]:
+) -> list[FounderDTO]:
     return await OrganizationsDAO.get_founders_by_level(
         level=filterfounderparams.level, session=session
     )

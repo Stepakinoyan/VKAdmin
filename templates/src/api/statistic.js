@@ -14,7 +14,8 @@ export const exportToExcel = (stats) => {
 export const getFounders = (level) => {
         return axios.get(`/filter/get_founders?level=${level}`);
 };
-// headers: { authorization: VueCookies.get('token') }
+
+
 export const getSpheresBy = (params) => {
         return axios.get('/filter/get_spheres_by');
 };
