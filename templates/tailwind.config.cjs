@@ -33,6 +33,9 @@ export default {
           },
           fontSize: {
             base: '15px'
+          },
+          screens: {
+            'lg': '1193px'
           }
       },
   },

@@ -1,5 +1,5 @@
 <template>
-        <Menubar :model="items" class="flex justify-between border">
+        <Menubar :model="items" class="flex justify-between border h-[64px]">
         <template #start>
             <svg width="199" height="23" viewBox="0 0 199 23" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <path d="M10.802 6.694V9.606H4.874V20.89H1V13.792V6.694H10.802Z" fill="#0066B3"/>
@@ -19,7 +19,7 @@
 
         </template>
         <template #item="{ item, props }">
-                <router-link v-if="item.route" v-slot="{ href, navigate }" :to="item.route" custom>
+                <router-link :disabled="field_disabled" v-if="item.route" v-slot="{ href, navigate }" :to="item.route" custom>
                     <a :href="href" v-bind="props.action" @click="navigate">
                         <span :class="item.icon" />
                         <span class="ml-2 text-blue-700 hover:text-blue-600">{{ item.label }}</span>
@@ -31,6 +31,8 @@
 
 
 <script>
+import VueCookies from 'vue-cookies';
+
 export default {
     data(){
         return {
@@ -43,6 +45,13 @@ export default {
                     label: 'Помощь',
                     route: '/help'
                 },
+                {
+                    label: 'Выйти',
+                    route: '/login',
+                    command: () => {
+                        VueCookies.remove('token');
+                    }
+                }
             ],
         }
     }

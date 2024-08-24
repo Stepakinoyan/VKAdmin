@@ -89,6 +89,7 @@
         <Calendar 
             v-model="dates"
             @click="dates = []"
+            @touchstart="dates = []"
             :hide-on-range-selection="true"
             @update:model-value="handleDateSelection"
             dateFormat="dd-mm-yy"
@@ -100,7 +101,7 @@
             showIcon 
             iconDisplay="input" 
             class="w-full lg:w-2/3 mt-2 lg:mt-0 py-2 lg:py-0 rounded-lg"  
-            :pt="{root: ['border', 'border-gosuslugi-border'], input: {class: ['pl-[12px]', 'placeholder:text-gray-500']}}" 
+            :pt="{root: ['border', 'border-gosuslugi-border',], input: {class: ['pl-[12px]', 'placeholder:text-gray-500']}}" 
             :disabled="field_disabled"  
             :minDate="minDateDisabled" 
             :maxDate="maxDateDisabled" 
@@ -120,9 +121,8 @@
       </div>
 
       <InputGroup class="w-full lg:w-1/4 flex justify-end space-x-8 pr-2.5">
-          <Button icon="pi pi-filter-slash" class="w-10 h-10 bg-slate-100" @click="resetFilters()" :disabled="field_disabled"></Button>
-          <Button icon="pi pi-file-excel" class="w-10 h-10 bg-slate-100" v-tooltip.bottom="'Экспорт в Excel'" @click="exportToExcel()"></Button>
-          <Button icon="pi pi-sign-out" class="w-10 h-10 bg-slate-100" @click="SignOut()" :disabled="field_disabled"></Button>
+          <Button icon="pi pi-filter-slash" class="w-10 h-10 bg-slate-100 border border-gosuslugi-border" @click="resetFilters()" :disabled="field_disabled"></Button>
+          <Button icon="pi pi-file-excel" class="w-10 h-10 bg-slate-100 border border-gosuslugi-border" v-tooltip.bottom="'Экспорт в Excel'" @click="exportToExcel()"></Button>
       </InputGroup>
     </div>
     <DataTable
@@ -143,7 +143,6 @@
         
         <Column
           field="name"
-          sortable
           header="Название"
           class="text-xs cursor-pointer text-left"
           style="min-width: 240px; max-width: 240px;"
@@ -441,6 +440,13 @@ export default {
             label: 'Помощь',
             route: '/help'
         },
+        {
+            label: 'Выйти',
+            route: '/login',
+            command: () => {
+                VueCookies.remove('token');
+            }
+        }
       ],
       loading: false,
       dialogVisible: false,
@@ -765,10 +771,6 @@ export default {
       this.stats = [];
       this.loadAllData();
       this.getSpheres()
-    },
-    SignOut() {
-      VueCookies.remove('token');
-      this.$router.push('/login');
     }
   }
 }
