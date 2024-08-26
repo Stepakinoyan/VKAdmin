@@ -182,9 +182,6 @@ async def wall_get_data(group_id: int):
         return group_id
 
 
-
-
-
 async def get_percentage_of_fulfillment_of_basic_requirements(
     organization: OrganizationType,
 ) -> Percent:
@@ -262,9 +259,7 @@ def get_average_month_fulfillment_percentage(
     return average_fulfillment_percentage
 
 
-def get_week_fulfillment_percentage(
-    statistics: list[StatisticDTO]
-) -> Percent:
+def get_week_fulfillment_percentage(statistics: list[StatisticDTO]) -> Percent:
     if not statistics:
         return 0
     today = datetime.now(amurtime)

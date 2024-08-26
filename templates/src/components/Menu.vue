@@ -22,7 +22,7 @@
                 <router-link :disabled="field_disabled" v-if="item.route" v-slot="{ href, navigate }" :to="item.route" custom>
                     <a :href="href" v-bind="props.action" @click="navigate">
                         <span :class="item.icon" />
-                        <span class="ml-2 text-blue-700 hover:text-blue-600">{{ item.label }}</span>
+                        <span class="ml-2 text-blue-600">{{ item.label }}</span>
                     </a>
                 </router-link>
         </template>

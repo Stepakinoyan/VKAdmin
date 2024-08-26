@@ -122,7 +122,7 @@ class ExcelDAO(BaseDAO):
             stat = OrganizationsDTO(**stat)
             activity = (
                 stat.statistic[-1].activity
-                if stat.statistic[-1].activity is not None
+                if stat.statistic and stat.statistic[-1].activity is not None
                 else {}
             )
             if activity:

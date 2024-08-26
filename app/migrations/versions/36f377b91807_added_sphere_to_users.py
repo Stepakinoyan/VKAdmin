@@ -1,18 +1,19 @@
-"""Deleted subscribes, likes and comments columns from organizations
+"""Added sphere to users
 
-Revision ID: 325544d3fe2b
+Revision ID: 36f377b91807
 Revises:
-Create Date: 2024-08-17 23:16:15.780404
+Create Date: 2024-08-25 16:17:11.310348
 
 """
 
 from typing import Sequence, Union
 
-import sqlalchemy as sa
 from alembic import op
+import sqlalchemy as sa
+
 
 # revision identifiers, used by Alembic.
-revision: str = "325544d3fe2b"
+revision: str = "36f377b91807"
 down_revision: Union[str, None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -65,6 +66,8 @@ def upgrade() -> None:
         sa.Column("id", sa.Integer(), nullable=False),
         sa.Column("email", sa.String(), nullable=False),
         sa.Column("password", sa.String(), nullable=False),
+        sa.Column("role", sa.String(), nullable=False),
+        sa.Column("sphere", sa.String(), nullable=False),
         sa.PrimaryKeyConstraint("id"),
     )
     op.create_table(

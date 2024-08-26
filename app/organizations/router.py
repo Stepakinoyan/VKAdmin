@@ -1,5 +1,5 @@
 import logging
-from typing import Annotated
+from typing import Annotated, Optional
 
 from fastapi import APIRouter, Depends
 from fastapi_cache.decorator import cache
@@ -19,6 +19,14 @@ from app.organizations.schemas import FounderDTO, OrganizationsDTO, SphereDTO
 router = APIRouter(prefix="/filter", tags=["Фильтрация данных"])
 
 
+@router.get("/get_levels")
+async def get_levels(
+    current_user: Annotated[Users, Depends(get_current_user)],
+    session: AsyncSession = Depends(get_session),
+):
+    return await OrganizationsDAO.get_levels(user=current_user, session=session)
+
+
 @router.get("/get_founders")
 async def get_founders(
     current_user: Annotated[Users, Depends(get_current_user)],
@@ -26,7 +34,7 @@ async def get_founders(
     session: AsyncSession = Depends(get_session),
 ) -> list[FounderDTO]:
     return await OrganizationsDAO.get_founders_by_level(
-        level=filterfounderparams.level, session=session
+        level=filterfounderparams.level, user=current_user, session=session
     )
 
 
@@ -39,6 +47,7 @@ async def get_spheres(
     return await OrganizationsDAO.get_spheres_by(
         founder=filterspheresparams.founder,
         level=filterspheresparams.level,
+        user=current_user,
         session=session,
     )
 
@@ -59,6 +68,7 @@ async def get_stats(
             zone=filterchannelsparams.zone,
             date_from=filterchannelsparams.date_from,
             date_to=filterchannelsparams.date_to,
+            user=current_user,
             session=session,
         )
     except Exception as e:

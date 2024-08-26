@@ -23,7 +23,7 @@
                 <router-link v-if="item.route" v-slot="{ href, navigate }" :to="item.route" custom>
                     <a :href="href" v-bind="props.action" @click="navigate">
                         <span :class="item.icon" />
-                        <span class="ml-2 text-blue-600">{{ item.label }}</span>
+                        <span class="ml-2 text-blue-600" v-if="item.label">{{ item.label }}</span>
                     </a>
                 </router-link>
         </template>
@@ -119,10 +119,9 @@
           }"
         />
       </div>
-
       <InputGroup class="w-full lg:w-1/4 flex justify-end space-x-8 pr-2.5">
           <Button icon="pi pi-filter-slash" class="w-10 h-10 bg-slate-100 border border-gosuslugi-border" @click="resetFilters()" :disabled="field_disabled"></Button>
-          <Button icon="pi pi-file-excel" class="w-10 h-10 bg-slate-100 border border-gosuslugi-border" v-tooltip.bottom="'Экспорт в Excel'" @click="exportToExcel()"></Button>
+          <Button icon="pi pi-file-excel" class="w-10 h-10 bg-slate-100 border border-gosuslugi-border" v-tooltip.bottom="'Экспорт в Excel'"  @click="exportToExcel()"></Button>
       </InputGroup>
     </div>
     <DataTable
@@ -441,7 +440,7 @@ export default {
             route: '/help'
         },
         {
-            label: 'Выйти',
+            icon: 'pi pi-sign-out',
             route: '/login',
             command: () => {
                 VueCookies.remove('token');
@@ -515,15 +514,7 @@ export default {
         { zone: '70-89%' },
         { zone: '0-69%' },
       ],
-      levels: [
-        { level: 'Регион' },
-        { level: 'Министерство' },
-        { level: 'МО' },
-        { level: 'Ведомство' },
-        { level: 'Законодательный орган' },
-        { level: 'Другое' },
-        { level: 'ВУЗ' },
-      ],
+      levels: [],
       stats: [],
       statisticColumns: [],
       columns: [],
@@ -533,6 +524,7 @@ export default {
   },
   mounted() {
     this.loadAllData();
+    this.getLevels();
     this.getSpheres();
   },
   computed: {
@@ -698,6 +690,18 @@ export default {
       } else {
         this.founders = [];
       }
+    },
+    getLevels() {
+      axios.get(`/filter/get_levels`, { headers: { authorization: VueCookies.get('token') }})
+        .then(response => {
+          this.levels = response.data
+        })
+        .catch(error => {
+          if(error.response.status == 401){
+              VueCookies.remove('token')
+              this.$router.go("/login");
+          }
+        })
     },
     getSpheres() {
       const params = {};
