@@ -120,15 +120,14 @@ class OrganizationsDAO(BaseDAO):
         user: Users,
         session: AsyncSession,
     ):
-        if not date_from:
-            date_from = get_last_monday()
-
-        if not date_to:
-            date_to = datetime.now(amurtime).date()
+        date_from_dt = None
+        date_to_dt = None
 
         try:
-            date_from_dt = datetime.combine(date_from, datetime.min.time())
-            date_to_dt = datetime.combine(date_to, datetime.min.time())
+            if date_from:
+                date_from_dt = datetime.combine(date_from, datetime.min.time())
+            if date_to:
+                date_to_dt = datetime.combine(date_to, datetime.min.time())
 
             if user.role == "admin":
                 query = (

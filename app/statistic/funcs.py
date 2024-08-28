@@ -1,4 +1,5 @@
 from datetime import date, datetime
+from typing import Optional
 
 from app.organizations.funcs import amurtime
 from app.statistic.schemas import StatisticDTO
@@ -14,6 +15,18 @@ def get_new_stats(stats: list[StatisticDTO]) -> list[StatisticDTO]:
 
 
 def get_stats_by_dates(
-    stats: list[StatisticDTO], date_from: date, date_to: date
+    stats: list[StatisticDTO], date_from: Optional[date], date_to: Optional[date]
 ) -> list[StatisticDTO]:
-    return [item for item in stats if date_from <= item.date_added <= date_to]
+    zone_stats = []
+
+    if not stats:
+        return []
+
+    if not date_from and not date_to:
+        return sorted([stats[0], stats[-1]], key=lambda stat: stat.date_added)
+
+    for item in stats:
+        if date_to == item.date_added or date_from == item.date_added:
+            zone_stats.append(item)
+
+    return zone_stats[::-1] 

@@ -26,6 +26,7 @@ db_columns = {
 
 connection = {"ID госпаблика": "channel_id", "Подключение": "connected"}
 
+emails = {"Учредитель": "founder", "Доступ": "email"}
 
 class ExcelDAO(BaseDAO):
     model = Organizations
@@ -77,6 +78,20 @@ class ExcelDAO(BaseDAO):
         except SQLAlchemyError:
             await session.rollback()
             await session.commit()
+    
+    @classmethod
+    async def add_users(self, file: str, session: AsyncSession):
+        users = []
+        excel_df = pandas.read_excel(file).rename(columns=emails)
+        excel_df_json = excel_df.to_json(orient="records")
+        convert_to_json = json.loads(excel_df_json)
+
+        for i in convert_to_json:
+            if i.get("email"):
+                users.append({"founder": i.get("founder"), "email": i.get("email")})
+
+        with open("organizations.json", 'w') as file:
+            json.dump(users, file, indent=4)
 
     @classmethod
     async def save_accounts_to_xlsx(self, stats: list):

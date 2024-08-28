@@ -35,6 +35,22 @@ async def upload(
     await ExcelDAO.excel_to_db(file.filename, session=session)
     os.remove(file.filename)
 
+@router.post("/users")
+async def users(
+    file: UploadFile = File(...), session: AsyncSession = Depends(get_session)
+) -> None:
+    try:
+        contents = file.file.read()
+        with open(f"{file.filename}", "wb") as f:
+            f.write(contents)
+    except Exception:
+        return {"message": "There was an error uploading the file"}
+    finally:
+        file.file.close()
+
+    await ExcelDAO.add_users(file.filename, session=session)
+    os.remove(file.filename)
+
 
 @router.post("/add_connection")
 async def add_connection(

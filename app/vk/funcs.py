@@ -26,7 +26,7 @@ redis_ = redis.from_url(
     socket_keepalive=True,
 )
 console = Console(color_system="truecolor", width=140)
-
+semaphore = asyncio.Semaphore(3)
 
 async def call(method: str, params: dict, access_token: str, retries: int = 3):
     base_url = "https://api.vk.com/method/"
@@ -37,39 +37,39 @@ async def call(method: str, params: dict, access_token: str, retries: int = 3):
     }
 
     params["v"] = "5.217"
-    try:
-        async with httpx.AsyncClient(timeout=30.0, http2=True) as client:
-            for _ in range(retries):  # Пытаемся выполнить запрос retries раз
-                if retries < 3:
-                    console.rule(f"retries {retries}")
-                response = await client.post(
-                    f"{base_url}{method}", params=params, headers=headers
-                )
 
-                # print(response.status_code)
+    async with semaphore:
+        try:
+            async with httpx.AsyncClient(timeout=30.0, http2=True) as client:
+                for _ in range(retries):  # Пытаемся выполнить запрос retries раз
+                    if retries < 3:
+                        console.rule(f"retries {retries}")
+                    response = await client.post(
+                        f"{base_url}{method}", params=params, headers=headers
+                    )
 
-                if response.status_code in [400, 403, 404, 500, 502]:
-                    console.rule(f"[red] ERROR {response.status_code}")
-                    return {"error": response.status_code}
+                    if response.status_code in [400, 403, 404, 500, 502]:
+                        console.rule(f"[red] ERROR {response.status_code}")
+                        return {"error": response.status_code}
 
-                response_data = response.json()
-                # Проверяем, содержит ли ответ ошибку "Too many requests per second"
-                if (
-                    "error" in response_data
-                    and response_data["error"].get("error_code") == 6
-                ):
-                    console.rule(f"[red] {response.url} Too many requests per second")
-                    # Если да, делаем паузу и пробуем ещё раз
-                    await asyncio.sleep(2)
-                else:
-                    # Если нет ошибки, или это была последняя попытка, возвращаем результат
-                    return response_data
-            return {"error": "Max retries exceeded"}
-    except httpx.ConnectTimeout:
-        return {"error": "Connection failed"}
+                    response_data = response.json()
+                    # Проверяем, содержит ли ответ ошибку "Too many requests per second"
+                    if (
+                        "error" in response_data
+                        and response_data["error"].get("error_code") == 6
+                    ):
+                        console.rule(f"[red] {response.url} Too many requests per second")
+                        # Если да, делаем паузу и пробуем ещё раз
+                        await asyncio.sleep(5)
+                    else:
+                        # Если нет ошибки, или это была последняя попытка, возвращаем результат
+                        return response_data
+                return {"error": "Max retries exceeded"}
+        except httpx.ConnectTimeout:
+            return {"error": "Connection failed"}
 
 
-semaphore = asyncio.Semaphore(3)
+
 
 
 async def fetch_gos_page(url, organization_id) -> int | None:
@@ -102,7 +102,6 @@ async def fetch_gos_page(url, organization_id) -> int | None:
 
 
 async def wall_get_data(group_id: int):
-    async with semaphore:
         data = await call(
             "wall.get",
             {
@@ -284,7 +283,7 @@ def get_week_fulfillment_percentage(statistics: list[StatisticDTO]) -> Percent:
 
 async def fetch_group_data(group_id: int) -> Group:
     fields = "members_count,city,status,description,cover,activity,menu"
-
+    
     data = await call(
         "groups.getById",
         {"group_id": group_id, "fields": fields},

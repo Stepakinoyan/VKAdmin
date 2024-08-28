@@ -827,4 +827,3 @@ html{
   @apply flex justify-end
 }
 </style>
-
