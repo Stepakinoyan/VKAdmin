@@ -6,10 +6,14 @@ from sqlalchemy import insert, update
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.auth.models import Users
+from app.auth.schema import UserDTO
 from app.dao.dao import BaseDAO
+from app.excel_to_db.funcs import generate_password
 from app.excel_to_db.schemas import Connection, Item
 from app.organizations.models import Organizations
 from app.organizations.schemas import OrganizationsDTO
+from app.auth.users import get_password_hash
 
 db_columns = {
     "Уровень": "level",
@@ -27,6 +31,7 @@ db_columns = {
 connection = {"ID госпаблика": "channel_id", "Подключение": "connected"}
 
 emails = {"Учредитель": "founder", "Доступ": "email"}
+
 
 class ExcelDAO(BaseDAO):
     model = Organizations
@@ -78,20 +83,19 @@ class ExcelDAO(BaseDAO):
         except SQLAlchemyError:
             await session.rollback()
             await session.commit()
-    
+
     @classmethod
-    async def add_users(self, file: str, session: AsyncSession):
-        users = []
-        excel_df = pandas.read_excel(file).rename(columns=emails)
-        excel_df_json = excel_df.to_json(orient="records")
-        convert_to_json = json.loads(excel_df_json)
+    async def add_users(self, session: AsyncSession):
+        with open("organizations.json", "r") as file:
+            users = json.load(file)
 
-        for i in convert_to_json:
-            if i.get("email"):
-                users.append({"founder": i.get("founder"), "email": i.get("email")})
+        for user in users:
+            user = UserDTO(**user).model_dump()
+            add_user = insert(Users).values(**user)
 
-        with open("organizations.json", 'w') as file:
-            json.dump(users, file, indent=4)
+            await session.execute(add_user)
+
+        await session.commit()
 
     @classmethod
     async def save_accounts_to_xlsx(self, stats: list):

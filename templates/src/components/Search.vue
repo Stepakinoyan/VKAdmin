@@ -55,6 +55,7 @@
           @change="onFounderChange" 
           :disabled="!selectedlevel || field_disabled"
           emptyMessage="Нет доступных опций"
+          v-if="AdminVerify"
           :pt="{
             root: ['border', 'border-gosuslugi-border']
           }"
@@ -520,12 +521,14 @@ export default {
       columns: [],
       statisticsMap: {},
       selectedItem: {},
+      AdminVerify: null,
     };
   },
   mounted() {
     this.loadAllData();
     this.getLevels();
     this.getSpheres();
+    this.checkAdmin();
   },
   computed: {
     handleDateSelection() {
@@ -563,6 +566,16 @@ export default {
     },
   },
   methods: {
+    checkAdmin(){
+        axios.get("/auth/me", { headers: { authorization: VueCookies.get('token') }})
+        .then(response => {
+          if(response.data.role === "admin"){
+            this.AdminVerify = true
+          }else{
+            this.AdminVerify = false
+          }
+        })
+    },
     exportToExcel() {
       this.loading = true
       this.field_disabled = true 

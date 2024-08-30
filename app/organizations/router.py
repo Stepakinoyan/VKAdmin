@@ -1,5 +1,5 @@
 import logging
-from typing import Annotated, Optional
+from typing import Annotated
 
 from fastapi import APIRouter, Depends
 from fastapi_cache.decorator import cache
@@ -45,7 +45,6 @@ async def get_spheres(
     session: AsyncSession = Depends(get_session),
 ) -> list[SphereDTO]:
     return await OrganizationsDAO.get_spheres_by(
-        founder=filterspheresparams.founder,
         level=filterspheresparams.level,
         user=current_user,
         session=session,

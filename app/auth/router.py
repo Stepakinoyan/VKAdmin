@@ -1,7 +1,9 @@
-from fastapi import APIRouter, Response
+from typing import Annotated
+from fastapi import APIRouter, Depends, Response
 
-from app.auth.schema import UserAuth
-from app.auth.users import authenticate_user, create_access_token
+from app.auth.models import Users
+from app.auth.schema import Role, UserAuth
+from app.auth.users import authenticate_user, create_access_token, get_current_user
 from app.config import settings
 
 router = APIRouter(prefix="/auth", tags=["Авторизация"])
@@ -18,3 +20,8 @@ async def login(user_data: UserAuth, response: Response):
         response.set_cookie(key="token", value=access_token)
 
     return {"access_token": access_token}
+
+
+@router.get("/me", response_model=Role)
+async def me(current_user: Annotated[Users, Depends(get_current_user)]):
+    return current_user

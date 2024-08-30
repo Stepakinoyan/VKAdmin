@@ -14,7 +14,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_session
 from app.excel_to_db.dao import ExcelDAO
-from app.excel_to_db.funcs import remove_file
+from app.excel_to_db.funcs import get_file, remove_file
 
 router = APIRouter(prefix="/excel", tags=["Excel"])
 
@@ -23,50 +23,25 @@ router = APIRouter(prefix="/excel", tags=["Excel"])
 async def upload(
     file: UploadFile = File(...), session: AsyncSession = Depends(get_session)
 ) -> None:
-    try:
-        contents = file.file.read()
-        with open(f"{file.filename}", "wb") as f:
-            f.write(contents)
-    except Exception:
-        return {"message": "There was an error uploading the file"}
-    finally:
-        file.file.close()
+    filename = await get_file(file=file)
 
-    await ExcelDAO.excel_to_db(file.filename, session=session)
-    os.remove(file.filename)
+    await ExcelDAO.excel_to_db(filename, session=session)
+    os.remove(filename)
+
 
 @router.post("/users")
-async def users(
-    file: UploadFile = File(...), session: AsyncSession = Depends(get_session)
-) -> None:
-    try:
-        contents = file.file.read()
-        with open(f"{file.filename}", "wb") as f:
-            f.write(contents)
-    except Exception:
-        return {"message": "There was an error uploading the file"}
-    finally:
-        file.file.close()
-
-    await ExcelDAO.add_users(file.filename, session=session)
-    os.remove(file.filename)
+async def add_users(session: AsyncSession = Depends(get_session)) -> None:
+    await ExcelDAO.add_users(session=session)
 
 
 @router.post("/add_connection")
 async def add_connection(
     file: UploadFile = File(...), session: AsyncSession = Depends(get_session)
 ) -> None:
-    try:
-        contents = file.file.read()
-        with open(f"{file.filename}", "wb") as f:
-            f.write(contents)
-    except Exception:
-        return {"message": "There was an error uploading the file"}
-    finally:
-        file.file.close()
+    filename = await get_file(file=file)
 
-    await ExcelDAO.add_connection(file.filename, session=session)
-    os.remove(file.filename)
+    await ExcelDAO.add_connection(filename, session=session)
+    os.remove(filename)
 
 
 @router.post("/xlsx/")

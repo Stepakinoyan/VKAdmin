@@ -35,10 +35,8 @@ class FilterSpheresParams:
             "Другое",
             "ВУЗ",
         ] = None,
-        founder: Optional[str] = None,
     ):
         self.level = level
-        self.founder = founder
 
 
 class FilterChannelsParams:

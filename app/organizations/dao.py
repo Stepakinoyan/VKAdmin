@@ -2,6 +2,7 @@ import logging
 from datetime import date, datetime
 from typing import Optional
 
+from fastapi import HTTPException, status
 from fastapi.encoders import jsonable_encoder
 from sqlalchemy import and_, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -9,7 +10,7 @@ from sqlalchemy.orm import selectinload
 
 from app.auth.models import Users
 from app.dao.dao import BaseDAO
-from app.organizations.funcs import amurtime, get_last_monday, get_unique_spheres
+from app.organizations.funcs import get_unique_spheres
 from app.organizations.models import Organizations
 from app.organizations.schemas import OrganizationsDTO
 from app.statistic.funcs import get_stats_by_dates
@@ -21,20 +22,14 @@ class OrganizationsDAO(BaseDAO):
 
     @classmethod
     async def get_levels(self, user: Users, session: AsyncSession):
-        if user.role == "admin":
-            get_levels = select(self.model.level).distinct()
-        else:
-            get_levels = (
+
+        get_levels = (
                 select(self.model.level)
                 .filter(
-                    or_(
-                        self.model.sphere_1.ilike(f"%{user.sphere}%"),
-                        self.model.sphere_2.ilike(f"%{user.sphere}%"),
-                        self.model.sphere_3.ilike(f"%{user.sphere}%"),
-                    )
+                    self.model.founder.ilike(f"%{user.founder}%") if user.founder else True,
                 )
                 .distinct()
-            )
+        )
 
         results = await session.execute(get_levels)
 
@@ -44,27 +39,20 @@ class OrganizationsDAO(BaseDAO):
     async def get_founders_by_level(
         self, level: str, user: Users, session: AsyncSession
     ):
-        if user.role == "admin":
-            get_founders = (
-                select(self.model.founder)
-                .filter_by(level=level)
-                .distinct(self.model.founder)
-            )
-        else:
-            get_founders = (
+        
+        if user.role != "admin":
+            raise HTTPException(detail="У вас недостаточно прав", status_code=status.HTTP_403_FORBIDDEN)
+
+        get_founders = (
                 select(self.model.founder)
                 .filter(
                     and_(
                         self.model.level == level,
-                        or_(
-                            self.model.sphere_1.ilike(f"%{user.sphere}%"),
-                            self.model.sphere_2.ilike(f"%{user.sphere}%"),
-                            self.model.sphere_3.ilike(f"%{user.sphere}%"),
-                        ),
+                        self.model.founder.ilike(f"%{user.founder}%") if user.founder else True,
                     )
                 )
                 .distinct(self.model.founder)
-            )
+        )
 
         results = await session.execute(get_founders)
 
@@ -72,35 +60,18 @@ class OrganizationsDAO(BaseDAO):
 
     @classmethod
     async def get_spheres_by(
-        self, level: str, founder: str, user: Users, session: AsyncSession
+        self, level: str, user: Users, session: AsyncSession
     ):
-        if user.role == "admin":
-            get_spheres = (
+        get_spheres = (
                 select(self.model.sphere_1, self.model.sphere_2, self.model.sphere_3)
                 .where(
                     and_(
                         self.model.level.ilike(f"%{level}%") if level else True,
-                        self.model.founder.ilike(f"%{founder}%") if founder else True,
+                        self.model.founder.ilike(f"%{user.founder}%") if user.founder else True,
                     )
                 )
                 .distinct()
-            )
-        else:
-            get_spheres = (
-                select(self.model.sphere_1, self.model.sphere_2, self.model.sphere_3)
-                .where(
-                    and_(
-                        self.model.level.ilike(f"%{level}%") if level else True,
-                        self.model.founder.ilike(f"%{founder}%") if founder else True,
-                        or_(
-                            self.model.sphere_1.ilike(f"%{user.sphere}%"),
-                            self.model.sphere_2.ilike(f"%{user.sphere}%"),
-                            self.model.sphere_3.ilike(f"%{user.sphere}%"),
-                        ),
-                    )
-                )
-                .distinct()
-            )
+        )
 
         results = await session.execute(get_spheres)
         results = results.scalars().all()
@@ -129,45 +100,23 @@ class OrganizationsDAO(BaseDAO):
             if date_to:
                 date_to_dt = datetime.combine(date_to, datetime.min.time())
 
-            if user.role == "admin":
-                query = (
-                    select(self.model)
-                    .options(selectinload(self.model.statistic))
-                    .filter(
-                        and_(
-                            self.model.level.ilike(f"%{level}%"),
-                            self.model.founder.ilike(f"%{founder}%"),
-                            self.model.name.ilike(f"%{name}%"),
-                            or_(
-                                self.model.sphere_1.ilike(f"%{sphere}%"),
-                                self.model.sphere_2.ilike(f"%{sphere}%"),
-                                self.model.sphere_3.ilike(f"%{sphere}%"),
-                            ),
-                        )
+            query = (
+                select(self.model)
+                .options(selectinload(self.model.statistic))
+                .filter(
+                    and_(
+                        self.model.level.ilike(f"%{level}%"),
+                        self.model.founder.ilike(f"%{founder}%"),
+                        self.model.name.ilike(f"%{name}%"),
+                        or_(
+                            self.model.sphere_1.ilike(f"%{sphere}%"),
+                            self.model.sphere_2.ilike(f"%{sphere}%"),
+                            self.model.sphere_3.ilike(f"%{sphere}%"),
+                        ),
+                        self.model.founder.ilike(f"%{user.founder}%") if user.founder else True,
                     )
                 )
-            else:
-                query = (
-                    select(self.model)
-                    .options(selectinload(self.model.statistic))
-                    .filter(
-                        and_(
-                            self.model.level.ilike(f"%{level}%"),
-                            self.model.founder.ilike(f"%{founder}%"),
-                            self.model.name.ilike(f"%{name}%"),
-                            or_(
-                                self.model.sphere_1.ilike(f"%{sphere}%"),
-                                self.model.sphere_2.ilike(f"%{sphere}%"),
-                                self.model.sphere_3.ilike(f"%{sphere}%"),
-                            ),
-                            or_(
-                                self.model.sphere_1.ilike(f"%{user.sphere}%"),
-                                self.model.sphere_2.ilike(f"%{user.sphere}%"),
-                                self.model.sphere_3.ilike(f"%{user.sphere}%"),
-                            ),
-                        )
-                    )
-                )
+            )
 
             if zone == "90-100%":
                 query = query.where(self.model.average_fulfillment_percentage >= 90)
