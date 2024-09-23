@@ -18,15 +18,24 @@ def get_stats_by_dates(
     stats: list[StatisticDTO], date_from: Optional[date], date_to: Optional[date]
 ) -> list[StatisticDTO]:
     zone_stats = []
+    today = date.today()
 
     if not stats:
         return []
+    
+    if not date_from:
+        date_from = today.replace(day=1)
+    else:
+        date_from = date_from.date()
 
-    if not date_from and not date_to:
-        return sorted([stats[0], stats[-1]], key=lambda stat: stat.date_added)
+    if not date_to:
+        date_to = today
+    else:
+        date_to = date_to.date()
+    
 
     for item in stats:
-        if date_to == item.date_added or date_from == item.date_added:
+        if date_from == item.date_added.date() or date_to == item.date_added.date():
             zone_stats.append(item)
 
-    return zone_stats[::-1] 
+    return sorted(zone_stats, key=lambda stat: stat.date_added)
