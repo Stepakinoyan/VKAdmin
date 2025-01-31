@@ -26,7 +26,7 @@ import axios from 'axios';
 
 export const app = createApp(App)
 axios.defaults.withCredentials = true;
-axios.defaults.baseURL = 'http://localhost:8000/';
+axios.defaults.baseURL = 'https://app.gospublicstat.ru/api/';
 app.component('DataTable', DataTable)
 app.component('Column', Column)
 app.component('Dropdown', Dropdown)

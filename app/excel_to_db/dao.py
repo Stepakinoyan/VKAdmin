@@ -86,7 +86,7 @@ class ExcelDAO(BaseDAO):
 
     @classmethod
     async def add_users(self, session: AsyncSession):
-        with open("organizations.json", "r") as file:
+        with open("app/excel_to_db/organizations.json", "r") as file:
             users = json.load(file)
 
         for user in users:

@@ -32,7 +32,8 @@
   <main class="flex flex-col">
     <div class="w-full h-full flex items-center flex-col lg:flex-row pt-3">
       <div class="flex flex-col lg:flex-row w-full lg:w-3/4 space-x-0 lg:space-x-1 ml-0 lg:ml-2">
-        <Dropdown 
+        <Dropdown
+          v-if="levels.length != 1"
           v-model="selectedlevel" 
           :options="levels" 
           optionLabel="level" 
@@ -61,6 +62,7 @@
           }"
         />
         <Dropdown 
+          v-if="spheres.length != 1"
           v-model="selectedsphere" 
           :options="spheres" 
           optionLabel="sphere" 
@@ -371,8 +373,25 @@
 
         <Column field="posts" sortable header="Посты" class="text-black text-xs text-center" v-if="showColumns"></Column>
         <Column field="posts_1d" sortable header="1 день" class="text-black text-xs text-center" v-if="showColumns"></Column>
-        <Column field="posts_7d" sortable header="7 дней" class="text-black text-xs text-center" v-if="showColumns"></Column>
+        <Column field="posts_7d" sortable header="7 дней" class="text-black text-xs text-center" v-if="showColumns">
+                <template #body="slotProps">
+                  <div>
+                      <span v-if="slotProps.data.posts_7d >= 3" class="cursor-pointer" v-tooltip="'+40%'">{{ slotProps.data.posts_7d }} </span>
+                      <span v-else class="cursor-pointer" v-tooltip="'0%'">{{ slotProps.data.posts_7d }} </span>
+                  </div>
+                </template>
+        </Column>
         <Column field="posts_30d" sortable header="30 дней" class="text-black text-xs text-center" v-if="showColumns"></Column>
+        <Column field="weekly_audience_reach" sortable header="Охват за неделю" class="text-black text-xs text-center" v-if="showColumns">
+          <template #body="slotProps">
+            <div>
+              <span v-if="(slotProps.data.weekly_audience_reach / slotProps.data.members_count) * 100 >= 70" class="cursor-pointer" v-tooltip="'+40%'">{{ slotProps.data.weekly_audience_reach }}</span>
+              <span v-else-if="(slotProps.data.weekly_audience_reach / slotProps.data.members_count) * 100 >= 50 && (slotProps.data.weekly_audience_reach / slotProps.data.members_count) * 100 < 70" class="cursor-pointer" v-tooltip="'+7%'">{{ slotProps.data.weekly_audience_reach }}</span>
+              <span v-else-if="(slotProps.data.weekly_audience_reach / slotProps.data.members_count) * 100 >= 30 && (slotProps.data.weekly_audience_reach / slotProps.data.members_count) * 100 < 50" class="cursor-pointer" v-tooltip="'+5%'">{{ slotProps.data.weekly_audience_reach }}</span>
+              <span v-else-if="(slotProps.data.weekly_audience_reach / slotProps.data.members_count) * 100 == 0" class="cursor-pointer" v-tooltip="'0%'">{{ slotProps.data.weekly_audience_reach }}</span>
+            </div>
+          </template>
+        </Column>
         <Column field="date_added" header="Дата сбора" class="text-black text-xs text-center" v-if="showColumns">
           <template #body="slotProps">
             {{ formatDate(slotProps.data.date_added) }}
@@ -390,7 +409,7 @@
       </div>
       <div class="text-black">
         <h2 class="font-bold">Ссылка</h2>
-        <a class="text-blue-300 hover:underline cursor-pointer" :href="selectedItem['url']" target="_blank">{{ selectedItem["url"] }}</a>
+        <a class="text-blue-600 hover:underline cursor-pointer" :href="selectedItem['url']" target="_blank">{{ selectedItem["url"] }}</a>
       </div>
       <div class="text-black">
         <h2 class="font-bold">ОГРН</h2>

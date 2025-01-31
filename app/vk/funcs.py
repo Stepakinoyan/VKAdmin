@@ -60,7 +60,7 @@ async def call(method: str, params: dict, access_token: str, retries: int = 3):
                     ):
                         console.rule(f"[red] {response.url} Too many requests per second")
                         # Если да, делаем паузу и пробуем ещё раз
-                        await asyncio.sleep(5)
+                        await asyncio.sleep(3)
                     else:
                         # Если нет ошибки, или это была последняя попытка, возвращаем результат
                         return response_data

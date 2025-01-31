@@ -52,7 +52,6 @@ async def get_spheres(
 
 
 @router.get("/get_stats")
-@cache(expire=60)
 async def get_stats(
     current_user: Annotated[Users, Depends(get_current_user)],
     filterchannelsparams: FilterChannelsParams = Depends(),

@@ -1,61 +1,9 @@
 <template>
     <Card class="border border-gosuslugi-border">
-        <template #title>На основе базы в Excel дашборд госпабликов должен отражать:</template>
+        <template #title>Дополнительные разделы</template>
         <template #content>
-            <div class="space-y-4">
+            <div>
                 <section>
-                    <ul class="list-disc pl-6 space-y-2">
-                        <li>
-                            Разделённые на уровни (Регион; МО — муниципальные образования; ИОГВ — министерства, ведомства, управление и инспекции; другое — негосударственные организации, законодательные органы, контрольно-счётные органы) учредителей подведомственных организаций, которые будут рейтинговаться на основе показателей.
-                        </li>
-                        <li>
-                            Подведомственные организации, разделённые по сферам (перечислены в столбце «F») и статусам (перечислены в столбце «G»), названия организаций должны быть кликабельными — иметь гиперссылку на сообщество, исключения — подведомственные организации со статусом «Освобождены НПА».
-                        </li>
-                        <li>
-                            Организации со статусом «Освобождены НПА» справа должны иметь реквизиты локального НПА или обоснование исключения из рейтинга.
-                        </li>
-                        <li>
-                            Адрес, указанный в настройках в разделах «Дополнительная информация» и «Адрес» официальной страницы ВК.
-                        </li>
-                        <li>
-                            Подключение к компоненту «Госпаблики» (10 %) — показатель отражает подключена ли данная страница к платформе «Госпаблики» (подключена — 10 %, не подключена — 0 %).
-                        </li>
-                        <li>
-                            Госметка (10 %) — наличие официального подтверждения статуса «Государственная организация» страницы ВК (официальная страница ВК подтверждена — 10 %, официальная страница ВК не подтверждена — 0 %).
-                        </li>
-                        <li>
-                            Оформление (20 %) — наличие трёх компонентов оформления: аватарка — 5 %, описание — 5 %, обложка — 10 %.
-                        </li>
-                        <li>
-                            Виджеты (10 %) — показатель отражает, сколько установленных виджетов корректно засчитывается (виджеты не установлены, либо оба установлены некорректно — 0 %, установлено два виджета с одинаковыми ссылками, либо одна из них установлена некорректно — 5 %, установлено оба виджета корректно — 15 %).
-                        </li>
-                        <li>
-                            Активность (40 %) госорганизаций на официальной странице ВК — количество постов, размещённых на официальной странице ВК за обновлённый период (если таких публикаций прошло не менее трёх — 30 %, менее трёх — 0 %).
-                        </li>
-                        <li>
-                            Количество подписчиков — сколько подписчиков присутствует у официальной страницы на момент обновления данных.
-                        </li>
-                        <li>
-                            Общий охват аудитории за неделю (10 %) — количество уникальных пользователей, просматривающих и реагирующих на посты, размещённые в обновляемый период, данные также есть в статистике ВК на странице (если охват составляет < 30 % от подписчиков — 0 %, 30-49 % от подписчиков — 5 %, 50-70 % от подписчиков — 7 %, > 70 % от подписчиков — 10 %).
-                        </li>
-                    </ul>
-                </section>
-                <section>
-                    <h3 class="text-lg font-semibold">В выгрузке можно также дополнительно отразить следующие данные:</h3>
-                    <ul class="list-disc pl-6 space-y-2 mt-1">
-                        <li>ОГРН организации</li>
-                        <li>ID госпаблика</li>
-                    </ul>
-                </section>
-                <section>
-                    <p>
-                        Для сбора аналитики ЦУР Амурской области предоставит доступ к технической странице
-                        <a href="https://vk.com/id643642330" class="text-blue-600 underline">https://vk.com/id643642330</a>, которая является администратором на официальных страницах ВК.
-                    </p>
-                </section>
-
-                <section>
-                    <h2 class="text-xl">Дополнительные разделы</h2>
                     <p>
                         Дополнительно пользователи дашборда (администраторы госпабликов) могут просмотреть и скачать через кнопку помощи:
                     </p>
@@ -64,13 +12,13 @@
                             Федеральные и региональные НПА по госпабликам:
                             <ol class="list-decimal pl-6 space-y-1">
                                 <li>
-                                    <a href="http://gospabliki.ru/wp-content/uploads/metodika-rascheta-rejtinga-po-ispolneniyu-polozhenij-8-fz.pdf#new_tab" class="text-blue-600 underline">Федеральная методика расчёта</a>
+                                    <a href="http://gospabliki.ru/wp-content/uploads/metodika-rascheta-rejtinga-po-ispolneniyu-polozhenij-8-fz.pdf#new_tab" class="text-blue-600 hover:underline cursor-pointer">Федеральная методика расчёта</a>
                                 </li>
                                 <li>
-                                    <a href="https://www.consultant.ru/document/cons_doc_LAW_84602/#new_tab" class="text-blue-600 underline">Федеральный закон «Об обеспечении доступа к информации о деятельности государственных органов и органов местного самоуправления» от 09.02.2009 N 8-ФЗ (последняя редакция)</a>
+                                    <a href="https://www.consultant.ru/document/cons_doc_LAW_84602/#new_tab" class="text-blue-600 hover:underline cursor-pointer">Федеральный закон «Об обеспечении доступа к информации о деятельности государственных органов и органов местного самоуправления» от 09.02.2009 N 8-ФЗ (последняя редакция)</a>
                                 </li>
                                 <li>
-                                    <a href="https://disk.yandex.ru/i/6j5jlrqUsSwsWg" class="text-blue-600 underline">Постановление Правительства Амурской области от 02.08.2023 № 658</a>
+                                    <a href="https://disk.yandex.ru/i/6j5jlrqUsSwsWg" class="text-blue-600 hover:underline cursor-pointer">Постановление Правительства Амурской области от 02.08.2023 № 658</a>
                                 </li>
                             </ol>
                         </li>
@@ -78,33 +26,33 @@
                             Инструкции:
                             <ol class="list-decimal pl-6 space-y-1">
                                 <li>
-                                    <a href="https://disk.yandex.ru/i/4Sj7v8SfZa2XDw" class="text-blue-600 underline">Рабочий кабинет учреждения в госпабликах</a>
+                                    <a href="https://disk.yandex.ru/i/4Sj7v8SfZa2XDw" class="text-blue-600 hover:underline cursor-pointer">Рабочий кабинет учреждения в госпабликах</a>
                                 </li>
                                 <li>
-                                    <a href="https://disk.yandex.ru/i/Qo62zfzZGU5y9g" class="text-blue-600 underline">Алгоритм исполнения Закона</a>
+                                    <a href="https://disk.yandex.ru/i/Qo62zfzZGU5y9g" class="text-blue-600 hover:underline cursor-pointer">Алгоритм исполнения Закона</a>
                                 </li>
                                 <li>
-                                    <a href="https://disk.yandex.ru/d/FpuCGd-qMSE0HA" class="text-blue-600 underline">Методические рекомендации</a>
+                                    <a href="https://disk.yandex.ru/d/FpuCGd-qMSE0HA" class="text-blue-600 hover:underline cursor-pointer">Методические рекомендации</a>
                                 </li>
                                 <li>
-                                    <a href="https://disk.yandex.ru/i/DZ2IgUTKoowUzg" class="text-blue-600 underline">Как включить подтверждение входа (2FA)</a>
+                                    <a href="https://disk.yandex.ru/i/DZ2IgUTKoowUzg" class="text-blue-600 hover:underline cursor-pointer">Как включить подтверждение входа (2FA)</a>
                                 </li>
                                 <li>
                                     Как подтвердить статус «Государственная организация»:
                                     <ul class="list-disc pl-6 space-y-1">
                                         <li>
                                             ВК — 
-                                            <a href="https://disk.yandex.ru/i/31QXIHhbKGeoTQ" class="text-blue-600 underline">Инструкция ВК</a>, 
-                                            <a href="https://disk.yandex.ru/i/eJOmyqTGKQQiFA" class="text-blue-600 underline">Дополнительная инструкция ВК</a>
+                                            <a href="https://disk.yandex.ru/i/31QXIHhbKGeoTQ" class="text-blue-600 hover:underline cursor-pointer">Инструкция ВК</a>, 
+                                            <a href="https://disk.yandex.ru/i/eJOmyqTGKQQiFA" class="text-blue-600 hover:underline cursor-pointer">Дополнительная инструкция ВК</a>
                                         </li>
                                         <li>
                                             ОК — 
-                                            <a href="https://disk.yandex.ru/i/QR3zn1qW4oeejQ" class="text-blue-600 underline">Инструкция ОК</a>
+                                            <a href="https://disk.yandex.ru/i/QR3zn1qW4oeejQ" class="text-blue-600 hover:underline cursor-pointer">Инструкция ОК</a>
                                         </li>
                                     </ul>
                                 </li>
                                 <li>
-                                    <a href="https://disk.yandex.ru/d/WBf67cDUyI3dog" class="text-blue-600 underline">Как добавить администраторов в соцсети и ТГ</a>
+                                    <a href="https://disk.yandex.ru/d/WBf67cDUyI3dog" class="text-blue-600 hover:underline cursor-pointer">Как добавить администраторов в соцсети и ТГ</a>
                                 </li>
                             </ol>
                         </li>

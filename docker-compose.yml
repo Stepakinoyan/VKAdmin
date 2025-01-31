@@ -9,7 +9,7 @@ services:
     environment:
       POSTGRES_DB: postgres
       POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
+      POSTGRES_PASSWORD: K7y4FoCjVUig/kyQFrKTow
     volumes:
       - postgresdata:/var/lib/postgresql/data
     networks:
@@ -41,7 +41,7 @@ services:
       - db
       - redis
       - nats
-    command: sh -c "alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port 8000"
+    command: sh -c "alembic stamp fb7e68f8b917 && uvicorn app.main:app --host 0.0.0.0 --port 8000"
     ports:
       - 7777:8000
     labels:
