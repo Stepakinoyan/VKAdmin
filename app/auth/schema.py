@@ -13,5 +13,6 @@ class UserDTO(BaseModel):
     password: str
     founder: Optional[str]
 
+
 class Role(BaseModel):
     role: str

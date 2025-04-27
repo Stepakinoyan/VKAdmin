@@ -9,11 +9,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.auth.models import Users
 from app.auth.schema import UserDTO
 from app.dao.dao import BaseDAO
-from app.excel_to_db.funcs import generate_password
 from app.excel_to_db.schemas import Connection, Item
 from app.organizations.models import Organizations
 from app.organizations.schemas import OrganizationsDTO
-from app.auth.users import get_password_hash
 
 db_columns = {
     "Уровень": "level",

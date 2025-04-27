@@ -22,13 +22,12 @@ class OrganizationsDAO(BaseDAO):
 
     @classmethod
     async def get_levels(self, user: Users, session: AsyncSession):
-
         get_levels = (
-                select(self.model.level)
-                .filter(
-                    self.model.founder.ilike(f"%{user.founder}%") if user.founder else True,
-                )
-                .distinct()
+            select(self.model.level)
+            .filter(
+                self.model.founder.ilike(f"%{user.founder}%") if user.founder else True,
+            )
+            .distinct()
         )
 
         results = await session.execute(get_levels)
@@ -39,19 +38,22 @@ class OrganizationsDAO(BaseDAO):
     async def get_founders_by_level(
         self, level: str, user: Users, session: AsyncSession
     ):
-        
         if user.role != "admin":
-            raise HTTPException(detail="У вас недостаточно прав", status_code=status.HTTP_403_FORBIDDEN)
+            raise HTTPException(
+                detail="У вас недостаточно прав", status_code=status.HTTP_403_FORBIDDEN
+            )
 
         get_founders = (
-                select(self.model.founder)
-                .filter(
-                    and_(
-                        self.model.level == level,
-                        self.model.founder.ilike(f"%{user.founder}%") if user.founder else True,
-                    )
+            select(self.model.founder)
+            .filter(
+                and_(
+                    self.model.level == level,
+                    self.model.founder.ilike(f"%{user.founder}%")
+                    if user.founder
+                    else True,
                 )
-                .distinct(self.model.founder)
+            )
+            .distinct(self.model.founder)
         )
 
         results = await session.execute(get_founders)
@@ -59,18 +61,18 @@ class OrganizationsDAO(BaseDAO):
         return results.mappings().all()
 
     @classmethod
-    async def get_spheres_by(
-        self, level: str, user: Users, session: AsyncSession
-    ):
+    async def get_spheres_by(self, level: str, user: Users, session: AsyncSession):
         get_spheres = (
-                select(self.model.sphere_1, self.model.sphere_2, self.model.sphere_3)
-                .where(
-                    and_(
-                        self.model.level.ilike(f"%{level}%") if level else True,
-                        self.model.founder.ilike(f"%{user.founder}%") if user.founder else True,
-                    )
+            select(self.model.sphere_1, self.model.sphere_2, self.model.sphere_3)
+            .where(
+                and_(
+                    self.model.level.ilike(f"%{level}%") if level else True,
+                    self.model.founder.ilike(f"%{user.founder}%")
+                    if user.founder
+                    else True,
                 )
-                .distinct()
+            )
+            .distinct()
         )
 
         results = await session.execute(get_spheres)
@@ -113,7 +115,9 @@ class OrganizationsDAO(BaseDAO):
                             self.model.sphere_2.ilike(f"%{sphere}%"),
                             self.model.sphere_3.ilike(f"%{sphere}%"),
                         ),
-                        self.model.founder.ilike(f"%{user.founder}%") if user.founder else True,
+                        self.model.founder.ilike(f"%{user.founder}%")
+                        if user.founder
+                        else True,
                     )
                 )
             )

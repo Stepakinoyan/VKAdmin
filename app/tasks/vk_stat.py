@@ -31,7 +31,6 @@ async def handler():
         )
         print(f"/vk/get_weekly_audience_reach: {get_weekly_audience_reach.status_code}")
 
-
         get_stat = await client.post(
             f"https://{settings.DOMAIN}/api/vk/get_stat", timeout=6000
         )

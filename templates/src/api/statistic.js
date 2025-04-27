@@ -1,21 +1,20 @@
-import axios from 'axios';
-import VueCookies from 'vue-cookies';
+import axios from "axios";
+import VueCookies from "vue-cookies";
 
 export const exportToExcel = (stats) => {
-    return axios.post("/excel/xlsx/", stats, {
-      headers: {
-        'Content-Type': 'application/json',
-         headers: { authorization: VueCookies.get('token') }
-      },
-      responseType: 'blob'
-    });
-  };
-
-export const getFounders = (level) => {
-        return axios.get(`/filter/get_founders?level=${level}`);
+  return axios.post("/excel/xlsx/", stats, {
+    headers: {
+      "Content-Type": "application/json",
+      headers: { authorization: VueCookies.get("token") },
+    },
+    responseType: "blob",
+  });
 };
 
+export const getFounders = (level) => {
+  return axios.get(`/filter/get_founders?level=${level}`);
+};
 
 export const getSpheresBy = (params) => {
-        return axios.get('/filter/get_spheres_by');
+  return axios.get("/filter/get_spheres_by");
 };

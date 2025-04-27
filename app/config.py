@@ -26,9 +26,6 @@ class Settings(BaseSettings):
     VK_AUTH: str
     REDIRECT_URI: str
 
-    REDIS_HOST: str
-    REDIS_PORT: int
-
     DOMAIN: str
     BACKEND_CORS_ORIGINS: Optional[str] = Field(default="http://localhost:5173")
 
@@ -42,9 +39,6 @@ class Settings(BaseSettings):
     def get_test_database_url(self) -> str:
         return f"postgresql+asyncpg://{self.POSTGRES_USER}:{self.POSTGRES_PASSWORD}@{self.DB_HOST}:{self.DB_PORT}/{self.TEST_POSTGRES_DB}"
 
-    @property
-    def redis_url(self) -> str:
-        return f"redis://{self.REDIS_HOST}:{self.REDIS_PORT}"
 
 
 settings = Settings()

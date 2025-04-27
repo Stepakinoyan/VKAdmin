@@ -22,7 +22,7 @@ def get_stats_by_dates(
 
     if not stats:
         return []
-    
+
     if not date_from:
         date_from = today.replace(day=1)
     else:
@@ -32,7 +32,6 @@ def get_stats_by_dates(
         date_to = today
     else:
         date_to = date_to.date()
-    
 
     for item in stats:
         if date_from == item.date_added.date() or date_to == item.date_added.date():

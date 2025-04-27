@@ -2,7 +2,6 @@ import logging
 from typing import Annotated
 
 from fastapi import APIRouter, Depends
-from fastapi_cache.decorator import cache
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.auth.models import Users

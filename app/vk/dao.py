@@ -12,7 +12,6 @@ from app.config import settings
 from app.dao.dao import BaseDAO
 from app.database import async_session_maker, engine, get_session
 from app.organizations.models import Organizations
-from app.statistic.schemas import Activity
 from app.vk.funcs import call, fetch_group_data
 
 semaphore = asyncio.Semaphore(3)
@@ -23,42 +22,44 @@ class VkDAO(BaseDAO):
 
     @classmethod
     async def upsert_account(self, data: dict, session: AsyncSession = get_session()):
-        organization = await session.get(self.model, data["id"])
-        if organization:
-            # Update the existing record
-            organization.screen_name = data["screen_name"]
-            organization.type = data["type"]
-            organization.name = data["name"]
-            organization.city = data.get("city", {}).get("title", "")
-            organization.activity = data.get("activity", "")
-            organization.has_avatar = bool(data.get("photo_50"))
-            organization.has_cover = bool(data.get("cover", {}).get("enabled"))
-            organization.has_description = bool(data.get("description"))
-            organization.has_widget = bool(data.get("menu"))
-            organization.widget_count = len(data.get("menu", {}).get("items", []))
-            organization.members_count = data.get("members_count", 0)
-            organization.site = data.get("site", "")
-            organization.date_added = datetime.now()
-        else:
-            # Insert a new record
-            organization = Organizations(
-                id=data["id"],
-                screen_name=data["screen_name"],
-                type=data["type"],
-                name=data["name"],
-                city=data.get("city", {}).get("title", ""),
-                activity=data.get("activity", ""),
-                has_avatar=bool(data.get("photo_50")),
-                has_cover=bool(data.get("cover", {}).get("enabled")),
-                has_description=bool(data.get("description")),
-                has_widget=bool(data.get("menu")),
-                widget_count=len(data.get("menu", {}).get("items", [])),
-                members_count=data.get("members_count", 0),
-                site=data.get("site", ""),
-                date_added=datetime.now(),
-            )
-            session.add(organization)
-
+        try:
+            organization = await session.get(self.model, data["id"])
+            if organization:
+                # Update the existing record
+                organization.screen_name = data["screen_name"]
+                organization.type = data["type"]
+                organization.name = data["name"]
+                organization.city = data.get("city", {}).get("title", "")
+                organization.activity = data.get("activity", "")
+                organization.has_avatar = bool(data.get("photo_50"))
+                organization.has_cover = bool(data.get("cover", {}).get("enabled"))
+                organization.has_description = bool(data.get("description"))
+                organization.has_widget = bool(data.get("menu"))
+                organization.widget_count = len(data.get("menu", {}).get("items", []))
+                organization.members_count = data.get("members_count", 0)
+                organization.site = data.get("site", "")
+                organization.date_added = datetime.now()
+            else:
+                # Insert a new record
+                organization = Organizations(
+                    id=data["id"],
+                    screen_name=data["screen_name"],
+                    type=data["type"],
+                    name=data["name"],
+                    city=data.get("city", {}).get("title", ""),
+                    activity=data.get("activity", ""),
+                    has_avatar=bool(data.get("photo_50")),
+                    has_cover=bool(data.get("cover", {}).get("enabled")),
+                    has_description=bool(data.get("description")),
+                    has_widget=bool(data.get("menu")),
+                    widget_count=len(data.get("menu", {}).get("items", [])),
+                    members_count=data.get("members_count", 0),
+                    site=data.get("site", ""),
+                    date_added=datetime.now(),
+                )
+                session.add(organization)
+        except SQLAlchemyError:
+            raise 
     @classmethod
     async def wall_get_data(self, group_id: int):
         async with semaphore:
@@ -220,15 +221,3 @@ class VkDAO(BaseDAO):
                 print(f"Failed to update weekly reach for group_id {group_id}")
             except SQLAlchemyError:
                 await session.rollback()
-                await session.commit()
-
-    @classmethod
-    async def update_activity(
-        self, group_id: int, activity: dict[Activity], session: AsyncSession
-    ):
-        activity_updating = (
-            update(self.model)
-            .where(self.model.channel_id == group_id)
-            .values(**activity)
-        )
-        await session.execute(activity_updating)

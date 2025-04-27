@@ -3,7 +3,6 @@ from datetime import datetime
 
 import httpx
 import pytz
-import redis.asyncio as redis
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from fastapi.responses import RedirectResponse
 from rich.console import Console
@@ -31,14 +30,6 @@ from app.vk.funcs import (
 
 router = APIRouter(prefix="/vk", tags=["VK"])
 console = Console(color_system="truecolor", width=140)
-redis_ = redis.from_url(
-    settings.redis_url,
-    encoding="utf-8",
-    decode_responses=True,
-    socket_timeout=5,
-    socket_keepalive=True,
-)
-
 
 @router.get("/auth")
 def auth(request: Request):
@@ -70,7 +61,6 @@ async def callback(code: str, state: str = None):
 
     if state == "init":
         auth = data["access_token"]
-        await redis_.set("access_token", auth)
 
         groups = await call("groups.get", {"filter": "admin"}, auth)
 
@@ -80,13 +70,6 @@ async def callback(code: str, state: str = None):
 
         return RedirectResponse(url, status_code=302)
 
-    if state == "init_groups":
-        groups = data["groups"]
-
-        for group in groups:
-            await redis_.set(f"access_token_{group['group_id']}", group["access_token"])
-
-        return RedirectResponse("https://vk.apps.icdv.ru", status_code=302)
 
     return data
 
