@@ -10,7 +10,12 @@ from httpx import AsyncClient
     ],
 )
 async def test_get_stats(
-    level: str, founder: str, sphere: str, date_from: str, date_to: str, authenticated_ac: AsyncClient
+    level: str,
+    founder: str,
+    sphere: str,
+    date_from: str,
+    date_to: str,
+    authenticated_ac: AsyncClient,
 ):
     response = await authenticated_ac.get(
         "/filter/get_stats",

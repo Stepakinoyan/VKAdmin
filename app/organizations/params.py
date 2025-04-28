@@ -1,10 +1,6 @@
 from datetime import date, datetime
 from typing import Literal, Optional
 
-from app.organizations.funcs import amurtime
-
-now = datetime.now(amurtime)
-
 
 class FilterFounderParams:
     def __init__(
@@ -56,8 +52,8 @@ class FilterChannelsParams:
         founder: Optional[str] = "",
         sphere: Optional[str] = "",
         name: Optional[str] = "",
-        date_from: Optional[date] = "",
-        date_to: Optional[date] = "",
+        date_from: Optional[date] = None,
+        date_to: Optional[date] = None,
     ):
         self.level = level
         self.zone = zone

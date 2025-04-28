@@ -1,6 +1,5 @@
-from typing import Literal, Optional
+from typing import Literal
 
-from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -28,8 +27,9 @@ class Settings(BaseSettings):
 
     DOMAIN: str
     FRONTEND_HOST: str = "http://localhost:5173"
-    model_config = SettingsConfigDict(env_file=".env", env_ignore_empty=True, extra="ignore")
-
+    model_config = SettingsConfigDict(
+        env_file=".env", env_ignore_empty=True, extra="ignore"
+    )
 
     @property
     def get_database_url(self) -> str:
@@ -38,7 +38,6 @@ class Settings(BaseSettings):
     @property
     def get_test_database_url(self) -> str:
         return f"postgresql+asyncpg://{self.POSTGRES_USER}:{self.POSTGRES_PASSWORD}@{self.DB_HOST}:{self.DB_PORT}/{self.TEST_POSTGRES_DB}"
-
 
 
 settings = Settings()

@@ -13,6 +13,7 @@ from sqlalchemy.orm import selectinload
 
 from app.config import settings
 from app.database import get_session
+from app.organizations.constants import AMURTIMEZONE
 from app.organizations.models import Organizations
 from app.organizations.schemas import (
     OrganizationsDTO,
@@ -30,6 +31,7 @@ from app.vk.funcs import (
 
 router = APIRouter(prefix="/vk", tags=["VK"])
 console = Console(color_system="truecolor", width=140)
+
 
 @router.get("/auth")
 def auth(request: Request):
@@ -70,14 +72,12 @@ async def callback(code: str, state: str = None):
 
         return RedirectResponse(url, status_code=302)
 
-
     return data
 
 
 @router.post("/get_stat")
 async def get_stat(session: AsyncSession = Depends(get_session)):
     # Получаем все ID из таблицы accounts
-    amurtime = pytz.timezone("Asia/Yakutsk")
     result = await session.execute(select(Organizations.channel_id))
     account_ids = result.scalars().all()
 
@@ -103,7 +103,7 @@ async def get_stat(session: AsyncSession = Depends(get_session)):
         try:
             for group in data.get("response", {}).get("groups", []):
                 # Генерируем date_id
-                date_str = datetime.now(amurtime).strftime("%Y%m%d")
+                date_str = datetime.now(AMURTIMEZONE).strftime("%Y%m%d")
                 date_id = f"{date_str}{group['id']}"
 
                 # Добавляем или обновляем значения в таблице статистики
@@ -125,7 +125,7 @@ async def get_stat(session: AsyncSession = Depends(get_session)):
 
                 if stat:
                     stat.members_count = group.get("members_count", 0)
-                    stat.date_added = datetime.now(amurtime)
+                    stat.date_added = datetime.now(AMURTIMEZONE)
                     stat.fulfillment_percentage = (
                         await get_percentage_of_fulfillment_of_basic_requirements(
                             organization_dto.model_dump()
@@ -136,7 +136,7 @@ async def get_stat(session: AsyncSession = Depends(get_session)):
                     new_stat = Statistic(
                         date_id=date_id,
                         organization_id=organization.id,
-                        date_added=datetime.now(amurtime),
+                        date_added=datetime.now(AMURTIMEZONE),
                         fulfillment_percentage=await get_percentage_of_fulfillment_of_basic_requirements(
                             organization_dto.model_dump()
                         ),

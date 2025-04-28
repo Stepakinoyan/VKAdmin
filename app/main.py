@@ -16,9 +16,7 @@ console = Console(color_system="truecolor", width=140)
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        settings.FRONTEND_HOST
-    ],
+    allow_origins=[settings.FRONTEND_HOST],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

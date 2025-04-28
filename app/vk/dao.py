@@ -59,7 +59,8 @@ class VkDAO(BaseDAO):
                 )
                 session.add(organization)
         except SQLAlchemyError:
-            raise 
+            raise
+
     @classmethod
     async def wall_get_data(self, group_id: int):
         async with semaphore:

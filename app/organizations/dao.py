@@ -1,20 +1,18 @@
-import logging
+import calendar
 from datetime import date, datetime
 from typing import Optional
 
 from fastapi import HTTPException, status
-from fastapi.encoders import jsonable_encoder
-from sqlalchemy import and_, or_, select
+import pytz
+from sqlalchemy import and_, or_, select, union_all
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from app.auth.models import Users
 from app.dao.dao import BaseDAO
-from app.organizations.funcs import get_unique_spheres
+from app.organizations.constants import AMURTIMEZONE
 from app.organizations.models import Organizations
-from app.organizations.schemas import OrganizationsDTO
-from app.statistic.funcs import get_stats_by_dates
-from app.statistic.schemas import StatisticDTO
+from app.statistic.models import Statistic
 
 
 class OrganizationsDAO(BaseDAO):
@@ -62,24 +60,33 @@ class OrganizationsDAO(BaseDAO):
 
     @classmethod
     async def get_spheres_by(self, level: str, user: Users, session: AsyncSession):
-        get_spheres = (
-            select(self.model.sphere_1, self.model.sphere_2, self.model.sphere_3)
-            .where(
-                and_(
-                    self.model.level.ilike(f"%{level}%") if level else True,
-                    self.model.founder.ilike(f"%{user.founder}%")
-                    if user.founder
-                    else True,
-                )
+        sphere1_query = select(self.model.sphere_1.label("sphere")).where(
+            and_(
+                self.model.level.ilike(f"%{level}%") if level else True,
+                self.model.founder.ilike(f"%{user.founder}%") if user.founder else True,
             )
-            .distinct()
-        )
+        ).where(self.model.sphere_1 != None)
+
+        sphere2_query = select(self.model.sphere_2.label("sphere")).where(
+            and_(
+                self.model.level.ilike(f"%{level}%") if level else True,
+                self.model.founder.ilike(f"%{user.founder}%") if user.founder else True,
+            )
+        ).where(self.model.sphere_2 != None)
+
+        sphere3_query = select(self.model.sphere_3.label("sphere")).where(
+            and_(
+                self.model.level.ilike(f"%{level}%") if level else True,
+                self.model.founder.ilike(f"%{user.founder}%") if user.founder else True,
+            )
+        ).where(self.model.sphere_3 != None)
+
+        combined = union_all(sphere1_query, sphere2_query, sphere3_query).subquery()
+        get_spheres = select(combined.c.sphere).distinct()
 
         results = await session.execute(get_spheres)
-        results = results.scalars().all()
-
-        return get_unique_spheres(results)
-
+        return results.mappings().all()
+    
     @classmethod
     async def filter_channels(
         self,
@@ -93,64 +100,55 @@ class OrganizationsDAO(BaseDAO):
         user: Users,
         session: AsyncSession,
     ):
-        date_from_dt = None
-        date_to_dt = None
+        
+        if not date_from:
+            date_from = datetime.now(AMURTIMEZONE).today().date().replace(day=1)
 
-        try:
-            if date_from:
-                date_from_dt = datetime.combine(date_from, datetime.min.time())
-            if date_to:
-                date_to_dt = datetime.combine(date_to, datetime.min.time())
-
-            query = (
-                select(self.model)
-                .options(selectinload(self.model.statistic))
-                .filter(
-                    and_(
-                        self.model.level.ilike(f"%{level}%"),
-                        self.model.founder.ilike(f"%{founder}%"),
-                        self.model.name.ilike(f"%{name}%"),
-                        or_(
-                            self.model.sphere_1.ilike(f"%{sphere}%"),
-                            self.model.sphere_2.ilike(f"%{sphere}%"),
-                            self.model.sphere_3.ilike(f"%{sphere}%"),
-                        ),
-                        self.model.founder.ilike(f"%{user.founder}%")
-                        if user.founder
-                        else True,
-                    )
-                )
+        if not date_to:
+            date_to = date(
+                date_from.year,
+                date_from.month,
+                calendar.monthrange(date_from.year, date_from.month)[1],
             )
 
-            if zone == "90-100%":
-                query = query.where(self.model.average_fulfillment_percentage >= 90)
-            elif zone == "70-89%":
-                query = query.where(
-                    (Organizations.average_fulfillment_percentage >= 70)
-                    & (Organizations.average_fulfillment_percentage < 90)
+        query = (
+            select(self.model)
+            .filter(
+                and_(
+                    self.model.level.ilike(f"%{level}%"),
+                    self.model.founder.ilike(f"%{founder}%"),
+                    self.model.name.ilike(f"%{name}%"),
+                    or_(
+                        self.model.sphere_1.ilike(f"%{sphere}%"),
+                        self.model.sphere_2.ilike(f"%{sphere}%"),
+                        self.model.sphere_3.ilike(f"%{sphere}%"),
+                    ),
+                    self.model.founder.ilike(f"%{user.founder}%")
+                    if user.founder
+                    else True,
                 )
-            elif zone == "0-69%":
-                query = query.where(self.model.average_fulfillment_percentage <= 69)
+            )
+            .options(selectinload(self.model.statistic))
+            .where(self.model.statistic)
+        )
 
-            results = await session.execute(query)
-            organizations = results.scalars().all()
+        query = query.where(
+            self.model.statistic.any(Statistic.date_added.between(date_from, date_to))
+        )
 
-            stats_items = []
+        if zone == "90-100%":
+            query = query.where(self.model.average_fulfillment_percentage >= 90)
+        elif zone == "70-89%":
+            query = query.where(
+                (self.model.average_fulfillment_percentage >= 70)
+                & (self.model.average_fulfillment_percentage < 90)
+            )
+        elif zone == "0-69%":
+            query = query.where(self.model.average_fulfillment_percentage < 70)
 
-            for organization in organizations:
-                organization_data = jsonable_encoder(organization)
-                organization_data["statistic"] = get_stats_by_dates(
-                    stats=[
-                        StatisticDTO.model_validate(stat, from_attributes=True)
-                        for stat in organization.statistic
-                    ],
-                    date_from=date_from_dt,
-                    date_to=date_to_dt,
-                )
-                stats_items.append(OrganizationsDTO(**organization_data))
+        query = query.order_by(self.model.date_added)
 
-        except Exception as e:
-            logging.error("Error executing filter_channels query", exc_info=True)
-            raise e
+        results = await session.execute(query)
+        organizations = results.scalars().all()
 
-        return stats_items
+        return organizations

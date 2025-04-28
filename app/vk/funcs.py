@@ -8,12 +8,12 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from app.config import settings
 from app.database import engine
+from app.organizations.constants import AMURTIMEZONE
 from app.organizations.models import Organizations
 from app.organizations.types import OrganizationType
 from app.statistic.schemas import Activity, StatisticDTO
 from app.vk.schemas import Group
 from app.vk.types import Percent
-from app.organizations.funcs import amurtime
 
 
 console = Console(color_system="truecolor", width=140)
@@ -252,14 +252,14 @@ def get_average_month_fulfillment_percentage(
 def get_week_fulfillment_percentage(statistics: list[StatisticDTO]) -> Percent:
     if not statistics:
         return 0
-    today = datetime.now(amurtime)
+    today = datetime.now(AMURTIMEZONE)
     start_of_week = today - timedelta(days=today.weekday())
     end_of_week = start_of_week + timedelta(days=6)
 
     fulfillment_percentages = []
 
     for item in statistics:
-        item_date = item.date_added.astimezone(amurtime)
+        item_date = item.date_added.astimezone(AMURTIMEZONE)
         if start_of_week.date() <= item_date.date() <= end_of_week.date():
             fulfillment_percentages.append(item.fulfillment_percentage)
 
@@ -288,7 +288,7 @@ async def fetch_group_data(group_id: int) -> Group:
         raise ValueError(f"API error: {data['error']}")
 
     group_data = data.get("response", []).get("groups")[0]
-    return Group(**group_data, date_added=datetime.now(amurtime).date())
+    return Group(**group_data, date_added=datetime.now(AMURTIMEZONE).date())
 
 
 async def get_activity(group_id: int) -> Activity | None:

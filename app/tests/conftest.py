@@ -60,4 +60,3 @@ async def authenticated_ac():
 
         assert ac.cookies["token"]
         yield ac
-
