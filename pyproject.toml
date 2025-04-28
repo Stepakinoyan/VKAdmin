@@ -7,7 +7,6 @@ readme = "README.md"
 
 [tool.poetry.dependencies]
 python = "^3.11"
-fastapi = {extras = ["all"], version = "^0.111.0"}
 sqlalchemy = "^2.0.30"
 asyncpg = "^0.29.0"
 pandas = "^2.2.2"
@@ -27,6 +26,8 @@ taskiq = "^0.11.4"
 taskiq-faststream = {extras = ["nats"], version = "^0.1.8"}
 uvicorn = {extras = ["standard"], version = "^0.30.6"}
 bcrypt = "4.0.1"
+fastapi = {extras = ["standard"], version = "^0.115.12"}
+pydantic-settings = "^2.9.1"
 
 
 [build-system]
