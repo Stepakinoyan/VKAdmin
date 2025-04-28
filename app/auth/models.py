@@ -11,5 +11,6 @@ class Users(Base):
     email: Mapped[str] = mapped_column()
     password: Mapped[str] = mapped_column()
     role: Mapped[str] = mapped_column()
+    sphere: Mapped[Optional[str]] = mapped_column()
 
     founder: Mapped[Optional[str]] = mapped_column()

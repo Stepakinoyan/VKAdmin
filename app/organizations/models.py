@@ -10,6 +10,12 @@ if TYPE_CHECKING:
     from app.statistic.models import Statistic
 
 
+from sqlalchemy import Column, String, Integer, Boolean, DateTime, BigInteger
+from sqlalchemy.orm import Mapped, mapped_column, relationship
+from typing import Optional, List
+from datetime import datetime
+from app.database import Base
+
 class Organizations(Base):
     __tablename__ = "organizations"
 
@@ -17,9 +23,7 @@ class Organizations(Base):
     level: Mapped[Optional[str]] = mapped_column()
     founder: Mapped[Optional[str]] = mapped_column()
     name: Mapped[Optional[str]] = mapped_column(index=True)
-    the_main_state_registration_number: Mapped[Optional[int]] = mapped_column(
-        BigInteger
-    )
+    the_main_state_registration_number: Mapped[Optional[int]] = mapped_column(BigInteger)
     screen_name: Mapped[Optional[str]] = mapped_column()
     type: Mapped[Optional[str]] = mapped_column()
     city: Mapped[Optional[str]] = mapped_column()
@@ -44,11 +48,10 @@ class Organizations(Base):
     posts_1d: Mapped[int] = mapped_column(default=0)
     posts_7d: Mapped[int] = mapped_column(default=0)
     posts_30d: Mapped[int] = mapped_column(default=0)
-
-    statistic: Mapped[Optional[list["Statistic"]]] = relationship(
-        "Statistic", back_populates="organizations"
-    )
-
     average_week_fulfillment_percentage: Mapped[int] = mapped_column(default=0)
     average_fulfillment_percentage: Mapped[int] = mapped_column(default=0)
     weekly_audience_reach: Mapped[int] = mapped_column(default=0)
+
+    statistic: Mapped[Optional[List["Statistic"]]] = relationship(
+        "Statistic", back_populates="organizations"
+    )

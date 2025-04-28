@@ -5,7 +5,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
-    MODE: Literal["DEV", "TEST", "PROD"]
+    MODE: Literal["DEV", "TEST", "PROD"] = "TEST"
 
     DB_HOST: str
     DB_PORT: int
@@ -27,9 +27,9 @@ class Settings(BaseSettings):
     REDIRECT_URI: str
 
     DOMAIN: str
-    BACKEND_CORS_ORIGINS: Optional[str] = Field(default="http://localhost:5173")
+    FRONTEND_HOST: str = "http://localhost:5173"
+    model_config = SettingsConfigDict(env_file=".env", env_ignore_empty=True, extra="ignore")
 
-    model_config = SettingsConfigDict(env_file=".env")
 
     @property
     def get_database_url(self) -> str:

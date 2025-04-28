@@ -80,7 +80,6 @@
 </template>
 
 <script>
-import VueCookies from "vue-cookies";
 
 export default {
   data() {
@@ -98,7 +97,7 @@ export default {
           label: "Выйти",
           route: "/login",
           command: () => {
-            VueCookies.remove("token");
+            
           },
         },
       ],

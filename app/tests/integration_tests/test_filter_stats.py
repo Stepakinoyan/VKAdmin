@@ -19,6 +19,6 @@ async def test_get_founder_by_level(
 
     data = response.json()
 
-    print(data)
+
     assert isinstance(data, list)
     assert response.status_code == 200

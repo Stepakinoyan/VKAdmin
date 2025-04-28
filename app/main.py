@@ -17,7 +17,7 @@ console = Console(color_system="truecolor", width=140)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
-        str(origin).strip("/") for origin in settings.BACKEND_CORS_ORIGINS.split(",")
+        settings.FRONTEND_HOST
     ],
     allow_credentials=True,
     allow_methods=["*"],

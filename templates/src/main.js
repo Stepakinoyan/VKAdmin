@@ -1,7 +1,6 @@
 import { createApp } from "vue";
 import App from "./App.vue";
 import router from "./router";
-import VueCookies from "vue-cookies";
 import "./style.css";
 
 import PrimeVue from "primevue/config";
@@ -41,7 +40,6 @@ app.component("Menubar", Menubar);
 app.component("Card", Card);
 
 app.directive("tooltip", Tooltip);
-app.use(VueCookies);
 
 app.use(PrimeVue, {
   unstyled: false,

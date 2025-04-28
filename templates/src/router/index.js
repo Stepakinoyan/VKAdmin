@@ -1,8 +1,7 @@
 import { createRouter, createWebHistory } from "vue-router";
 import FormView from "../views/FormView.vue";
-import DashBoard from "../views/DashBoard.vue";
-import Help from "../views/Help.vue";
-import VueCookies from "vue-cookies";
+import DashBoard from "../views/DashBoardView.vue";
+import HelpView from "../views/HelpView.vue";
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -21,13 +20,11 @@ const router = createRouter({
       path: "/dashboard",
       name: "dashboard",
       component: DashBoard,
-      meta: { requiresAuth: true },
     },
     {
       path: "/help",
       name: "help",
-      component: Help,
-      meta: { requiresAuth: true },
+      component: HelpView,
     },
   ],
 });
