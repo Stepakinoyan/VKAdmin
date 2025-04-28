@@ -27,16 +27,6 @@ jobs:
           POSTGRES_USER: postgres
           POSTGRES_PASSWORD: postgres
 
-      redis:
-        image: redis:latest
-        ports:
-          - 6379:6379
-        options: >-
-          --health-cmd "redis-cli ping"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-
     steps:
     - name: Checkout code
       uses: actions/checkout@v3
@@ -63,8 +53,6 @@ jobs:
         echo POSTGRES_USER=postgres >> $GITHUB_ENV
         echo POSTGRES_PASSWORD=postgres >> $GITHUB_ENV
         echo TEST_POSTGRES_DB=test_vkadmin >> $GITHUB_ENV
-        echo REDIS_HOST=localhost >> $GITHUB_ENV
-        echo REDIS_PORT=6379 >> $GITHUB_ENV
         echo SECRET_KEY=${{ secrets.SECRET_KEY }} >> $GITHUB_ENV
         echo ALGORITHM=${{ secrets.ALGORITHM }} >> $GITHUB_ENV
         echo VK_CLIENT_ID=${{ secrets.VK_CLIENT_ID }} >> $GITHUB_ENV
