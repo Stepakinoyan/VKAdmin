@@ -17,7 +17,7 @@ from app.organizations.models import Organizations
 from app.organizations.schemas import (
     OrganizationsDTO,
 )
-from app.statistic.models import Statistic
+from app.organizations.models import Statistic
 from app.vk.dao import VkDAO
 from app.vk.funcs import (
     call,

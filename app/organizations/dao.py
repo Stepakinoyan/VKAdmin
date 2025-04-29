@@ -11,7 +11,7 @@ from app.auth.models import Users
 from app.dao.dao import BaseDAO
 from app.organizations.constants import AMURTIMEZONE
 from app.organizations.models import Organizations
-from app.statistic.models import Statistic
+from app.organizations.models import Statistic
 from fastapi.encoders import jsonable_encoder
 
 

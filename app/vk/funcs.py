@@ -11,7 +11,7 @@ from app.database import engine
 from app.organizations.constants import AMURTIMEZONE
 from app.organizations.models import Organizations
 from app.organizations.types import OrganizationType
-from app.statistic.schemas import Activity, StatisticDTO
+from app.organizations.schemas import Activity, StatisticDTO
 from app.vk.schemas import Group
 from app.vk.types import Percent
 

@@ -3,7 +3,22 @@ from typing import Optional
 
 from pydantic import BaseModel, Field, field_validator
 
-from app.statistic.schemas import StatisticDTO
+
+class Activity(BaseModel):
+    comments: Optional[int] = Field(default=0)
+    likes: Optional[int] = Field(default=0)
+    subscribed: Optional[int] = Field(default=0)
+    widget_count: Optional[int] = Field(default=0)
+
+
+class StatisticDTO(BaseModel):
+    date_id: str
+    organization_id: int
+    date_added: datetime
+    members_count: int
+    fulfillment_percentage: int
+
+    activity: Optional[Activity]
 
 
 class OrganizationsDTO(BaseModel):
