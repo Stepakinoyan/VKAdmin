@@ -9,7 +9,6 @@
   </div>
 </template>
 
-
 <script>
 import Menu from "../components/Menu.vue";
 import Instruction from "../components/Instruction.vue";
@@ -17,7 +16,7 @@ import Instruction from "../components/Instruction.vue";
 export default {
   components: {
     Menu,
-    Instruction
-  }
-}
+    Instruction,
+  },
+};
 </script>

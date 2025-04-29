@@ -59,7 +59,7 @@ export default {
     dialogVisible: Boolean,
     selectedItem: Object,
   },
-  emits: ['update:dialogVisible'],
+  emits: ["update:dialogVisible"],
 };
 </script>
 
@@ -67,4 +67,4 @@ export default {
 .p-dialog-header {
   @apply flex justify-end;
 }
-</style>  
+</style>

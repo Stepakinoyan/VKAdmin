@@ -5,7 +5,9 @@ export async function getFounders(selectedLevel) {
     if (!selectedLevel) {
       return [];
     }
-    const response = await axios.get(`/filter/get_founders?level=${selectedLevel.level}`);
+    const response = await axios.get(
+      `/filter/get_founders?level=${selectedLevel.level}`,
+    );
     return response.data;
   } catch (error) {
     console.error("Error fetching founders:", error);

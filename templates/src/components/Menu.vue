@@ -80,6 +80,7 @@
 </template>
 
 <script>
+import { LogOutRequest } from "@/api/LogOutRequest";
 
 export default {
   data() {
@@ -96,8 +97,8 @@ export default {
         {
           label: "Выйти",
           route: "/login",
-          command: () => {
-            
+          command: async () => {
+            await LogOutRequest();
           },
         },
       ],

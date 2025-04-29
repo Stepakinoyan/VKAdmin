@@ -5,7 +5,7 @@ from typing import Optional
 from fastapi import HTTPException, status
 from sqlalchemy import and_, or_, select, union_all
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import selectinload
+from sqlalchemy.orm import selectinload, with_loader_criteria
 
 from app.auth.models import Users
 from app.dao.dao import BaseDAO
@@ -144,32 +144,50 @@ class OrganizationsDAO(BaseDAO):
 
         if zone == "90-100%":
             query = query.options(
-                selectinload(
-                    self.model.statistic.and_(
-                        Statistic.date_added.between(date_from, date_to)
-                        & (self.model.average_fulfillment_percentage >= 90)
-                    )
+                selectinload(self.model.statistic),
+                with_loader_criteria(
+                    Statistic,
+                    and_(
+                        Statistic.date_added.between(date_from, date_to),
+                        Statistic.fulfillment_percentage >= 90
+                    ),
+                    include_aliases=True
                 )
             )
 
         elif zone == "70-89%":
             query = query.options(
-                selectinload(
-                    self.model.statistic.and_(
-                        Statistic.date_added.between(date_from, date_to)
-                        & (self.model.average_fulfillment_percentage >= 70)
-                        & (self.model.average_fulfillment_percentage < 90)
-                    )
+                selectinload(self.model.statistic),
+                with_loader_criteria(
+                    Statistic,
+                    and_(
+                        Statistic.date_added.between(date_from, date_to),
+                        Statistic.fulfillment_percentage >= 70,
+                        Statistic.fulfillment_percentage < 90
+                    ),
+                    include_aliases=True
                 )
             )
 
         elif zone == "0-69%":
             query = query.options(
-                selectinload(
-                    self.model.statistic.and_(
-                        Statistic.date_added.between(date_from, date_to)
-                        & (self.model.average_fulfillment_percentage < 70)
-                    )
+                selectinload(self.model.statistic),
+                with_loader_criteria(
+                    Statistic,
+                    and_(
+                        Statistic.date_added.between(date_from, date_to),
+                        Statistic.fulfillment_percentage < 70
+                    ),
+                    include_aliases=True
+                )
+            )
+        else:
+            query = query.options(
+                selectinload(self.model.statistic),
+                with_loader_criteria(
+                    Statistic,
+                    Statistic.date_added.between(date_from, date_to),
+                    include_aliases=True
                 )
             )
 

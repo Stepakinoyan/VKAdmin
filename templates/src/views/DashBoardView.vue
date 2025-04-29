@@ -151,18 +151,14 @@ export default {
       searchName: "",
       founders: [],
       spheres: [],
-      zones: [
-        { zone: "90-100%" },
-        { zone: "70-89%" },
-        { zone: "0-69%" }
-      ],
+      zones: [{ zone: "90-100%" }, { zone: "70-89%" }, { zone: "0-69%" }],
       levels: [],
       stats: [],
       columns: [],
       statisticsMap: {},
       selectedItem: {},
       isAdmin: false,
-      DataTableStyle: GosPublicStatDataTableStyle
+      DataTableStyle: GosPublicStatDataTableStyle,
     };
   },
   mounted() {
@@ -234,8 +230,10 @@ export default {
         const newItem = { ...item };
         if (item.statistic) {
           item.statistic.forEach((stat, index) => {
-            newItem[`statistic_percentage_${index + 1}`] = stat.fulfillment_percentage;
-            newItem[`statistic_members_count_${index + 1}`] = stat.members_count;
+            newItem[`statistic_percentage_${index + 1}`] =
+              stat.fulfillment_percentage;
+            newItem[`statistic_members_count_${index + 1}`] =
+              stat.members_count;
           });
         }
         return newItem;
@@ -307,7 +305,6 @@ export default {
     },
     async getSpheres() {
       try {
-
         this.spheres = await getSpheresByRequest(this.selectedLevel);
       } catch (error) {
         if (error.response?.status === 401) {
@@ -316,7 +313,7 @@ export default {
         console.error("Error fetching spheres:", error);
         this.spheres = [];
       }
-      console.log(this.spheres)
+      console.log(this.spheres);
     },
     async loadFilteredData() {
       try {
@@ -330,14 +327,16 @@ export default {
           sphere: this.selectedSphere?.sphere,
           zone: this.selectedZone?.zone,
           name: this.searchName,
-          date_from: this.dates?.[0] ? this.formatDate(this.dates[0]) : undefined,
+          date_from: this.dates?.[0]
+            ? this.formatDate(this.dates[0])
+            : undefined,
           date_to: this.dates?.[1] ? this.formatDate(this.dates[1]) : undefined,
         };
 
         const queryString = Object.entries(params)
           .filter(([_, value]) => value !== undefined)
           .map(([key, value]) => `${key}=${encodeURIComponent(value)}`)
-          .join('&');
+          .join("&");
 
         const response = await axios.get(`/filter/get_stats?${queryString}`);
         const items = response.data;
@@ -355,7 +354,7 @@ export default {
       }
     },
     formatDate(dateStr) {
-      if (!dateStr) return '';
+      if (!dateStr) return "";
       const dateObj = new Date(dateStr);
       const day = String(dateObj.getDate()).padStart(2, "0");
       const month = String(dateObj.getMonth() + 1).padStart(2, "0");

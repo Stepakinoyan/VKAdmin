@@ -57,7 +57,10 @@
       />
       <Calendar
         :value="dates"
-        @update:model-value="$emit('update:dates', $event); $emit('filter-change')"
+        @update:model-value="
+          $emit('update:dates', $event);
+          $emit('filter-change');
+        "
         @click="$emit('update:dates', [])"
         @touchstart="$emit('update:dates', [])"
         :hide-on-range-selection="true"
@@ -111,15 +114,15 @@ export default {
     AdminVerify: Boolean,
   },
   emits: [
-    'update:selectedLevel',
-    'update:selectedFounder',
-    'update:selectedSphere',
-    'update:selectedZone',
-    'update:dates',
-    'update:searchingName',
-    'level-change',
-    'founder-change',
-    'filter-change',
+    "update:selectedLevel",
+    "update:selectedFounder",
+    "update:selectedSphere",
+    "update:selectedZone",
+    "update:dates",
+    "update:searchingName",
+    "level-change",
+    "founder-change",
+    "filter-change",
   ],
 };
 </script>
