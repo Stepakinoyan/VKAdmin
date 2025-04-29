@@ -14,6 +14,8 @@ from app.organizations.params import (
     FilterSpheresParams,
 )
 from app.organizations.schemas import FounderDTO, OrganizationsDTO, SphereDTO
+from app.organizations.service import service as organization_service
+
 
 router = APIRouter(prefix="/filter", tags=["Фильтрация данных"])
 
@@ -50,14 +52,14 @@ async def get_spheres(
     )
 
 
-@router.get("/get_stats")
+@router.get("/get_stats", response_model_exclude_none=True)
 async def get_stats(
     current_user: Annotated[Users, Depends(get_current_user)],
     filterchannelsparams: FilterChannelsParams = Depends(),
     session: AsyncSession = Depends(get_session),
 ) -> list[OrganizationsDTO]:
     try:
-        return await OrganizationsDAO.filter_channels(
+        return await organization_service.filter_channels(
             level=filterchannelsparams.level,
             founder=filterchannelsparams.founder,
             name=filterchannelsparams.name,

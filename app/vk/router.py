@@ -2,7 +2,6 @@ import asyncio
 from datetime import datetime
 
 import httpx
-import pytz
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from fastapi.responses import RedirectResponse
 from rich.console import Console
