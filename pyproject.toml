@@ -14,7 +14,6 @@ rich = "^13.7.1"
 alembic = "^1.13.1"
 pytest = "^8.2.1"
 pytest-asyncio = "^0.23.7"
-aioredis = "^2.0.1"
 pyjwt = "^2.8.0"
 passlib = {version = "1.7.4", extras = ["bcrypt"]}
 python-jose = "^3.3.0"

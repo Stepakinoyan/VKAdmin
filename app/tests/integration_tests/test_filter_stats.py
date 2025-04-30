@@ -3,29 +3,21 @@ from httpx import AsyncClient
 
 
 @pytest.mark.parametrize(
-    "level,founder,sphere,date_from,date_to",
+    "level,founder,sphere",
     [
-        ("МО", "Благовещенск", "Школы", "2023-01-01", "2023-12-31"),
-        ("МО", "Селемджинский", "Культура", "2023-01-01", "2023-12-31"),
+        ("МО", "Благовещенск", "Школы"),
+        ("МО", "Селемджинский", "Культура"),
     ],
 )
 async def test_get_stats(
     level: str,
     founder: str,
     sphere: str,
-    date_from: str,
-    date_to: str,
     authenticated_ac: AsyncClient,
 ):
     response = await authenticated_ac.get(
         "/filter/get_stats",
-        params={
-            "level": level,
-            "founder": founder,
-            "sphere": sphere,
-            "date_from": date_from,
-            "date_to": date_to,
-        },
+        params={"level": level, "founder": founder, "sphere": sphere},
     )
     data = response.json()
     assert isinstance(data, list)

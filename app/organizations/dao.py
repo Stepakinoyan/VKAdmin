@@ -12,7 +12,6 @@ from app.dao.dao import BaseDAO
 from app.organizations.constants import AMURTIMEZONE
 from app.organizations.models import Organizations
 from app.organizations.models import Statistic
-from fastapi.encoders import jsonable_encoder
 
 
 class OrganizationsDAO(BaseDAO):
@@ -149,10 +148,10 @@ class OrganizationsDAO(BaseDAO):
                     Statistic,
                     and_(
                         Statistic.date_added.between(date_from, date_to),
-                        Statistic.fulfillment_percentage >= 90
+                        Statistic.fulfillment_percentage >= 90,
                     ),
-                    include_aliases=True
-                )
+                    include_aliases=True,
+                ),
             )
 
         elif zone == "70-89%":
@@ -163,10 +162,10 @@ class OrganizationsDAO(BaseDAO):
                     and_(
                         Statistic.date_added.between(date_from, date_to),
                         Statistic.fulfillment_percentage >= 70,
-                        Statistic.fulfillment_percentage < 90
+                        Statistic.fulfillment_percentage < 90,
                     ),
-                    include_aliases=True
-                )
+                    include_aliases=True,
+                ),
             )
 
         elif zone == "0-69%":
@@ -176,10 +175,10 @@ class OrganizationsDAO(BaseDAO):
                     Statistic,
                     and_(
                         Statistic.date_added.between(date_from, date_to),
-                        Statistic.fulfillment_percentage < 70
+                        Statistic.fulfillment_percentage < 70,
                     ),
-                    include_aliases=True
-                )
+                    include_aliases=True,
+                ),
             )
         else:
             query = query.options(
@@ -187,10 +186,10 @@ class OrganizationsDAO(BaseDAO):
                 with_loader_criteria(
                     Statistic,
                     Statistic.date_added.between(date_from, date_to),
-                    include_aliases=True
-                )
+                    include_aliases=True,
+                ),
             )
 
         results = await session.execute(query)
 
-        return jsonable_encoder(results.scalars().all())
+        return results.scalars().all()

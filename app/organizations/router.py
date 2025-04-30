@@ -1,4 +1,3 @@
-import logging
 from typing import Annotated
 
 from fastapi import APIRouter, Depends
@@ -8,6 +7,7 @@ from app.auth.models import Users
 from app.auth.users import get_current_user
 from app.database import get_session
 from app.organizations.dao import OrganizationsDAO
+from app.organizations.exceptions import InvalidDatesException
 from app.organizations.params import (
     FilterChannelsParams,
     FilterFounderParams,
@@ -58,17 +58,21 @@ async def get_stats(
     filterchannelsparams: FilterChannelsParams = Depends(),
     session: AsyncSession = Depends(get_session),
 ) -> list[OrganizationsDTO]:
-    try:
-        return await organization_service.filter_channels(
-            level=filterchannelsparams.level,
-            founder=filterchannelsparams.founder,
-            name=filterchannelsparams.name,
-            sphere=filterchannelsparams.sphere,
-            zone=filterchannelsparams.zone,
-            date_from=filterchannelsparams.date_from,
-            date_to=filterchannelsparams.date_to,
-            user=current_user,
-            session=session,
-        )
-    except Exception as e:
-        logging.error(f"An error occurred: {e}")
+    if (
+        filterchannelsparams.date_from
+        and filterchannelsparams.date_to
+        and filterchannelsparams.date_from > filterchannelsparams.date_to
+    ):
+        raise InvalidDatesException
+
+    return await organization_service.filter_channels(
+        level=filterchannelsparams.level,
+        founder=filterchannelsparams.founder,
+        name=filterchannelsparams.name,
+        sphere=filterchannelsparams.sphere,
+        zone=filterchannelsparams.zone,
+        date_from=filterchannelsparams.date_from,
+        date_to=filterchannelsparams.date_to,
+        user=current_user,
+        session=session,
+    )

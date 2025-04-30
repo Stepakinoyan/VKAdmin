@@ -8,14 +8,14 @@ from pydantic import EmailStr
 
 from app.auth.dao import UserDAO
 from app.config import settings
-from app.exceptions import (
+from app.auth.exceptions import (
     IncorrectEmailOrPasswordException,
     IncorrectTokenFormatException,
     TokenAbsentException,
     TokenExpiredException,
     UserIsNotPresentException,
 )
-from app.organizations.constants import AMURTIMEZONE
+
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
@@ -31,10 +31,10 @@ def get_password_hash(password):
 def create_access_token(data: dict, expires_delta: timedelta | None = None):
     to_encode = data.copy()
     if expires_delta:
-        expire = datetime.now(AMURTIMEZONE) + expires_delta
+        expire = datetime.now() + expires_delta
     else:
-        expire = datetime.now(AMURTIMEZONE) + timedelta(
-            minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES
+        expire = datetime.now() + timedelta(
+            seconds=settings.ACCESS_TOKEN_EXPIRE_MINUTES
         )
     to_encode.update({"exp": expire})
     encoded_jwt = jwt.encode(

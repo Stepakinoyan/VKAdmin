@@ -12,10 +12,17 @@ router = APIRouter(prefix="/auth", tags=["Авторизация"])
 @router.post("/login")
 async def login(user_data: UserAuth, response: Response):
     user = await authenticate_user(email=user_data.email, password=user_data.password)
-    access_token = create_access_token({"sub": str(user.id)}, )
+    access_token = create_access_token(
+        {"sub": str(user.id)},
+    )
 
-
-    response.set_cookie(key="token", value=access_token, max_age=settings.ACCESS_TOKEN_EXPIRE_MINUTES, httponly=True, secure=True)
+    response.set_cookie(
+        key="token",
+        value=access_token,
+        max_age=settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60,
+        httponly=True,
+        secure=settings.MODE == "PROD",
+    )
 
     return {"access_token": access_token}
 
