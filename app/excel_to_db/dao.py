@@ -96,14 +96,13 @@ class ExcelDAO(BaseDAO):
         await session.commit()
 
     @classmethod
-    async def save_accounts_to_xlsx(self, stats: list):
-        stats = sorted(stats, key=lambda id: id["id"])
-        # 2. Create a new XLSX workbook and sheet
+    async def save_accounts_to_xlsx(cls, stats: list):
+        stats = sorted(stats, key=lambda s: s.get("id", 0))
+
         wb = Workbook()
         ws = wb.active
         ws.title = "Organizations"
 
-        # Set headers for the sheet
         headers = [
             "id",
             "screen_name",
@@ -134,76 +133,39 @@ class ExcelDAO(BaseDAO):
         ]
         ws.append(headers)
 
-        # Append account data to the sheet
         for stat in stats:
-            stat = OrganizationsDTO(**stat)
-            activity = (
-                stat.statistic[-1].activity
-                if stat.statistic and stat.statistic[-1].activity is not None
-                else {}
-            )
-            if activity:
-                ws.append(
-                    [
-                        stat.id,
-                        stat.screen_name,
-                        activity.comments,
-                        activity.likes,
-                        activity.subscribed,
-                        stat.type,
-                        stat.name,
-                        stat.city,
-                        stat.activity,
-                        str(stat.channel_id),
-                        "ДА" if stat.has_avatar else "НЕТ",
-                        "ДА" if stat.has_cover else "НЕТ",
-                        "ДА" if stat.has_description else "НЕТ",
-                        "ДА" if stat.has_gos_badge else "НЕТ",
-                        "ДА" if stat.has_widget else "НЕТ",
-                        stat.widget_count,
-                        str(stat.members_count),
-                        stat.site,
-                        str(stat.date_added),
-                        stat.posts,
-                        stat.posts_1d,
-                        stat.posts_7d,
-                        stat.posts_30d,
-                        stat.average_week_fulfillment_percentage,
-                        stat.average_fulfillment_percentage,
-                        stat.weekly_audience_reach,
-                    ]
-                )
-            else:
-                ws.append(
-                    [
-                        stat.id,
-                        stat.screen_name,
-                        0,
-                        0,
-                        0,
-                        stat.type,
-                        stat.name,
-                        stat.city,
-                        stat.activity,
-                        str(stat.channel_id),
-                        "ДА" if stat.has_avatar else "НЕТ",
-                        "ДА" if stat.has_cover else "НЕТ",
-                        "ДА" if stat.has_description else "НЕТ",
-                        "ДА" if stat.has_gos_badge else "НЕТ",
-                        "ДА" if stat.has_widget else "НЕТ",
-                        stat.widget_count,
-                        str(stat.members_count),
-                        stat.site,
-                        str(stat.date_added),
-                        stat.posts,
-                        stat.posts_1d,
-                        stat.posts_7d,
-                        stat.posts_30d,
-                        stat.average_week_fulfillment_percentage,
-                        stat.average_fulfillment_percentage,
-                        stat.weekly_audience_reach,
-                    ]
-                )
+            statistic = stat.get("statistic", [])
+            last_activity = statistic[-1].get("activity") if statistic and isinstance(statistic[-1], dict) else {}
 
-        # Save the workbook to the specified file path
+            row = [
+                stat.get("id"),
+                stat.get("screen_name"),
+                last_activity.get("comments", 0) if last_activity else 0,
+                last_activity.get("likes", 0) if last_activity else 0,
+                last_activity.get("subscribed", 0) if last_activity else 0,
+                stat.get("type"),
+                stat.get("name"),
+                stat.get("city"),
+                stat.get("activity"),
+                str(stat.get("channel_id", "")),
+                "ДА" if stat.get("has_avatar") else "НЕТ",
+                "ДА" if stat.get("has_cover") else "НЕТ",
+                "ДА" if stat.get("has_description") else "НЕТ",
+                "ДА" if stat.get("has_gos_badge") else "НЕТ",
+                "ДА" if stat.get("has_widget") else "НЕТ",
+                stat.get("widget_count", 0),
+                str(stat.get("members_count", "")),
+                stat.get("site", ""),
+                str(stat.get("date_added", "")),
+                stat.get("posts", 0),
+                stat.get("posts_1d", 0),
+                stat.get("posts_7d", 0),
+                stat.get("posts_30d", 0),
+                stat.get("average_week_fulfillment_percentage", 0),
+                stat.get("average_fulfillment_percentage", 0),
+                stat.get("weekly_audience_reach", 0),
+            ]
+
+            ws.append(row)
+
         wb.save(filename="organizations.xlsx")

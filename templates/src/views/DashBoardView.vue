@@ -160,7 +160,7 @@ export default {
       selectedItem: {},
       isAdmin: false,
       DataTableStyle: GosPublicStatDataTableStyle,
-      debouncedLoadFilteredData: null
+      debouncedLoadFilteredData: null,
     };
   },
   mounted() {

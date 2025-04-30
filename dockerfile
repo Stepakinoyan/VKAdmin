@@ -8,6 +8,6 @@ COPY /pyproject.toml /code
 
 RUN pip install poetry
 RUN poetry config virtualenvs.create false
-RUN poetry install
+RUN poetry install --no-root
 
 COPY . .

@@ -46,16 +46,15 @@ async def add_connection(
 
 @router.post("/xlsx/")
 async def download_accounts_xlsx(stats: list[dict], background_tasks: BackgroundTasks):
-    try:
-        file_path = "organizations.xlsx"
-        await ExcelDAO.save_accounts_to_xlsx(stats=stats)
-        background_tasks.add_task(remove_file, file_path)
-        return FileResponse(
-            file_path,
-            media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-            filename="organizations.xlsx",
-        )
-    except KeyError:
+    if not stats:
         raise HTTPException(
             status.HTTP_400_BAD_REQUEST, detail="Данные статистики пустые"
         )
+    file_path = "organizations.xlsx"
+    await ExcelDAO.save_accounts_to_xlsx(stats=stats)
+    background_tasks.add_task(remove_file, file_path)
+    return FileResponse(
+        file_path,
+        media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        filename="organizations.xlsx",
+    )
