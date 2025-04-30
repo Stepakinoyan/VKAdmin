@@ -88,7 +88,7 @@
           v-model="searchName"
           placeholder="Организация"
           class="w-full lg:w-2/3 placeholder:text-gray-500 pl-[12px] py-2 lg:py-0 mt-2 lg:mt-0"
-          @input="loadFilteredData"
+          @input="debouncedLoadFilteredData"
           :disabled="fieldDisabled"
           :pt="{
             root: ['border', 'border-gosuslugi-border'],
@@ -128,6 +128,7 @@ import ActionButtons from "@/components/ActionButtons.vue";
 import StatsTable from "@/components/StatsTable.vue";
 import DetailsDialog from "@/components/DetailsDialog.vue";
 import { GosPublicStatDataTableStyle } from "@/assets/GosPublicStatDataTableStyle";
+import debounce from "lodash/debounce";
 
 export default {
   components: {
@@ -159,6 +160,7 @@ export default {
       selectedItem: {},
       isAdmin: false,
       DataTableStyle: GosPublicStatDataTableStyle,
+      debouncedLoadFilteredData: null
     };
   },
   mounted() {
@@ -176,7 +178,11 @@ export default {
       return true;
     },
   },
+  created() {
+    this.debouncedLoadFilteredData = debounce(this.loadFilteredData, 1000);
+  },
   methods: {
+    debounce,
     async checkAdmin() {
       try {
         const response = await axios.get("/auth/me");

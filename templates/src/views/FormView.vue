@@ -5,7 +5,7 @@
       class="bg-white p-6 rounded-md w-full max-w-sm border border-gosuslugi-border"
     >
       <div class="space-y-3">
-        <GosPublicStatLogo class="mx-auto" />
+        <GosPublicStatLogo class="mx-auto mb-2" />
         <InputGroup>
           <EmailInput v-model="email" />
         </InputGroup>

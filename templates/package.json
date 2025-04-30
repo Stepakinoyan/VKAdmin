@@ -10,6 +10,7 @@
   "dependencies": {
     "autoprefixer": "^10",
     "axios": "^1.6.8",
+    "lodash": "^4.17.21",
     "postcss": "^8",
     "primeicons": "^7.0.0",
     "primevue": "^3.52.0",
