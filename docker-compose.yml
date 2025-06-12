@@ -12,8 +12,20 @@ services:
       POSTGRES_PASSWORD: postgres
     volumes:
       - postgresdata:/var/lib/postgresql/data
+      - pg_logs:/var/log/postgresql
     networks:
       - traefik-public
+
+  fail2ban:
+    image: crazymax/fail2ban:latest
+    container_name: fail2ban
+    volumes:
+      - ./fail2ban/jail.d:/etc/fail2ban/jail.d:ro
+      - ./fail2ban/filter.d:/etc/fail2ban/filter.d:ro
+      - pg_logs:/var/log/postgresql:ro
+      - /var/run/docker.sock:/var/run/docker.sock
+    network_mode: host
+    restart: always
 
   nats:
     image: 'nats:latest'
